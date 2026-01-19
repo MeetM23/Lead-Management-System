@@ -44,16 +44,9 @@ const handleSubmit = async (e) => {
     return;
   }
 
-  const result = await login(email, password);
-
-  if (result.success) {
-    const dashboardPath =
-      result.user.role === 'admin'
-        ? '/admin/dashboard'
-        : '/sales/dashboard';
-    navigate(dashboardPath, { replace: true });
-  }
+  await login(email, password);
 };
+
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-dark relative overflow-hidden">

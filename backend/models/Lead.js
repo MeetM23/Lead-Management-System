@@ -1,44 +1,50 @@
-import mongoose from 'mongoose';
+import mongoose from "mongoose";
 
-const leadsSchema = new mongoose.Schema(
-    {
-        leadId: {
-            type: String,
-            unique: true,
-        },
-        name: {
-            type: String,
-            required: true,
-        },
-        email: {
-            type: String,
-            required: true,
-        },
-        phone: {
-            type: String,
-            required: true,
-        },
-        source: {
-            type: String,
-            default: "Website",
-        },
-        status: {
-            type: String,
-            enum: ["New", "Contacted", "Converted", "Lost"],
-            default: "New",
-        },
-        createdBy: {
-            type: mongoose.Schema.Types.ObjectId,
-            ref: "User",
-            required: false,
-        },
-        assignedTo: {
-            type: mongoose.Schema.Types.ObjectId,
-            ref: "User",
-            required: false,
-        },
+const leadSchema = new mongoose.Schema(
+  {
+    leadId: {
+      type: String,
+      unique: true,
     },
-    { timestamps: true }
+    name: {
+      type: String,
+      required: true,
+      trim: true,
+    },
+    email: {
+      type: String,
+      trim: true,
+    },
+    phone: {
+      type: String,
+      trim: true,
+    },
+    source: {
+      type: String,
+      default: "Manual",
+    },
+    status: {
+      type: String,
+      enum: ["New", "Contacted", "Converted", "Lost"],
+      default: "New",
+    },
+
+    // 🔑 Relations
+    createdBy: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      required: true,
+    },
+    assignedTo: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      required: true,
+    },
+  },
+  {
+    timestamps: true,
+  }
 );
 
-export default mongoose.model('lead', leadsSchema);
+const Lead = mongoose.model("Lead", leadSchema);
+export default Lead;

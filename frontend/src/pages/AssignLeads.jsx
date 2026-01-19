@@ -16,7 +16,7 @@ const AssignLeads = () => {
         // If assigned to current user (Admin) and not specifically meant for them (assuming Admin creates for others)
         // We consider them "assignable" if they are assigned to the admin.
         if (lead.assignedTo._id === user._id) return true;
-        
+
         return false;
     });
 
@@ -65,7 +65,7 @@ const AssignLeads = () => {
                         className="w-full md:w-64 px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:border-primary"
                     >
                         <option value="">Choose a user...</option>
-                        {users.filter(u => u.role === 'sales').map((u) => (
+                        {users.filter(u => u.role === 'sales' && u._id).map((u) => (
                             <option key={u._id} value={u._id}>
                                 {u.name} ({u.email})
                             </option>
@@ -78,7 +78,7 @@ const AssignLeads = () => {
                         Unassigned Leads ({unassignedLeads.length})
                     </h3>
                     <div className="space-y-2 max-h-96 overflow-y-auto">
-                        {unassignedLeads.map((lead) => (
+                        {unassignedLeads && unassignedLeads.filter(lead => lead && lead._id).map((lead) => (
                             <div key={lead._id} className="flex items-center gap-3 p-3 border border-gray-200 rounded-lg">
                                 <input
                                     type="checkbox"

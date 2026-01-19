@@ -1,37 +1,31 @@
-const express = require("express");
-const mongoose = require("mongoose");
-const cors = require("cors");
-const dotenv = require('dotenv');
+import express from "express";
+import dotenv from "dotenv";
+import cors from "cors";
+import connectDB from "./config/db.js";
+
+import authRoutes from "./routes/authRoutes.js";
+import leadRoutes from "./routes/leadRoutes.js";
+import userRoutes from "./routes/userRoutes.js"; // ✅ added
 
 dotenv.config();
-const app = express();
-    
-app.use(cors());
-app.use(express.json({ limit: '10mb' }));
-app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
-app.use((req, res, next) => {
-    if (req.method === 'POST' || req.method === 'PUT' || req.method === 'PATCH') {
-        console.log('=== REQUEST DEBUG ===');
-        console.log('Method:', req.method);
-        console.log('URL:', req.url);
-        console.log('Content-Type:', req.headers['content-type']);
-        console.log('Parsed body:', req.body);
-        console.log('====================');
-    }
-    next();
+connectDB();
+
+const app = express();
+
+app.use(cors());
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+
+app.use("/api/auth", authRoutes);
+app.use("/api/leads", leadRoutes);
+app.use("/api/users", userRoutes); // ✅ added
+
+app.get("/", (req, res) => {
+  res.send("API is running 🚀");
 });
 
-app.use("/api/auth", require("./routes/auth"));
-app.use("/api/leads", require("./routes/leads"));
-app.use("/api/users", require("./routes/users"));
-
-
-const uri = process.env.MONGO_URI || 'mongodb://localhost:27017/leadmanagement';
-mongoose
-    .connect(uri)
-    .then(() => console.log("MongoDB connected"))
-    .catch((err) => console.error(err));
-
 const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+app.listen(PORT, () => {
+  console.log(`Server running on port ${PORT}`);
+});

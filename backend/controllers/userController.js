@@ -1,20 +1,36 @@
-import User from '../models/User.js';
-import Lead from '../models/Lead.js';
+import User from "../models/User.js";
 
-export const getMyProfile = async (req, res) => {
+/* =========================
+   GET ALL USERS (ADMIN)
+========================= */
+const getUsers = async (req, res) => {
     try {
-        const user = await User.findById(req.user._id).select("-password");
-        const totalLeads = await Lead.countDocuments({
-            assignedTo: user._id
-        });
+        const users = await User.find()
+            .select("-password")
+            .sort({ createdAt: -1 });
+
         res.json({
-            name: user.name,
-            email: user.email,
-            role: user.role,
-            profileImage: user.profileImage,
-            totalLeads
+            success: true,
+            data: users,
         });
     } catch (error) {
-        res.status(500).json({ message: "Server Error" });
+        res.status(500).json({
+            success: false,
+            message: error.message,
+        });
     }
 };
+
+const getUserById = async (req, res) => {
+    try {
+        const user = await User.findById(req.params.id).select("-password");
+        if (!user) {
+            return res.status(404).json({ success: false, message: "User not found" });
+        }
+        res.json(user);
+    } catch (error) {
+        res.status(500).json({ success: false, message: error.message });
+    }
+};
+
+export { getUsers, getUserById };

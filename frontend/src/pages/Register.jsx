@@ -107,15 +107,7 @@ const handleSubmit = async (e) => {
                             placeholder="••••••••"
                         />
                     </div>
-                    <div>
-                        <label className="block text-sm font-medium text-gray-300 mb-2">Role</label>
-                        <select
-                            value={role}
-                            onChange={(e) => setRole(e.target.value)}
-                            className="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all"
-                        ><option value='admin'>Admin / Manager</option><option value='sales'>Sales Employee</option>
-                        </select>
-                    </div>
+
                     <button
                         type="submit"
                         className="w-full bg-secondary hover:bg-yellow-300 text-dark font-bold py-3 px-4 rounded-lg transition-all duration-300 transform hover:scale-[1.02] shadow-lg shadow-secondary/30"

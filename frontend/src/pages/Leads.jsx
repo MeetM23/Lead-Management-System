@@ -16,12 +16,17 @@ const Leads = () => {
   const [showModal, setShowModal] = useState(false);
 
   // Filter logic
-  const filteredLeads = leads.filter(lead => {
-    const matchesStatus = statusFilter === 'All' || lead.status === statusFilter;
-    const matchesSearch = lead.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      lead.email.toLowerCase().includes(searchQuery.toLowerCase());
-    return matchesStatus && matchesSearch;
-  });
+  const filteredLeads = leads
+    ? statusFilter === 'All'
+      ? leads
+      : leads.filter(
+        (lead) =>
+          lead.status &&
+          statusFilter &&
+          lead.status.toLowerCase() === statusFilter.toLowerCase()
+      )
+    : [];
+
 
   // Handle Delete
   const handleDelete = async (id) => {
@@ -86,66 +91,67 @@ const Leads = () => {
           <tbody className="divide-y divide-gray-100">
             {filteredLeads.length > 0 ? (
               filteredLeads.map((lead) => (
-                <tr key={lead._id} className="hover:bg-gray-50 transition-colors">
-                  <td className="px-6 py-4">
-                    <p className="font-medium text-gray-900">{lead.name}</p>
-                    <p className="text-xs text-gray-400">ID: {lead._id.slice(-6)}</p>
-                  </td>
-                  <td className="px-6 py-4">
-                    <p className="text-sm text-gray-600">{lead.email}</p>
-                    <p className="text-sm text-gray-500">{lead.phone}</p>
-                  </td>
-                  <td className="px-6 py-4">
-                    <select
-                      value={lead.status}
-                      onChange={(e) => updateLeadStatus(lead._id, e.target.value)}
-                      className={`text-sm font-medium px-3 py-1 rounded-full border-none focus:ring-2 focus:ring-blue-300 cursor-pointer
-                        ${lead.status === 'New' ? 'bg-blue-100 text-blue-700' :
-                          lead.status === 'Converted' ? 'bg-green-100 text-green-700' :
-                            'bg-red-100 text-red-700'}`}
-                    >
-                      <option value="New">New</option>
-                      <option value="Converted">Converted</option>
-                      <option value="Lost">Lost</option>
-                    </select>
-                  </td>
-                  <td className="px-6 py-4">
-                    {user.role === 'admin' ? (
+                lead && lead._id && (
+                  <tr key={lead._id} className="hover:bg-gray-50 transition-colors">
+                    <td className="px-6 py-4">
+                      <p className="font-medium text-gray-900">{lead.name}</p>
+                      <p className="text-xs text-gray-400">ID: {lead._id.slice(-6)}</p>
+                    </td>
+                    <td className="px-6 py-4">
+                      <p className="text-sm text-gray-600">{lead.email}</p>
+                      <p className="text-sm text-gray-500">{lead.phone}</p>
+                    </td>
+                    <td className="px-6 py-4">
                       <select
-                        value={lead.assignedTo?._id || ''}
-                        onChange={(e) => assignLead(lead._id, e.target.value)}
-                        className="text-sm border rounded px-2 py-1 bg-white"
-                      >
-                        <option value="">Unassigned</option>
-                        {users.map(u => (
-                          <option key={u._id} value={u._id}>{u.name}</option>
-                        ))}
+                        value={lead.status}
+                        onChange={(e) => updateLeadStatus(lead._id, e.target.value)}
+                        className={`text-sm font-medium px-3 py-1 rounded-full border-none focus:ring-2 focus:ring-blue-300 cursor-pointer
+                        ${lead.status === 'New' ? 'bg-blue-100 text-blue-700' :
+                            lead.status === 'Converted' ? 'bg-green-100 text-green-700' :
+                              'bg-red-100 text-red-700'}`}>
+                        <option value="New">New</option>
+                        <option value="Converted">Converted</option>
+                        <option value="Lost">Lost</option>
                       </select>
-                    ) : (
-                      <span className="text-sm text-gray-600">
-                        {lead.assignedTo?.name || 'Unassigned'}
-                      </span>
-                    )}
-                  </td>
-                  <td className="px-6 py-4">
-                    <div className="flex justify-center gap-3">
-                      <button
-                        onClick={() => handleView(lead)}
-                        className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
-                        title="View Details"
-                      >
-                        <Eye size={20} />
-                      </button>
-                      <button
-                        onClick={() => handleDelete(lead._id)}
-                        className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-                        title="Delete Lead"
-                      >
-                        <Trash2 size={20} />
-                      </button>
-                    </div>
-                  </td>
-                </tr>
+                    </td>
+                    <td className="px-6 py-4">
+                      {user.role === 'admin' ? (
+                        <select
+                          value={lead.assignedTo?._id || ''}
+                          onChange={(e) => assignLead(lead._id, e.target.value)}
+                          className="text-sm border rounded px-2 py-1 bg-white"
+                        >
+                          <option value="">Unassigned</option>
+                          {users.map(u => (
+                            <option key={u._id} value={u._id}>{u.name}</option>
+                          ))}
+                        </select>
+                      ) : (
+                        <span className="text-sm text-gray-600">
+                          {lead.assignedTo?.name || 'Unassigned'}
+                        </span>
+                      )}
+                    </td>
+                    <td className="px-6 py-4">
+                      <div className="flex justify-center gap-3">
+                        <button
+                          onClick={() => handleView(lead)}
+                          className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                          title="View Details"
+                        >
+                          <Eye size={20} />
+                        </button>
+                        <button
+                          onClick={() => handleDelete(lead._id)}
+                          className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                          title="Delete Lead"
+                        >
+                          <Trash2 size={20} />
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                )
               ))
             ) : (
               <tr>

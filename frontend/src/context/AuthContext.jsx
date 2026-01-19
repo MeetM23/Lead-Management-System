@@ -7,40 +7,30 @@ export const AuthProvider = ({ children }) => {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(true);
 
-  // 🔹 Check login on page refresh
+  // 🔹 Restore login on page refresh (JWT-based)
   useEffect(() => {
-    const fetchUser = async () => {
-      try {
-        const res = await fetch('/api/auth/me', {
-          credentials: 'include',
-        });
+    const storedUser = localStorage.getItem('user');
+    const token = localStorage.getItem('token');
 
-        if (!res.ok) {
-          setUser(null);
-        } else {
-          const data = await res.json();
-          setUser(data.user);
-        }
-      } catch {
-        setUser(null);
-      } finally {
-        setLoading(false);
-      }
-    };
+    if (storedUser && token) {
+      setUser(JSON.parse(storedUser));
+    } else {
+      setUser(null);
+    }
 
-    fetchUser();
+    setLoading(false);
   }, []);
 
+  // 🔹 Login
   const login = async (email, password) => {
     try {
       setError('');
 
-      const res = await fetch('/api/auth/login', {
+      const res = await fetch('http://localhost:5000/api/auth/login', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        credentials: 'include', // 🔴 REQUIRED
         body: JSON.stringify({ email, password }),
       });
 
@@ -50,6 +40,10 @@ export const AuthProvider = ({ children }) => {
         throw new Error(data.message || 'Login failed');
       }
 
+      // Store JWT + user
+      localStorage.setItem('token', data.token);
+      localStorage.setItem('user', JSON.stringify(data.user));
+
       setUser(data.user);
       return { success: true, user: data.user };
     } catch (err) {
@@ -58,11 +52,12 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
+  // 🔹 Register
   const register = async (userData) => {
     try {
       setError('');
 
-      const res = await fetch('/api/auth/register', {
+      const res = await fetch('http://localhost:5000/api/auth/register', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -83,16 +78,24 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  const logout = async () => {
-    await fetch('/api/auth/logout', {
-      method: 'POST',
-      credentials: 'include',
-    });
+  // 🔹 Logout
+  const logout = () => {
+    localStorage.removeItem('token');
+    localStorage.removeItem('user');
     setUser(null);
   };
 
   return (
-    <AuthContext.Provider value={{ user, login, register, logout, error, loading }}>
+    <AuthContext.Provider
+      value={{
+        user,
+        login,
+        register,
+        logout,
+        error,
+        loading,
+      }}
+    >
       {children}
     </AuthContext.Provider>
   );

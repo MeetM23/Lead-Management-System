@@ -16,7 +16,9 @@ export const LeadsProvider = ({ children }) => {
       setLoading(false);
       return;
     }
+
     fetchLeads();
+
     if (user.role === 'admin') {
       fetchUsers();
     }
@@ -39,14 +41,24 @@ export const LeadsProvider = ({ children }) => {
   const fetchLeads = async () => {
     if (!user) return;
 
+    const userId = user._id || user.id; // ✅ FIX
+
+    if (!userId || !user.role) {
+      console.warn('User data incomplete, skipping leads fetch');
+      setLoading(false);
+      return;
+    }
+
     try {
       setLoading(true);
+
       const params = new URLSearchParams({
-        userId: user._id,
-        role: user.role
+        userId,
+        role: user.role,
       });
 
       const response = await fetch(`/api/leads?${params}`);
+
       if (response.ok) {
         const result = await response.json();
         if (result.success && Array.isArray(result.data)) {
@@ -70,18 +82,18 @@ export const LeadsProvider = ({ children }) => {
   const addLead = async (leadData) => {
     if (!user) return;
 
+    const userId = user._id || user.id; // ✅ FIX
+
     try {
       const leadWithUser = {
         ...leadData,
-        createdBy: user._id,
-        assignedTo: leadData.assignedTo || user._id,
+        createdBy: userId,
+        assignedTo: leadData.assignedTo ?? userId,
       };
 
       const response = await fetch('/api/leads', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(leadWithUser),
       });
 
@@ -90,15 +102,12 @@ export const LeadsProvider = ({ children }) => {
         if (result.success && result.data) {
           setLeads((prev) => [result.data, ...prev]);
           return { success: true, data: result.data };
-        } else {
-          console.error('Failed to add lead: invalid response format');
-          return { success: false, message: 'Invalid response format' };
         }
-      } else {
-        const errorData = await response.json();
-        console.error('Failed to add lead:', errorData.message);
-        return { success: false, message: errorData.message || 'Failed to add lead' };
+        return { success: false, message: 'Invalid response format' };
       }
+
+      const errorData = await response.json();
+      return { success: false, message: errorData.message };
     } catch (error) {
       console.error('Error adding lead:', error);
       return { success: false, message: 'Network error' };
@@ -121,10 +130,10 @@ export const LeadsProvider = ({ children }) => {
           )
         );
         return { success: true };
-      } else {
-        const errorData = await response.json();
-        return { success: false, message: errorData.message };
       }
+
+      const errorData = await response.json();
+      return { success: false, message: errorData.message };
     } catch (error) {
       console.error('Error assigning lead:', error);
       return { success: false, message: 'Network error' };
@@ -138,14 +147,17 @@ export const LeadsProvider = ({ children }) => {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ status }),
       });
+
       if (response.ok) {
         const updatedLead = await response.json();
-        setLeads((prev) => prev.map((lead) => (lead._id === leadId ? updatedLead : lead)));
+        setLeads((prev) =>
+          prev.map((lead) => (lead._id === leadId ? updatedLead : lead))
+        );
         return { success: true };
-      } else {
-        const errorData = await response.json();
-        return { success: false, message: errorData.message };
       }
+
+      const errorData = await response.json();
+      return { success: false, message: errorData.message };
     } catch (error) {
       console.error('Error updating lead status:', error);
       return { success: false, message: 'Network error' };
@@ -161,25 +173,39 @@ export const LeadsProvider = ({ children }) => {
       if (response.ok) {
         setLeads((prev) => prev.filter((lead) => lead._id !== leadId));
         return { success: true };
-      } else {
-        const errorData = await response.json();
-        return { success: false, message: errorData.message };
       }
+
+      const errorData = await response.json();
+      return { success: false, message: errorData.message };
     } catch (error) {
       console.error('Error deleting lead:', error);
       return { success: false, message: 'Network error' };
     }
   };
 
-  const stats = Array.isArray(leads) ? {
-    total: leads.length,
-    new: leads.filter(l => l.status === 'New').length,
-    converted: leads.filter(l => l.status === 'Converted').length,
-    lost: leads.filter(l => l.status === 'Lost').length,
-  } : { total: 0, new: 0, converted: 0, lost: 0 };
+  const stats = Array.isArray(leads)
+    ? {
+        total: leads.length,
+        new: leads.filter((l) => l.status === 'New').length,
+        converted: leads.filter((l) => l.status === 'Converted').length,
+        lost: leads.filter((l) => l.status === 'Lost').length,
+      }
+    : { total: 0, new: 0, converted: 0, lost: 0 };
 
   return (
-    <LeadsContext.Provider value={{ leads, addLead, updateLeadStatus, assignLead, deleteLead, users, stats, loading, refetchLeads: fetchLeads }}>
+    <LeadsContext.Provider
+      value={{
+        leads,
+        addLead,
+        updateLeadStatus,
+        assignLead,
+        deleteLead,
+        users,
+        stats,
+        loading,
+        refetchLeads: fetchLeads,
+      }}
+    >
       {children}
     </LeadsContext.Provider>
   );
