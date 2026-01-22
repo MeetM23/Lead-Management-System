@@ -19,7 +19,6 @@ const Sidebar = ({ isOpen, onClose }) => {
 
   const adminLinks = [
     { name: 'Users', path: `${basePath}/users`, icon: UserCheck },
-    { name: 'Assign Leads', path: `${basePath}/assign-leads`, icon: UserCheck },
   ];
 
   const links = user?.role === 'admin' ? [...commonLinks, ...adminLinks] : commonLinks;

@@ -1,74 +1,54 @@
-import React, { createContext, useState, useContext, useEffect } from 'react';
+import React, { createContext, useState, useContext, useEffect, useCallback } from 'react';
 import { useAuth } from './AuthContext';
 
 const LeadsContext = createContext();
 
 export const LeadsProvider = ({ children }) => {
   const [leads, setLeads] = useState([]);
+  const [stats, setStats] = useState({ total: 0, byStatus: {}, perUser: {} });
   const [loading, setLoading] = useState(true);
   const [users, setUsers] = useState([]);
   const { user } = useAuth();
 
-  useEffect(() => {
-    if (!user) {
-      setLeads([]);
-      setUsers([]);
-      setLoading(false);
-      return;
-    }
+  const getAuthHeaders = useCallback(() => {
+    const token = localStorage.getItem('token');
+    return {
+      'Content-Type': 'application/json',
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    };
+  }, []);
 
-    fetchLeads();
+  const hasToken = () => {
+    const token = localStorage.getItem('token');
+    return Boolean(token);
+  };
 
-    if (user.role === 'admin') {
-      fetchUsers();
-    }
-  }, [user]);
-
-  const fetchUsers = async () => {
+  const fetchUsers = useCallback(async () => {
+    if (!hasToken() || user?.role !== 'admin') return;
     try {
-      const response = await fetch('/api/users');
+      const response = await fetch('/api/users', { headers: getAuthHeaders() });
       if (response.ok) {
         const result = await response.json();
-        if (result.success && Array.isArray(result.data)) {
-          setUsers(result.data);
-        }
+        setUsers(result.data || []);
       }
     } catch (error) {
       console.error('Error fetching users:', error);
     }
-  };
+  }, [user, getAuthHeaders]);
 
-  const fetchLeads = async () => {
-    if (!user) return;
-
-    const userId = user._id || user.id; // ✅ FIX
-
-    if (!userId || !user.role) {
-      console.warn('User data incomplete, skipping leads fetch');
+  const fetchLeads = useCallback(async () => {
+    if (!hasToken()) {
+      setLeads([]);
       setLoading(false);
       return;
     }
-
+    setLoading(true);
     try {
-      setLoading(true);
-
-      const params = new URLSearchParams({
-        userId,
-        role: user.role,
-      });
-
-      const response = await fetch(`/api/leads?${params}`);
-
+      const response = await fetch('/api/leads', { headers: getAuthHeaders() });
       if (response.ok) {
         const result = await response.json();
-        if (result.success && Array.isArray(result.data)) {
-          setLeads(result.data);
-        } else {
-          console.error('Invalid response format:', result);
-          setLeads([]);
-        }
+        setLeads(result.data || []);
       } else {
-        console.error('Failed to fetch leads:', response.statusText);
         setLeads([]);
       }
     } catch (error) {
@@ -77,89 +57,93 @@ export const LeadsProvider = ({ children }) => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [getAuthHeaders]);
 
-  const addLead = async (leadData) => {
-    if (!user) return;
-
-    const userId = user._id || user.id; // ✅ FIX
-
+  const fetchStats = useCallback(async () => {
+    if (!hasToken() || user?.role !== 'admin') return;
     try {
-      const leadWithUser = {
-        ...leadData,
-        createdBy: userId,
-        assignedTo: leadData.assignedTo ?? userId,
-      };
-
-      const response = await fetch('/api/leads', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(leadWithUser),
-      });
-
+      const response = await fetch('/api/leads/stats', { headers: getAuthHeaders() });
       if (response.ok) {
         const result = await response.json();
-        if (result.success && result.data) {
-          setLeads((prev) => [result.data, ...prev]);
-          return { success: true, data: result.data };
-        }
-        return { success: false, message: 'Invalid response format' };
+        setStats(result.data);
       }
-
-      const errorData = await response.json();
-      return { success: false, message: errorData.message };
     } catch (error) {
-      console.error('Error adding lead:', error);
+      console.error('Error fetching stats:', error);
+    }
+  }, [user, getAuthHeaders]);
+
+  useEffect(() => {
+    if (hasToken()) {
+      fetchLeads();
+      if (user?.role === 'admin') {
+        fetchUsers();
+        fetchStats();
+      }
+    } else {
+      setLeads([]);
+      setUsers([]);
+      setStats({ total: 0, byStatus: {}, perUser: {} });
+      setLoading(false);
+    }
+  }, [user, fetchLeads, fetchUsers, fetchStats]);
+
+  const addLead = async (leadData) => {
+    try {
+      const response = await fetch('/api/leads', {
+        method: 'POST',
+        headers: getAuthHeaders(),
+        body: JSON.stringify(leadData),
+      });
+      const result = await response.json();
+      if (response.ok) {
+        setLeads((prev) => [result.data, ...prev]);
+        if (user?.role === 'admin') fetchStats();
+        return { success: true, data: result.data };
+      }
+      return { success: false, message: result.message };
+    } catch (error) {
       return { success: false, message: 'Network error' };
     }
   };
 
-  const assignLead = async (leadId, assignedToId) => {
+  const updateLead = async (leadId, updateData) => {
     try {
-      const response = await fetch(`/api/leads/${leadId}/assign`, {
+      const response = await fetch(`/api/leads/${leadId}`, {
         method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ assignedTo: assignedToId }),
+        headers: getAuthHeaders(),
+        body: JSON.stringify(updateData),
       });
-
+      const result = await response.json();
       if (response.ok) {
-        const updatedLead = await response.json();
-        setLeads((prev) =>
-          prev.map((lead) =>
-            lead._id === leadId ? updatedLead : lead
-          )
-        );
-        return { success: true };
+        setLeads((prev) => prev.map((lead) => (lead._id === leadId ? result.data : lead)));
+        if (user?.role === 'admin') fetchStats();
+        return { success: true, data: result.data };
       }
-
-      const errorData = await response.json();
-      return { success: false, message: errorData.message };
+      return { success: false, message: result.message };
     } catch (error) {
-      console.error('Error assigning lead:', error);
       return { success: false, message: 'Network error' };
     }
   };
 
   const updateLeadStatus = async (leadId, status) => {
+    return updateLead(leadId, { status });
+  };
+
+  const assignLead = async (leadId, assignedTo) => {
     try {
-      const response = await fetch(`/api/leads/${leadId}/status`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ status }),
+      const response = await fetch(`/api/leads/${leadId}/assign`, {
+        method: 'PATCH',
+        headers: getAuthHeaders(),
+        body: JSON.stringify({ assignedTo }),
       });
-
+      const result = await response.json();
       if (response.ok) {
-        const updatedLead = await response.json();
-        setLeads((prev) =>
-          prev.map((lead) => (lead._id === leadId ? updatedLead : lead))
-        );
-        return { success: true };
+        setLeads((prev) => prev.map((lead) => (lead._id === leadId ? result.data : lead)));
+        if (user?.role === 'admin') fetchStats();
+        return { success: true, data: result.data };
       }
-
-      const errorData = await response.json();
-      return { success: false, message: errorData.message };
+      return { success: false, message: result.message };
     } catch (error) {
-      console.error('Error updating lead status:', error);
       return { success: false, message: 'Network error' };
     }
   };
@@ -168,41 +152,32 @@ export const LeadsProvider = ({ children }) => {
     try {
       const response = await fetch(`/api/leads/${leadId}`, {
         method: 'DELETE',
+        headers: getAuthHeaders(),
       });
-
       if (response.ok) {
         setLeads((prev) => prev.filter((lead) => lead._id !== leadId));
+        if (user?.role === 'admin') fetchStats();
         return { success: true };
       }
-
-      const errorData = await response.json();
-      return { success: false, message: errorData.message };
+      const result = await response.json();
+      return { success: false, message: result.message };
     } catch (error) {
-      console.error('Error deleting lead:', error);
       return { success: false, message: 'Network error' };
     }
   };
-
-  const stats = Array.isArray(leads)
-    ? {
-        total: leads.length,
-        new: leads.filter((l) => l.status === 'New').length,
-        converted: leads.filter((l) => l.status === 'Converted').length,
-        lost: leads.filter((l) => l.status === 'Lost').length,
-      }
-    : { total: 0, new: 0, converted: 0, lost: 0 };
 
   return (
     <LeadsContext.Provider
       value={{
         leads,
-        addLead,
-        updateLeadStatus,
-        assignLead,
-        deleteLead,
         users,
         stats,
         loading,
+        addLead,
+        updateLead,
+        updateLeadStatus,
+        assignLead,
+        deleteLead,
         refetchLeads: fetchLeads,
       }}
     >

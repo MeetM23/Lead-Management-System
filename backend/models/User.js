@@ -23,6 +23,18 @@ const userSchema = new mongoose.Schema(
       enum: ["admin", "sales"],
       default: "sales",
     },
+    phone: {
+      type: String,
+      trim: true,
+    },
+    employeeId: {
+      type: String,
+      trim: true,
+    },
+    profilePic: {
+      type: String,
+      trim: true,
+    },
   },
   {
     timestamps: true,

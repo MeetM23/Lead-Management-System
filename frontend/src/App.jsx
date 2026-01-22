@@ -10,8 +10,8 @@ import Dashboard from './pages/Dashboard';
 import Leads from './pages/Leads';
 import AddLead from './pages/AddLead';
 import Users from './pages/Users';
-import AssignLeads from './pages/AssignLeads';
 import UserProfile from './pages/UserProfile';
+import Profile from './pages/Profile';
 
 // Protected Route Component
 const ProtectedRoute = ({ children, allowedRoles }) => {
@@ -52,7 +52,7 @@ function App() {
               <Route path="add-lead" element={<AddLead />} />
               <Route path="users" element={<Users />} />
               <Route path="users/:userId" element={<UserProfile />} />
-              <Route path="assign-leads" element={<AssignLeads />} />
+              <Route path="profile" element={<Profile />} />
             </Route>
 
             <Route path="/sales/dashboard" element={
@@ -63,6 +63,7 @@ function App() {
               <Route index element={<Dashboard />} />
               <Route path="leads" element={<Leads />} />
               <Route path="add-lead" element={<AddLead />} />
+              <Route path="profile" element={<Profile />} />
             </Route>
 
             {/* Catch all - redirect to Landing Page instead of Dashboard */}

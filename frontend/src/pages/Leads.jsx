@@ -102,17 +102,28 @@ const Leads = () => {
                       <p className="text-sm text-gray-500">{lead.phone}</p>
                     </td>
                     <td className="px-6 py-4">
-                      <select
-                        value={lead.status}
-                        onChange={(e) => updateLeadStatus(lead._id, e.target.value)}
-                        className={`text-sm font-medium px-3 py-1 rounded-full border-none focus:ring-2 focus:ring-blue-300 cursor-pointer
-                        ${lead.status === 'New' ? 'bg-blue-100 text-blue-700' :
+                      {(user.role === 'admin' || user.role === 'sales') ? (
+                        <select
+                          value={lead.status}
+                          onChange={(e) => updateLeadStatus(lead._id, e.target.value)}
+                          className={`text-sm font-medium px-3 py-1 rounded-full border-none focus:ring-2 focus:ring-blue-300 cursor-pointer
+                          ${lead.status === 'New' ? 'bg-blue-100 text-blue-700' :
+                              lead.status === 'Converted' ? 'bg-green-100 text-green-700' :
+                                'bg-red-100 text-red-700'}`}
+                        >
+                          <option value="New">New</option>
+                          <option value="Converted">Converted</option>
+                          <option value="Lost">Lost</option>
+                        </select>
+                      ) : (
+                        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium
+                          ${lead.status === 'New' ? 'bg-blue-100 text-blue-700' :
                             lead.status === 'Converted' ? 'bg-green-100 text-green-700' :
-                              'bg-red-100 text-red-700'}`}>
-                        <option value="New">New</option>
-                        <option value="Converted">Converted</option>
-                        <option value="Lost">Lost</option>
-                      </select>
+                              'bg-red-100 text-red-700'}`}
+                        >
+                          {lead.status}
+                        </span>
+                      )}
                     </td>
                     <td className="px-6 py-4">
                       {user.role === 'admin' ? (
@@ -141,13 +152,15 @@ const Leads = () => {
                         >
                           <Eye size={20} />
                         </button>
-                        <button
-                          onClick={() => handleDelete(lead._id)}
-                          className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-                          title="Delete Lead"
-                        >
-                          <Trash2 size={20} />
-                        </button>
+                        {user.role === 'admin' && (
+                          <button
+                            onClick={() => handleDelete(lead._id)}
+                            className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                            title="Delete Lead"
+                          >
+                            <Trash2 size={20} />
+                          </button>
+                        )}
                       </div>
                     </td>
                   </tr>

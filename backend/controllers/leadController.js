@@ -1,4 +1,5 @@
 import Lead from "../models/Lead.js";
+import User from "../models/User.js";
 
 /* =========================
    GET LEADS
@@ -7,27 +8,27 @@ import Lead from "../models/Lead.js";
 // Sales → only their leads
 const getLeads = async (req, res) => {
   try {
-    const { userId, role } = req.query;
+    let query = {};
 
-    if (!userId || !role) {
-      return res.status(400).json({
-        success: false,
-        message: "Missing userId or role",
-      });
-    }
-
-    let leads;
-
-    if (role === "admin") {
-      leads = await Lead.find().sort({ createdAt: -1 });
+    // Role-based filtering
+    if (req.user.role === 'admin') {
+      // Admin sees all leads
+      query = {};
+    } else if (req.user.role === 'sales') {
+      // Sales sees only leads assigned to them
+      query = { assignedTo: req.user._id };
     } else {
-      leads = await Lead.find({
-        $or: [{ createdBy: userId }, { assignedTo: userId }],
-      }).sort({ createdAt: -1 });
+      return res.status(403).json({ message: "Unauthorized role" });
     }
+
+    const leads = await Lead.find(query)
+      .populate('assignedTo', 'name email')
+      .populate('createdBy', 'name email')
+      .sort({ createdAt: -1 });
 
     res.json({
       success: true,
+      count: leads.length,
       data: leads,
     });
   } catch (error) {
@@ -39,58 +40,25 @@ const getLeads = async (req, res) => {
 };
 
 /* =========================
-   CREATE LEAD
+   GET SINGLE LEAD
 ========================= */
-const createLead = async (req, res) => {
+const getLeadById = async (req, res) => {
   try {
-    const { name, email, phone, source, createdBy, assignedTo } = req.body;
-
-    if (!name || !createdBy) {
-      return res.status(400).json({
-        success: false,
-        message: "Name and createdBy are required",
-      });
-    }
-
-    const lead = await Lead.create({
-      name,
-      email,
-      phone,
-      source,
-      createdBy,
-      assignedTo: assignedTo || createdBy, // ✅ FIX
-    });
-
-    res.status(201).json({
-      success: true,
-      data: lead,
-    });
-  } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: error.message,
-    });
-  }
-};
-
-/* =========================
-   UPDATE LEAD STATUS
-========================= */
-const updateLeadStatus = async (req, res) => {
-  try {
-    const { status } = req.body;
-
-    const lead = await Lead.findByIdAndUpdate(
-      req.params.id,
-      { status },
-      { new: true }
-    );
+    const lead = await Lead.findById(req.params.id)
+      .populate('assignedTo', 'name email profilePic')
+      .populate('createdBy', 'name email profilePic')
+      .populate('notes.createdBy', 'name profilePic');
 
     if (!lead) {
-      return res.status(404).json({
-        success: false,
-        message: "Lead not found",
-      });
+      return res.status(404).json({ success: false, message: "Lead not found" });
+    }
+
+    // Check access for sales users - backend filtering is source of truth
+    if (req.user.role === 'sales') {
+      // Verify lead is assigned to this sales user
+      if (!lead.assignedTo || lead.assignedTo._id.toString() !== req.user._id.toString()) {
+        return res.status(403).json({ success: false, message: "Not authorized to view this lead" });
+      }
     }
 
     res.json({
@@ -98,6 +66,83 @@ const updateLeadStatus = async (req, res) => {
       data: lead,
     });
   } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+/* =========================
+   CREATE LEAD
+========================= */
+const createLead = async (req, res) => {
+  try {
+    const { name, email, phone, source, assignedTo } = req.body;
+
+    if (!name) {
+      return res.status(400).json({
+        success: false,
+        message: "Name is required",
+      });
+    }
+
+    let finalAssignedTo;
+
+    // Admin must assign to a sales user
+    if (req.user.role === 'admin') {
+      if (!assignedTo) {
+        return res.status(400).json({
+          success: false,
+          message: "Admin must assign lead to a sales user",
+        });
+      }
+
+      // Validate assignedTo exists and is a sales user
+      const assignedUser = await User.findById(assignedTo);
+      if (!assignedUser) {
+        return res.status(404).json({
+          success: false,
+          message: "Assigned user not found",
+        });
+      }
+
+      if (assignedUser.role !== 'sales') {
+        return res.status(400).json({
+          success: false,
+          message: "Admin can only assign leads to sales users",
+        });
+      }
+
+      finalAssignedTo = assignedTo;
+    }
+    // Sales auto-assigns to themselves (ignore any assignedTo from frontend)
+    else if (req.user.role === 'sales') {
+      finalAssignedTo = req.user._id;
+    }
+    else {
+      return res.status(403).json({
+        success: false,
+        message: "Unauthorized role",
+      });
+    }
+
+    const lead = await Lead.create({
+      leadId: `L${Date.now()}`,
+      name,
+      email,
+      phone,
+      source,
+      createdBy: req.user._id,
+      assignedTo: finalAssignedTo,
+    });
+
+    const populatedLead = await Lead.findById(lead._id)
+      .populate('assignedTo', 'name email')
+      .populate('createdBy', 'name email');
+
+    res.status(201).json({
+      success: true,
+      data: populatedLead,
+    });
+  } catch (error) {
     res.status(500).json({
       success: false,
       message: error.message,
@@ -106,7 +151,67 @@ const updateLeadStatus = async (req, res) => {
 };
 
 /* =========================
-   DELETE LEAD
+   UPDATE LEAD (Admin: All, Sales: Status & Notes Only)
+========================= */
+const updateLead = async (req, res) => {
+  try {
+    const lead = await Lead.findById(req.params.id);
+
+    if (!lead) {
+      return res.status(404).json({ success: false, message: "Lead not found" });
+    }
+
+    // Sales can only update status and notes of their own leads
+    if (req.user.role === 'sales') {
+      if (lead.assignedTo.toString() !== req.user._id.toString()) {
+        return res.status(403).json({ success: false, message: "Not authorized to update this lead" });
+      }
+
+      // Only allow status update (notes are handled separately via addNote endpoint)
+      if (req.body.status) {
+        lead.status = req.body.status;
+      }
+      // Block any attempt to update assignedTo or other fields
+      if (req.body.assignedTo || req.body.createdBy) {
+        return res.status(403).json({ success: false, message: "Sales cannot update assignment or creator" });
+      }
+    } else if (req.user.role === 'admin') {
+      // Admin can update everything except _id
+      const { name, email, phone, source, status } = req.body;
+      if (name) lead.name = name;
+      if (email) lead.email = email;
+      if (phone) lead.phone = phone;
+      if (source) lead.source = source;
+      if (status) lead.status = status;
+      // Admin cannot update assignedTo via this endpoint (use assignLead endpoint)
+      if (req.body.assignedTo) {
+        return res.status(400).json({ success: false, message: "Use PATCH /leads/:id/assign to reassign leads" });
+      }
+    } else {
+      return res.status(403).json({ success: false, message: "Unauthorized role" });
+    }
+
+    const updatedLead = await lead.save();
+
+    // Re-populate for response
+    const populatedLead = await Lead.findById(updatedLead._id)
+      .populate('assignedTo', 'name email')
+      .populate('createdBy', 'name email');
+
+    res.json({
+      success: true,
+      data: populatedLead,
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: error.message,
+    });
+  }
+};
+
+/* =========================
+   DELETE LEAD (Admin Only)
 ========================= */
 const deleteLead = async (req, res) => {
   try {
@@ -131,9 +236,132 @@ const deleteLead = async (req, res) => {
   }
 };
 
+/* =========================
+   ADD NOTE (Sales & Admin)
+========================= */
+const addNote = async (req, res) => {
+  try {
+    const { content } = req.body;
+    const lead = await Lead.findById(req.params.id);
+
+    if (!lead) {
+      return res.status(404).json({ success: false, message: "Lead not found" });
+    }
+
+    // Check access
+    if (req.user.role === 'sales' && lead.assignedTo.toString() !== req.user._id.toString()) {
+      return res.status(403).json({ success: false, message: "Not authorized to add notes to this lead" });
+    }
+
+    const newNote = {
+      content,
+      createdBy: req.user._id
+    };
+
+    lead.notes.push(newNote);
+    await lead.save();
+
+    const populatedLead = await Lead.findById(lead._id)
+      .populate('notes.createdBy', 'name');
+
+    res.json({
+      success: true,
+      data: populatedLead.notes,
+    });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+/* =========================
+   GET STATS (Admin Only)
+========================= */
+const getStats = async (req, res) => {
+  try {
+    const totalLeads = await Lead.countDocuments();
+
+    const leadsByStatus = await Lead.aggregate([
+      { $group: { _id: "$status", count: { $sum: 1 } } }
+    ]);
+
+    const leadsByUser = await Lead.aggregate([
+      { $group: { _id: "$assignedTo", count: { $sum: 1 } } },
+      { $lookup: { from: "users", localField: "_id", foreignField: "_id", as: "user" } },
+      { $unwind: "$user" },
+      { $project: { name: "$user.name", count: 1 } }
+    ]);
+
+    res.json({
+      success: true,
+      data: {
+        totalLeads,
+        leadsByStatus,
+        leadsByUser
+      }
+    });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+/* =========================
+   ASSIGN / REASSIGN LEAD (Admin Only)
+========================= */
+const assignLead = async (req, res) => {
+  try {
+    if (req.user.role !== 'admin') {
+      return res.status(403).json({ success: false, message: "Only admin can assign leads" });
+    }
+
+    const { assignedTo } = req.body;
+
+    if (!assignedTo) {
+      return res.status(400).json({ success: false, message: "assignedTo is required" });
+    }
+
+    const lead = await Lead.findById(req.params.id);
+
+    if (!lead) {
+      return res.status(404).json({ success: false, message: "Lead not found" });
+    }
+
+    // Validate assignedTo exists and is a sales user
+    const assignedUser = await User.findById(assignedTo);
+    if (!assignedUser) {
+      return res.status(404).json({ success: false, message: "Assigned user not found" });
+    }
+
+    if (assignedUser.role !== 'sales') {
+      return res.status(400).json({ success: false, message: "Admin can only assign leads to sales users" });
+    }
+
+    lead.assignedTo = assignedTo;
+    const updatedLead = await lead.save();
+
+    // Re-populate for response
+    const populatedLead = await Lead.findById(updatedLead._id)
+      .populate('assignedTo', 'name email')
+      .populate('createdBy', 'name email');
+
+    res.json({
+      success: true,
+      data: populatedLead,
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: error.message,
+    });
+  }
+};
+
 export {
   getLeads,
+  getLeadById,
   createLead,
-  updateLeadStatus,
+  updateLead,
   deleteLead,
+  addNote,
+  getStats,
+  assignLead
 };

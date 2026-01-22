@@ -37,6 +37,38 @@ const Dashboard = () => {
   // Recent Leads 
   const recentLeads = leads.slice(0, 4);
 
+  // Calculate stats based on role
+  const dashboardStats = React.useMemo(() => {
+    if (user?.role === 'admin' && stats) {
+      // Admin: Use backend stats
+      const leadsByStatus = stats.leadsByStatus || [];
+      const statusMap = {};
+      leadsByStatus.forEach(item => {
+        statusMap[item._id] = item.count;
+      });
+
+      return {
+        total: stats.totalLeads || 0,
+        new: statusMap['New'] || 0,
+        converted: statusMap['Converted'] || 0,
+        lost: statusMap['Lost'] || 0,
+      };
+    } else {
+      // Sales: Calculate from their leads
+      const total = leads.length;
+      const newCount = leads.filter(lead => lead.status === 'New').length;
+      const convertedCount = leads.filter(lead => lead.status === 'Converted').length;
+      const lostCount = leads.filter(lead => lead.status === 'Lost').length;
+
+      return {
+        total,
+        new: newCount,
+        converted: convertedCount,
+        lost: lostCount,
+      };
+    }
+  }, [stats, leads, user]);
+
   return (
     <div className="space-y-8">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
@@ -55,28 +87,28 @@ const Dashboard = () => {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         <StatCard
           title="Total Leads"
-          value={stats.total}
+          value={dashboardStats.total}
           icon={Users}
           color="bg-blue-500"
           delay={0.1}
         />
         <StatCard
           title="New Leads"
-          value={stats.new}
+          value={dashboardStats.new}
           icon={UserPlus}
           color="bg-primary"
           delay={0.2}
         />
         <StatCard
           title="Converted"
-          value={stats.converted}
+          value={dashboardStats.converted}
           icon={CheckCircle}
           color="bg-green-500"
           delay={0.3}
         />
         <StatCard
           title="Lost"
-          value={stats.lost}
+          value={dashboardStats.lost}
           icon={AlertCircle}
           color="bg-red-500"
           delay={0.4}

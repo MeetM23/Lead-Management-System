@@ -15,7 +15,13 @@ const Users = () => {
     const navigate = useNavigate();
     const fetchUsers = async () => {
         try {
-            const response = await fetch('/api/users');
+            const token = localStorage.getItem('token');
+            const response = await fetch('/api/users/sales', {
+                headers: {
+                    'Content-Type': 'application/json',
+                    Authorization: `Bearer ${token}`,
+                },
+            });
             if (response.ok) {
                 const result = await response.json();
                 if (result.success) {
@@ -29,41 +35,14 @@ const Users = () => {
         }
     };
 
+    const getDefaultAvatar = (name) => {
+        return `https://ui-avatars.com/api/?name=${encodeURIComponent(name || 'User')}&background=6366f1&color=fff&size=80`;
+    };
+
     if (loading) {
         return <div className="flex justify-center items-center h-64">Loading...</div>;
     }
 
-    const handleDeleteUser = async (userId) => {
-        console.log("delete", userId);
-        if (userId === user._id) {
-            alert("You cannot delete Your Own Account");
-            return;
-        }
-        const confirmDelete = window.confirm(
-            "Are you sure you want to delete this user?"
-        );
-        if (!confirmDelete) return;
-
-        try {
-      const response = await fetch(
-        `/api/users/${userId}`,
-        {
-          method: 'DELETE',
-        }
-      );
-            if (response.ok) {
-                //remove deleted user from ui
-                setUsers((prevUsers) =>
-                    prevUsers.filter((u) => u._id !== userId)
-                );
-            } else {
-                alert("Failed to delete user");
-            }
-        } catch (error) {
-            console.error("Delete:", error);
-            alert("Something went wrong");
-        }
-    };
     return (
         <div className="space-y-6">
             <div>
@@ -76,31 +55,46 @@ const Users = () => {
                     <table className="w-full text-left">
                         <thead className="bg-gray-50 border-b border-gray-100">
                             <tr>
+                                <th className="px-6 py-4 text-xs font-bold text-gray-500 uppercase">Profile</th>
                                 <th className="px-6 py-4 text-xs font-bold text-gray-500 uppercase">Name</th>
                                 <th className="px-6 py-4 text-xs font-bold text-gray-500 uppercase">Email</th>
-                                <th className="px-6 py-4 text-xs font-bold text-gray-500 uppercase">Role</th>
-                                <th className="px-6 py-4 text-xs font-bold text-gray-500 uppercase">Created</th>
+                                <th className="px-6 py-4 text-xs font-bold text-gray-500 uppercase">Leads Created</th>
+                                <th className="px-6 py-4 text-xs font-bold text-gray-500 uppercase">Leads Assigned</th>
                                 <th className="px-6 py-4 text-xs font-bold text-gray-500 uppercase">Actions</th>
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-gray-100">
                             {users.map((u) => (
-                                <tr key={u._id} className="hover:bg-gray-50">
+                                <tr key={u._id || u.email} className="hover:bg-gray-50">
+                                    <td className="px-6 py-4">
+                                        <div className="w-10 h-10 rounded-full overflow-hidden bg-gray-200 flex items-center justify-center">
+                                            {u.profilePic ? (
+                                                <img
+                                                    src={u.profilePic}
+                                                    alt={u.name}
+                                                    className="w-full h-full object-cover"
+                                                    onError={(e) => {
+                                                        e.target.src = getDefaultAvatar(u.name);
+                                                    }}
+                                                />
+                                            ) : (
+                                                <img
+                                                    src={getDefaultAvatar(u.name)}
+                                                    alt={u.name}
+                                                    className="w-full h-full object-cover"
+                                                />
+                                            )}
+                                        </div>
+                                    </td>
                                     <td className="px-6 py-4 font-medium text-dark">{u.name}</td>
                                     <td className="px-6 py-4 text-gray-600">{u.email}</td>
-                                    <td className="px-6 py-4">
-                                        <span className={`inline-flex px-2.5 py-0.5 rounded-full text-xs font-bold uppercase
-                      ${u.role === 'admin' ? 'bg-purple-100 text-purple-700' : 'bg-blue-100 text-blue-700'}`}>
-                                            {u.role}
-                                        </span>
-                                    </td>
-                                    <td className="px-6 py-4 text-sm text-gray-500">
-                                        {new Date(u.createdAt).toLocaleDateString()}
-                                    </td>
+                                    <td className="px-6 py-4 text-gray-600">{u.leadsCreatedCount || 0}</td>
+                                    <td className="px-6 py-4 text-gray-600">{u.leadsAssignedCount || 0}</td>
                                     <td className='px-6 py-4'>
                                         <div className='flex gap-3' >
-                                            <button onClick={() => navigate(`/admin/dashboard/users/${u._id}`)} className='px-2 text-sm rounded-md bg-blue-100 text-blue-500 hover:bg-blue-200 transition ' >User Profile</button>
-                                            <button className='px-2 text-sm rounded-md bg-red-100 text-red-500 hover:bg-red-200 transition ' onClick={() => handleDeleteUser(u._id)}>Delete User</button>
+                                            {u._id && (
+                                                <button onClick={() => navigate(`/admin/dashboard/users/${u._id}`)} className='px-2 text-sm rounded-md bg-blue-100 text-blue-500 hover:bg-blue-200 transition ' >View Profile</button>
+                                            )}
                                         </div>
                                     </td>
                                 </tr>
