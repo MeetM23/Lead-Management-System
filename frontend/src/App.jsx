@@ -11,11 +11,16 @@ import Leads from './pages/Leads';
 import AddLead from './pages/AddLead';
 import Users from './pages/Users';
 import UserProfile from './pages/UserProfile';
+import AdminUserProfile from './pages/AdminUserProfile';
 import Profile from './pages/Profile';
 
 // Protected Route Component
 const ProtectedRoute = ({ children, allowedRoles }) => {
-  const { user } = useAuth();
+  const { user, loading } = useAuth();
+
+  if (loading) {
+    return <div className="min-h-screen flex items-center justify-center bg-gray-50 text-gray-500">Loading...</div>;
+  }
 
   if (!user) {
     return <Navigate to="/" replace />;
@@ -51,7 +56,7 @@ function App() {
               <Route path="leads" element={<Leads />} />
               <Route path="add-lead" element={<AddLead />} />
               <Route path="users" element={<Users />} />
-              <Route path="users/:userId" element={<UserProfile />} />
+              <Route path="users/:userId" element={<AdminUserProfile />} />
               <Route path="profile" element={<Profile />} />
             </Route>
 

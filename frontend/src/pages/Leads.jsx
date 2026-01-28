@@ -223,6 +223,16 @@ const Leads = () => {
               </div>
 
               <div>
+                <label className="text-xs font-semibold text-gray-500 uppercase">Priority</label>
+                <span className={`inline-block mt-1 px-3 py-1 rounded-full text-xs font-bold 
+                  ${(selectedLead.priority || 'Medium') === 'High' ? 'bg-red-100 text-red-700' :
+                    (selectedLead.priority || 'Medium') === 'Medium' ? 'bg-yellow-100 text-yellow-700' :
+                      'bg-gray-100 text-gray-700'}`}>
+                  {selectedLead.priority || 'Medium'}
+                </span>
+              </div>
+
+              <div>
                 <label className="text-xs font-semibold text-gray-500 uppercase">Assigned To</label>
                 <p className="text-gray-700">{selectedLead.assignedTo?.name || 'Unassigned'}</p>
               </div>

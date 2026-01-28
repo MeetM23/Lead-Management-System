@@ -121,7 +121,7 @@ const Dashboard = () => {
           <div className="flex items-center justify-between mb-6">
             <h2 className="text-xl font-heading font-bold text-dark">Recent Leads</h2>
             <Link
-              to="/dashboard/leads"
+              to={user?.role === 'admin' ? '/admin/dashboard/leads' : '/sales/dashboard/leads'}
               className="text-primary hover:text-violet-700 text-sm font-medium"
             >
               View All

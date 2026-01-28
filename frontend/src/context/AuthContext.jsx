@@ -9,16 +9,34 @@ export const AuthProvider = ({ children }) => {
 
   // 🔹 Restore login on page refresh (JWT-based)
   useEffect(() => {
-    const storedUser = localStorage.getItem('user');
-    const token = localStorage.getItem('token');
+    const checkLoggedIn = async () => {
+      const token = localStorage.getItem('token');
+      if (token) {
+        try {
+          const res = await fetch('/api/users/me', {
+            headers: {
+              'Authorization': `Bearer ${token}`
+            }
+          });
 
-    if (storedUser && token) {
-      setUser(JSON.parse(storedUser));
-    } else {
-      setUser(null);
-    }
+          if (res.ok) {
+            const data = await res.json();
+            setUser(data.data);
+          } else {
+            // Token invalid or expired
+            localStorage.removeItem('token');
+            localStorage.removeItem('user');
+            setUser(null);
+          }
+        } catch (err) {
+          console.error('Failed to fetch user', err);
+          setUser(null);
+        }
+      }
+      setLoading(false);
+    };
 
-    setLoading(false);
+    checkLoggedIn();
   }, []);
 
   // 🔹 Login
@@ -26,7 +44,7 @@ export const AuthProvider = ({ children }) => {
     try {
       setError('');
 
-      const res = await fetch('http://localhost:5000/api/auth/login', {
+      const res = await fetch('/api/auth/login', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -40,9 +58,8 @@ export const AuthProvider = ({ children }) => {
         throw new Error(data.message || 'Login failed');
       }
 
-      // Store JWT + user
+      // Store JWT
       localStorage.setItem('token', data.token);
-      localStorage.setItem('user', JSON.stringify(data.user));
 
       setUser(data.user);
       return { success: true, user: data.user };
@@ -57,7 +74,7 @@ export const AuthProvider = ({ children }) => {
     try {
       setError('');
 
-      const res = await fetch('http://localhost:5000/api/auth/register', {
+      const res = await fetch('/api/auth/register', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -85,6 +102,10 @@ export const AuthProvider = ({ children }) => {
     setUser(null);
   };
 
+  const updateUser = (updatedUser) => {
+    setUser(prev => ({ ...prev, ...updatedUser }));
+  };
+
   return (
     <AuthContext.Provider
       value={{
@@ -92,6 +113,7 @@ export const AuthProvider = ({ children }) => {
         login,
         register,
         logout,
+        updateUser,
         error,
         loading,
       }}

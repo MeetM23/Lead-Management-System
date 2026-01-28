@@ -16,6 +16,7 @@ const AddLead = () => {
     email: '',
     phone: '',
     source: 'Website',
+    priority: 'High',
     assignedTo: '', // Admin must assign to sales user
   });
 
@@ -48,8 +49,9 @@ const AddLead = () => {
     // For sales, don't send assignedTo (backend will auto-assign to themselves)
     const leadData = user?.role === 'admin'
       ? formData
-      : { name: formData.name, email: formData.email, phone: formData.phone, source: formData.source };
+      : { name: formData.name, email: formData.email, phone: formData.phone, source: formData.source, priority: formData.priority };
 
+    console.log("Lead payload:", leadData);
     const result = await addLead(leadData);
 
     if (result?.success) {
@@ -134,6 +136,20 @@ const AddLead = () => {
               <option value="LinkedIn">LinkedIn</option>
               <option value="Cold Call">Cold Call</option>
               <option value="Advertisement">Advertisement</option>
+            </select>
+          </div>
+
+          <div className="space-y-2">
+            <label className="text-sm font-semibold text-gray-700">Priority</label>
+            <select
+              name="priority"
+              value={formData.priority}
+              onChange={handleChange}
+              className="w-full px-4 py-3 rounded-lg border border-gray-200 focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all bg-white"
+            >
+              <option value="High">High</option>
+              <option value="Medium">Medium</option>
+              <option value="Low">Low</option>
             </select>
           </div>
 

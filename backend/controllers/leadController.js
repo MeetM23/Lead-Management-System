@@ -75,7 +75,8 @@ const getLeadById = async (req, res) => {
 ========================= */
 const createLead = async (req, res) => {
   try {
-    const { name, email, phone, source, assignedTo } = req.body;
+    const { name, email, phone, source, priority, assignedTo } = req.body;
+    console.log("REQ BODY PRIORITY:", req.body.priority);
 
     if (!name) {
       return res.status(400).json({
@@ -130,9 +131,11 @@ const createLead = async (req, res) => {
       email,
       phone,
       source,
+      priority: priority || "Medium",
       createdBy: req.user._id,
       assignedTo: finalAssignedTo,
     });
+    console.log("createLead priority", { bodyPriority: priority, savedPriority: lead.priority });
 
     const populatedLead = await Lead.findById(lead._id)
       .populate('assignedTo', 'name email')
@@ -177,11 +180,12 @@ const updateLead = async (req, res) => {
       }
     } else if (req.user.role === 'admin') {
       // Admin can update everything except _id
-      const { name, email, phone, source, status } = req.body;
+      const { name, email, phone, source, priority, status } = req.body;
       if (name) lead.name = name;
       if (email) lead.email = email;
       if (phone) lead.phone = phone;
       if (source) lead.source = source;
+      if (priority) lead.priority = priority;
       if (status) lead.status = status;
       // Admin cannot update assignedTo via this endpoint (use assignLead endpoint)
       if (req.body.assignedTo) {

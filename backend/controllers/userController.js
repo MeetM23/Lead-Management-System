@@ -1,5 +1,6 @@
 import User from "../models/User.js";
 import Lead from "../models/Lead.js";
+import bcrypt from "bcryptjs";
 
 /* =========================
    GET ALL USERS (ADMIN ONLY)
@@ -50,7 +51,9 @@ const getMyProfile = async (req, res) => {
                 employeeId: user.employeeId || '',
                 role: user.role,
                 profilePic: user.profilePic || '',
+                profileImage: user.profilePic || '',
                 leadsCreatedCount,
+                totalLeads: leadsCreatedCount,
             },
         });
     } catch (error) {
@@ -63,7 +66,7 @@ const getMyProfile = async (req, res) => {
 ========================= */
 const updateMyProfile = async (req, res) => {
     try {
-        const { name, phone, profilePic } = req.body;
+        const { name, phone, profilePic, email, password } = req.body;
 
         const user = await User.findById(req.user._id);
 
@@ -71,7 +74,7 @@ const updateMyProfile = async (req, res) => {
             return res.status(404).json({ success: false, message: "User not found" });
         }
 
-        // Only allow updating name, phone, profilePic
+        // Only allow updating name, phone, profilePic, email, password
         if (name !== undefined) {
             if (typeof name !== 'string' || name.trim().length === 0) {
                 return res.status(400).json({ success: false, message: "Name cannot be empty" });
@@ -96,6 +99,24 @@ const updateMyProfile = async (req, res) => {
             user.profilePic = profilePic || '';
         }
 
+        // Update Email
+        if (email !== undefined) {
+            const emailTrimmed = email.trim().toLowerCase();
+            if (emailTrimmed !== user.email) {
+                const emailExists = await User.findOne({ email: emailTrimmed });
+                if (emailExists) {
+                    return res.status(400).json({ success: false, message: "Email already in use" });
+                }
+                user.email = emailTrimmed;
+            }
+        }
+
+        // Update Password
+        if (password !== undefined && password.length > 0) {
+            const salt = await bcrypt.genSalt(10);
+            user.password = await bcrypt.hash(password, salt);
+        }
+
         await user.save();
 
         // Return updated profile with lead count
@@ -110,7 +131,9 @@ const updateMyProfile = async (req, res) => {
                 employeeId: user.employeeId || '',
                 role: user.role,
                 profilePic: user.profilePic || '',
+                profileImage: user.profilePic || '',
                 leadsCreatedCount,
+                totalLeads: leadsCreatedCount,
             },
         });
     } catch (error) {
@@ -157,6 +180,41 @@ const getSalesUsers = async (req, res) => {
     }
 };
 
+/* =========================
+   UPLOAD AVATAR
+========================= */
+const uploadAvatar = async (req, res) => {
+    try {
+        if (!req.file) {
+            return res.status(400).json({ success: false, message: "Please upload a file" });
+        }
+
+        const user = await User.findById(req.user._id);
+
+        if (!user) {
+            return res.status(404).json({ success: false, message: "User not found" });
+        }
+
+        // Save relative path to DB (e.g., /uploads/filename.jpg)
+        // Normalize path separators to forward slashes
+        const profilePicPath = `/uploads/${req.file.filename}`;
+
+        user.profilePic = profilePicPath;
+        await user.save();
+
+        res.json({
+            success: true,
+            message: "Avatar uploaded successfully",
+            data: {
+                profilePic: user.profilePic,
+                profileImage: user.profilePic
+            }
+        });
+    } catch (error) {
+        res.status(500).json({ success: false, message: error.message });
+    }
+};
+
 const getUserById = async (req, res) => {
     try {
         // Only admin can access this route
@@ -182,12 +240,15 @@ const getUserById = async (req, res) => {
         res.json({
             success: true,
             data: {
+                _id: user._id,
                 name: user.name,
                 email: user.email,
                 phone: user.phone || '',
                 employeeId: user.employeeId || '',
                 profilePic: user.profilePic || '',
                 role: user.role,
+                isActive: user.isActive,
+                createdAt: user.createdAt,
                 leadsCreatedCount,
                 leadsAssignedCount,
             },
@@ -197,4 +258,42 @@ const getUserById = async (req, res) => {
     }
 };
 
-export { getUsers, getUserById, getMyProfile, updateMyProfile, getSalesUsers };
+/* =========================
+   TERMINATE/DELETE USER (Admin Only)
+========================= */
+const terminateUser = async (req, res) => {
+    try {
+        if (req.user.role !== 'admin') {
+            return res.status(403).json({ success: false, message: "Forbidden: Only admin can delete users" });
+        }
+
+        const user = await User.findById(req.params.id);
+
+        if (!user) {
+            return res.status(404).json({ success: false, message: "User not found" });
+        }
+
+        if (user.role === 'admin') {
+            return res.status(403).json({ success: false, message: "Cannot delete an admin" });
+        }
+
+        // 1. Reassign leads assigned to this user to the Admin (req.user)
+        const leadsUpdateResult = await Lead.updateMany(
+            { assignedTo: user._id },
+            { assignedTo: req.user._id }
+        );
+
+        // 2. Delete the user
+        await User.findByIdAndDelete(req.params.id);
+
+        res.json({
+            success: true,
+            message: `User ${user.name} has been deleted. ${leadsUpdateResult.modifiedCount} leads were reassigned to you.`,
+            data: { isActive: false, deleted: true }
+        });
+    } catch (error) {
+        res.status(500).json({ success: false, message: error.message });
+    }
+};
+
+export { getUsers, getUserById, getMyProfile, updateMyProfile, getSalesUsers, uploadAvatar, terminateUser };

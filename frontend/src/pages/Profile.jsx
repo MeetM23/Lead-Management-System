@@ -154,6 +154,7 @@ const Profile = () => {
                 if (user) {
                     const updatedUser = { ...user, name: result.data.name, profilePic: result.data.profilePic };
                     localStorage.setItem('user', JSON.stringify(updatedUser));
+                    updateUser({ name: result.data.name, profilePic: result.data.profilePic });
                 }
                 alert('Profile updated successfully!');
             } else {
@@ -281,8 +282,30 @@ const Profile = () => {
 
                         <div className="bg-white rounded-xl p-6 border-2 border-gray-100 shadow-sm">
                             <label className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-2 block">Email</label>
-                            <p className="mt-2 text-xl font-semibold text-dark">{profile.email}</p>
-                            <p className="text-xs text-gray-400 mt-1">Email cannot be changed</p>
+                            {editing ? (
+                                <input
+                                    type="email"
+                                    name="email"
+                                    value={formData.email || profile.email}
+                                    onChange={handleChange}
+                                    className="w-full mt-2 px-4 py-3 rounded-lg border-2 border-gray-200 focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all font-semibold text-lg"
+                                />
+                            ) : (
+                                <p className="mt-2 text-xl font-semibold text-dark">{profile.email}</p>
+                            )}
+                            {/* Password Update Section */}
+                            {editing && (
+                                <div className="mt-4 pt-4 border-t border-gray-100">
+                                    <label className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-2 block">New Password (optional)</label>
+                                    <input
+                                        type="password"
+                                        name="password"
+                                        placeholder="Leave blank to keep current"
+                                        onChange={handleChange}
+                                        className="w-full mt-2 px-4 py-3 rounded-lg border-2 border-gray-200 focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all font-semibold text-lg"
+                                    />
+                                </div>
+                            )}
                         </div>
 
                         <div className="bg-white rounded-xl p-6 border-2 border-gray-100 shadow-sm hover:shadow-md transition-shadow">
