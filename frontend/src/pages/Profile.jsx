@@ -1,9 +1,11 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useAuth } from '../context/AuthContext';
-import { Save, Camera, User as UserIcon } from 'lucide-react';
+import { Save, Camera, User as UserIcon, Pencil } from 'lucide-react';
+import { LogOut, User, Menu } from 'lucide-react';
 
 const Profile = () => {
-    const { user } = useAuth();
+    // const { user } = useAuth();
+    const { user, logout } = useAuth();
     const [profile, setProfile] = useState(null);
     const [loading, setLoading] = useState(true);
     const [editing, setEditing] = useState(false);
@@ -15,6 +17,26 @@ const Profile = () => {
     const [saving, setSaving] = useState(false);
     const [previewImage, setPreviewImage] = useState(null);
     const fileInputRef = useRef(null);
+    const buttonClass =
+        "flex items-center justify-center gap-2 \
+   px-8 py-3 \
+   bg-gradient-to-r from-primary to-violet-600 \
+   text-white font-medium \
+   rounded-xl \
+   transition-all duration-200 \
+   shadow-md shadow-primary/30 \
+   hover:shadow-lg hover:scale-[1.03]";
+
+    const LogOutbuttonClass =
+        "flex items-center justify-center gap-2 \
+   px-8 py-3\
+   bg-gradient-to-r from-red-500 to-red-600 \
+   text-white font-medium \
+   rounded-xl \
+   transition-all duration-200 \
+   shadow-md shadow-primary/30 \
+   hover:shadow-lg hover:scale-[1.03] hover:from-red-600 hover:to-red-700 ";
+
 
     useEffect(() => {
         fetchProfile();
@@ -377,11 +399,22 @@ const Profile = () => {
                     ) : (
                         <button
                             onClick={() => setEditing(true)}
-                            className="px-8 py-3 bg-gradient-to-r from-primary to-violet-600 text-white font-bold rounded-xl hover:from-violet-600 hover:to-primary transition-all shadow-lg shadow-primary/30 hover:shadow-xl transform hover:scale-105"
+                            className={buttonClass}
                         >
-                            Edit Profile
+                            <Pencil size={16} />
+                            <span className='hidden sm:inline'>
+                                Edit Profile
+                            </span>
                         </button>
+
                     )}
+                    <button
+                        onClick={logout}
+                        className={LogOutbuttonClass}
+                    >
+                        <LogOut size={16} />
+                        <span className="hidden sm:inline">Logout</span>
+                    </button>
                 </div>
             </div>
         </div>

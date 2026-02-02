@@ -173,11 +173,20 @@ const AddLead = () => {
             </div>
           )}
 
-          <div className="pt-4 flex items-center gap-4">
+          <div className="pt-4 flex items-center gap-4 ">
 
             <button
               type="submit"
-              className="flex items-center justify-center gap-2 bg-primary text-white font-bold py-3 px-8 rounded-lg hover:bg-violet-700 transition-colors shadow-lg shadow-primary/20">
+              className="flex items-center justify-center gap-2
+             w-full
+             h-12
+             px-4
+             bg-primary text-white font-medium
+             rounded-xl
+             shadow-md shadow-primary/30
+             hover:bg-violet-700
+             hover:shadow-lg hover:scale-[1.02]
+             transition-all duration-200">
               <Save size={18} />
               <span>Save Lead</span>
             </button>

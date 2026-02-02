@@ -5,6 +5,7 @@ import { Link } from 'react-router-dom';
 import { Users, UserPlus, TrendingUp, AlertCircle, CheckCircle } from 'lucide-react';
 import gsap from 'gsap';
 
+
 const StatCard = ({ title, value, icon: Icon, color, delay }) => {
   const cardRef = useRef(null);
 

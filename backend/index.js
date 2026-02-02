@@ -7,7 +7,7 @@ import connectDB from "./config/db.js";
 
 import authRoutes from "./routes/authRoutes.js";
 import leadRoutes from "./routes/leadRoutes.js";
-import userRoutes from "./routes/userRoutes.js"; // ✅ added
+import userRoutes from "./routes/userRoutes.js";
 
 dotenv.config();
 
@@ -24,13 +24,13 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
 app.use("/api/auth", authRoutes);
 app.use("/api/leads", leadRoutes);
-app.use("/api/users", userRoutes); // ✅ added
+app.use("/api/users", userRoutes);
 
 // Make uploads folder static
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 app.get("/", (req, res) => {
-  res.send("API is running 🚀");
+  res.send("API is running");
 });
 
 const PORT = process.env.PORT || 5000;

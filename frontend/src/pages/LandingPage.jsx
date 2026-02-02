@@ -1,9 +1,9 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
-import { NavLink } from "react-router-dom";
+import  { NavLink } from "react-router-dom";
 import {
   BarChart3,
   Users,
@@ -14,7 +14,9 @@ import {
   LogIn,
   Layers,
   Zap,
-  Briefcase
+  Briefcase,
+  Menu,
+  X
 } from 'lucide-react';
 // import Navbar from '../layout/Navbar';
 import { assets } from '../assets/assets';
@@ -24,6 +26,9 @@ gsap.registerPlugin(ScrollTrigger);
 
 const LandingPage = () => {
   const navigate = useNavigate();
+  const { user } = useAuth();
+  const [mobileOpen, setMobileOpen] = useState(false);
+  const dashboardPath = user?.role === 'admin' ? '/admin/dashboard' : '/sales/dashboard';
 
   // Refs for animations
   const heroRef = useRef(null);
@@ -32,7 +37,6 @@ const LandingPage = () => {
   const howItWorksRef = useRef(null);
   const whoItsForRef = useRef(null);
   const ctaRef = useRef(null);
-  const { user } = useAuth();
 
   <button
     onClick={() => {
@@ -99,45 +103,90 @@ const LandingPage = () => {
 
   return (
     <div className="min-h-screen bg-gray-50 text-gray-900 font-sans selection:bg-blue-100 selection:text-blue-900 overflow-x-hidden">
-      {/* Navbar */}
-      
-      <div className='fixed top-0 right-0 left-0 md:left-0 h-20 bg-black backdrop-blur-md border-b border-blue-500 px-0 md:px-8 flex-item-center justify-between z-40 transition-all duration-300 overflow-hidden'>
-        <div className='flex items-center h-[77px]
-         justify-between' >
-          <h1 className='text-4xl mt-2 font-bold tracking-tighter text-secondary'>Lead<span className="text-primary">Flow</span></h1>
-          <ul className="hidden sm:flex gap-20 text-l font-bold ">
-            <NavLink
-              to="/"
-              className="flex flex-col items-center gap-1 text-white transition-all duration-300 hover:scale-105 p-2">
-              <p>Home</p>
-              <hr className="w-full border-none h-[1.5px] bg-gray-700 hidden" />
-            </NavLink>
-            <NavLink
-              to="/"
-              className="flex flex-col items-center gap-1 text-white transition-all duration-300 hover:scale-105 p-2">
-              <p>Collection</p>
-              <hr className="w-full border-none h-[1.5px] bg-gray-700 hidden" />
-            </NavLink>
-            <NavLink
-              className="flex flex-col items-center gap-1 text-white transition-all duration-300 hover:scale-105 p-2">
-              <p>About</p>
-              <hr className="w-full border-none h-[1.5px] bg-gray-700 hidden" />
-            </NavLink>
-
-            <NavLink
-              className="flex flex-col items-center gap-1 text-white transition-all duration-300 hover:scale-105 p-2">
-              <p>Contact</p>
-              <hr className="w-full border-none h-[1.5px] bg-gray-700 hidden" />
-            </NavLink>
-
-          </ul>
-
+      <header className="fixed top-0 right-0 left-0 h-16 bg-white/80 backdrop-blur-md border-b border-gray-200 px-4 md:px-8 flex items-center justify-between z-40">
+        <button
+          onClick={() => { setMobileOpen((v) => !v); }}
+          className="md:hidden p-2 rounded-lg text-dark transition-colors"
+          aria-label="Toggle menu"
+        >
+          {mobileOpen ? <X size={24} /> : <Menu size={24} />}
+        </button>
+        <button
+          onClick={() => { navigate('/'); setMobileOpen(false); }}
+          className="font-bold text-2xl font-heading text-dark"
+        >
+          Lead<span className="text-primary">Flow</span>
+        </button>
+        <nav className="hidden md:flex items-center gap-8">
+          <a href="#home" className="text-sm font-semibold text-gray-700 hover:text-primary transition-colors">Home</a>
+          <a href="#how-it-works" className="text-sm font-semibold text-gray-700 hover:text-primary transition-colors">How It Works</a>
+          <a href="#who" className="text-sm font-semibold text-gray-700 hover:text-primary transition-colors">Who It's For</a>
+          <a href="#contact" className="text-sm font-semibold text-gray-700 hover:text-primary transition-colors">Contact</a>
+        </nav>
+        <div className="hidden md:flex items-center gap-3">
+          {!user ? (
+            <>
+              <button
+                onClick={() => navigate('/login')}
+                className="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-semibold shadow-sm hover:opacity-90 transition"
+              >
+                Login
+              </button>
+              <button
+                onClick={() => navigate('/register')}
+                className="px-4 py-2 border border-blue-600 text-blue-600 rounded-lg text-sm font-semibold hover:bg-blue-50 transition"
+              >
+                Register
+              </button>
+            </>
+          ) : (
+            <button
+              onClick={() => navigate(dashboardPath)}
+              className="px-4 py-2 bg-primary text-white rounded-lg text-sm font-semibold shadow-sm hover:opacity-90 transition"
+            >
+              View Dashboard
+            </button>
+          )}
         </div>
-
-      </div>
+      </header>
+      {mobileOpen && (
+        <div className="fixed top-16 left-0 right-0 bg-white border-b border-gray-200 z-40 md:hidden">
+          <div className="px-4 py-3 flex flex-col gap-2">
+            <a href="#home" onClick={() => setMobileOpen(false)} className="py-2 text-sm font-semibold text-gray-800">Home</a>
+            <a href="#how-it-works" onClick={() => setMobileOpen(false)} className="py-2 text-sm font-semibold text-gray-800">How It Works</a>
+            <a href="#who" onClick={() => setMobileOpen(false)} className="py-2 text-sm font-semibold text-gray-800">Who It's For</a>
+            <a href="#contact" onClick={() => setMobileOpen(false)} className="py-2 text-sm font-semibold text-gray-800">Contact</a>
+            <div className="pt-2 flex gap-2">
+              {!user ? (
+                <>
+                  <button
+                    onClick={() => { setMobileOpen(false); navigate('/login'); }}
+                    className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-semibold"
+                  >
+                    Login
+                  </button>
+                  <button
+                    onClick={() => { setMobileOpen(false); navigate('/register'); }}
+                    className="flex-1 px-4 py-2 border border-blue-600 text-blue-600 rounded-lg text-sm font-semibold"
+                  >
+                    Register
+                  </button>
+                </>
+              ) : (
+                <button
+                  onClick={() => { setMobileOpen(false); navigate(dashboardPath); }}
+                  className="w-full px-4 py-2 bg-primary text-white rounded-lg text-sm font-semibold"
+                >
+                  View Dashboard
+                </button>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* 1. HERO SECTION */}
-      <section ref={heroRef} className="relative pt-32 pb-20 px-6 md:px-12 max-w-7xl mx-auto flex flex-col items-center text-center">
+      <section id="home" ref={heroRef} className="relative pt-32 pb-20 px-6 md:px-12 max-w-7xl mx-auto flex flex-col items-center text-center scroll-mt-16">
         {/* Decorative Background Blur */}
         <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[500px] bg-blue-100/50 blur-[100px] rounded-full -z-10 pointer-events-none" />
 
@@ -166,13 +215,15 @@ const LandingPage = () => {
             <LayoutDashboard className="w-5 h-5 group-hover:rotate-12 transition-transform" />
             View Dashboard
           </button> */}
-          <button
-            onClick={() => navigate('/login')}
-            className="group px-8 py-4 bg-blue-600 text-white border border-gray-200 rounded-xl font-semibold text-lg shadow-sm transition-all duration-300 hover:scale-105 hover:text-black hover:bg-gray-50 hover:border-blue-900 flex items-center justify-center gap-2"
-          >
-            <LogIn className="w-5 h-5" />
-            Login
-          </button>
+          {!user && (
+            <button
+              onClick={() => navigate('/login')}
+              className="group px-8 py-4 bg-blue-600 text-white border border-gray-200 rounded-xl font-semibold text-lg shadow-sm transition-all duration-300 hover:scale-105 hover:text-black hover:bg-gray-50 hover:border-blue-900 flex items-center justify-center gap-2"
+            >
+              <LogIn className="w-5 h-5" />
+              Login
+            </button>
+          )}
         </div>
       </section>
 
@@ -238,7 +289,7 @@ const LandingPage = () => {
       </section> */}
 
       {/* 4. HOW IT WORKS */}
-      <section ref={howItWorksRef} className="py-24 px-6 md:px-12 bg-gray-900 text-white">
+      <section id="how-it-works" ref={howItWorksRef} className="py-24 px-6 md:px-12 bg-gray-900 text-white scroll-mt-16">
         <div className="max-w-7xl mx-auto">
           <div className="text-center mb-20">
             <h2 className="text-3xl md:text-5xl font-bold mb-4">How It Works</h2>
@@ -268,7 +319,7 @@ const LandingPage = () => {
       </section>
 
       {/* 5. WHO IT'S FOR */}
-      <section ref={whoItsForRef} className="py-24 px-6 md:px-12 max-w-4xl mx-auto text-center">
+      <section id="who" ref={whoItsForRef} className="py-24 px-6 md:px-12 max-w-4xl mx-auto text-center scroll-mt-16">
         <h2 className="text-3xl md:text-5xl font-bold mb-12">Who Is This For?</h2>
 
         <div className="flex flex-wrap justify-center gap-4">
@@ -288,7 +339,7 @@ const LandingPage = () => {
       </section>
 
       {/* 6. CALL TO ACTION */}
-      <section ref={ctaRef} className="py-20 px-6 md:px-12">
+      <section id="cta" ref={ctaRef} className="py-20 px-6 md:px-12 scroll-mt-16">
         <div className="cta-content max-w-5xl mx-auto bg-blue-600 rounded-[2.5rem] p-12 md:p-24 text-center text-white relative overflow-hidden shadow-2xl">
           {/* Abstract circles */}
           <div className="absolute top-0 right-0 w-64 h-64 bg-white opacity-10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2" />
@@ -301,7 +352,7 @@ const LandingPage = () => {
 
           <div className="flex flex-col sm:flex-row justify-center gap-4">
             <button
-              onClick={() => navigate('/dashboard')}
+              onClick={() => (user ? navigate(dashboardPath) : navigate('/login'))}
               className="px-8 py-4 bg-white text-blue-600 rounded-xl font-bold text-lg shadow-lg transition-transform hover:scale-105"
             >
               View Dashboard
@@ -317,7 +368,7 @@ const LandingPage = () => {
       </section>
 
       {/* 7. FOOTER */}
-      <footer className="py-12 px-6 border-t border-gray-100 bg-white text-center">
+      <footer id="contact" className="py-12 px-6 border-t border-gray-100 bg-white text-center scroll-mt-16">
         <div className="flex items-center justify-center gap-2 mb-4 text-blue-600 font-bold text-xl">
           <Briefcase className="w-6 h-6" />
           <span>LMS Pro</span>
