@@ -1,10 +1,12 @@
 import React, { useEffect, useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
+import { Search } from 'lucide-react';
 
 const Users = () => {
     const [users, setUsers] = useState([]);
     const [loading, setLoading] = useState(true);
+    const [searchQuery, setSearchQuery] = useState('');
     const { user } = useAuth();
 
     useEffect(() => {
@@ -43,11 +45,35 @@ const Users = () => {
         return <div className="flex justify-center items-center h-64">Loading...</div>;
     }
 
+    const filteredUsers = users.filter((u) => {
+        const q = searchQuery.trim().toLowerCase();
+        if (!q) return true;
+        return [
+            u.name,
+            u.email,
+            u.leadsCreatedCount,
+            u.leadsAssignedCount,
+        ].some((v) => v !== undefined && String(v).toLowerCase().includes(q));
+    });
+
     return (
         <div className="space-y-6">
             <div>
                 <h1 className="text-3xl font-heading font-bold text-dark">Users</h1>
                 <p className="text-gray-500 mt-1">Manage system users</p>
+            </div>
+
+            <div className="flex flex-col md:flex-row items-center justify-between gap-4">
+                <div className="w-full md:w-80 relative">
+                    <Search className="absolute left-3 top-3 text-gray-400" size={18} />
+                    <input
+                        type="text"
+                        placeholder="Search users..."
+                        className="w-full pl-10 pr-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
+                    />
+                </div>
             </div>
 
             <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
@@ -64,7 +90,7 @@ const Users = () => {
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-gray-100">
-                            {users.map((u) => (
+                            {filteredUsers.map((u) => (
                                 <tr key={u._id || u.email} className="hover:bg-gray-50">
                                     <td className="px-6 py-4">
                                         <div className="w-10 h-10 rounded-full overflow-hidden bg-gray-200 flex items-center justify-center">

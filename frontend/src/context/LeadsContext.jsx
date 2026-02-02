@@ -101,7 +101,7 @@ export const LeadsProvider = ({ children }) => {
         return { success: true, data: result.data };
       }
       return { success: false, message: result.message };
-    } catch (error) {
+    } catch {
       return { success: false, message: 'Network error' };
     }
   };
@@ -120,7 +120,7 @@ export const LeadsProvider = ({ children }) => {
         return { success: true, data: result.data };
       }
       return { success: false, message: result.message };
-    } catch (error) {
+    } catch {
       return { success: false, message: 'Network error' };
     }
   };
@@ -143,7 +143,7 @@ export const LeadsProvider = ({ children }) => {
         return { success: true, data: result.data };
       }
       return { success: false, message: result.message };
-    } catch (error) {
+    } catch {
       return { success: false, message: 'Network error' };
     }
   };
@@ -161,7 +161,7 @@ export const LeadsProvider = ({ children }) => {
       }
       const result = await response.json();
       return { success: false, message: result.message };
-    } catch (error) {
+    } catch {
       return { success: false, message: 'Network error' };
     }
   };

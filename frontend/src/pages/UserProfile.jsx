@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import { useParams } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 
@@ -13,9 +13,9 @@ const UserProfile = () => {
     if (user?.role === 'admin') {
       fetchUser();
     }
-  }, [user, userId]);
+  }, [user, fetchUser]);
 
-  const fetchUser = async () => {
+  const fetchUser = useCallback(async () => {
     try {
       const token = localStorage.getItem('token');
       const res = await fetch(`/api/users/${userId}`, {
@@ -40,7 +40,7 @@ const UserProfile = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [userId]);
 
   const getDefaultAvatar = () => {
     return `https://ui-avatars.com/api/?name=${encodeURIComponent(profile?.name || 'User')}&background=6366f1&color=fff&size=200`;

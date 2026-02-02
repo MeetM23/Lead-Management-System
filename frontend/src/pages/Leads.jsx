@@ -16,16 +16,25 @@ const Leads = () => {
   const [showModal, setShowModal] = useState(false);
 
   // Filter logic
-  const filteredLeads = leads
-    ? statusFilter === 'All'
-      ? leads
-      : leads.filter(
-        (lead) =>
-          lead.status &&
-          statusFilter &&
-          lead.status.toLowerCase() === statusFilter.toLowerCase()
-      )
-    : [];
+  const filteredLeads = (leads || [])
+    .filter((lead) => {
+      if (statusFilter === 'All') return true;
+      const s = (lead.status || '').toLowerCase();
+      return s === statusFilter.toLowerCase();
+    })
+    .filter((lead) => {
+      const q = searchQuery.trim().toLowerCase();
+      if (!q) return true;
+      return [
+        lead.name,
+        lead.email,
+        lead.phone,
+        lead.source,
+        lead.assignedTo?.name,
+        lead._id,
+        lead.status,
+      ].some((v) => v && String(v).toLowerCase().includes(q));
+    });
 
 
   // Handle Delete

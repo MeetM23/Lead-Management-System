@@ -11,3 +11,36 @@ body {
 html {
   scroll-behavior: smooth;
 }
+
+@layer components {
+  .container-section {
+    @apply max-w-7xl mx-auto px-6 md:px-12;
+  }
+  .section-spacing {
+    @apply py-24;
+  }
+  .heading-xl {
+    @apply text-3xl md:text-5xl font-bold mb-4;
+  }
+  .subheading {
+    @apply text-gray-500 text-lg;
+  }
+  .bento-card {
+    @apply rounded-3xl p-6 md:p-8 border border-gray-200 bg-white transition-transform hover:-translate-y-0.5 hover:shadow-md;
+  }
+  .bento-card-dark {
+    @apply rounded-3xl p-6 md:p-8 bg-gray-900 text-white transition-transform hover:-translate-y-0.5 hover:shadow-md;
+  }
+  .bento-card-blue {
+    @apply rounded-3xl p-6 md:p-8 text-white bg-gradient-to-br from-blue-600 to-indigo-600 transition-transform hover:-translate-y-0.5 hover:shadow-md;
+  }
+  .bento-card-green {
+    @apply rounded-3xl p-6 md:p-8 text-white bg-gradient-to-br from-green-500 to-emerald-600 transition-transform hover:-translate-y-0.5 hover:shadow-md;
+  }
+  .bento-card-warm {
+    @apply rounded-3xl p-6 md:p-8 text-white bg-gradient-to-br from-yellow-400 to-orange-500 transition-transform hover:-translate-y-0.5 hover:shadow-md;
+  }
+  .bento-grid {
+    @apply grid grid-cols-12 gap-6 [grid-auto-rows:160px] md:[grid-auto-rows:180px];
+  }
+}

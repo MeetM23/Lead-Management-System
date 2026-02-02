@@ -5,7 +5,7 @@ import { LogOut, User, Menu } from 'lucide-react';
 
 const Profile = () => {
     // const { user } = useAuth();
-    const { user, logout } = useAuth();
+    const { user, logout, updateUser } = useAuth();
     const [profile, setProfile] = useState(null);
     const [loading, setLoading] = useState(true);
     const [editing, setEditing] = useState(false);
@@ -260,6 +260,18 @@ const Profile = () => {
                                     title="Change Profile Picture"
                                 >
                                     <Camera size={20} />
+                                </button>
+                            )}
+                            {editing && (previewImage || profile.profilePic) && (
+                                <button
+                                    onClick={() => {
+                                        setPreviewImage(null);
+                                        setFormData(prev => ({ ...prev, profilePic: '' }));
+                                    }}
+                                    className="absolute bottom-2 left-2 bg-white text-red-600 px-3 py-2 rounded-full shadow-lg hover:bg-red-500 hover:text-white transition-all text-xs font-semibold"
+                                    title="Remove Profile Picture"
+                                >
+                                    Remove
                                 </button>
                             )}
                             <input

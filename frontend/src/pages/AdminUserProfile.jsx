@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { ArrowLeft, Trash2, Calendar, Mail, Phone, Hash, Shield, User } from 'lucide-react';
@@ -16,9 +16,9 @@ const AdminUserProfile = () => {
     if (user?.role === 'admin') {
       fetchUser();
     }
-  }, [user, userId]);
+  }, [user, fetchUser]);
 
-  const fetchUser = async () => {
+  const fetchUser = useCallback(async () => {
     try {
       const token = localStorage.getItem('token');
       const res = await fetch(`/api/users/${userId}`, {
@@ -44,7 +44,7 @@ const AdminUserProfile = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [userId]);
 
   const handleTerminate = async () => {
     if (!window.confirm(`Are you sure you want to DELETE ${profile.name}? \n\nThis will:\n1. PERMANENTLY delete this user\n2. Reassign all their assigned leads to YOU`)) {

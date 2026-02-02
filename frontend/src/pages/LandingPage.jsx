@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
-import  { NavLink } from "react-router-dom";
+import { NavLink } from "react-router-dom";
 import {
   BarChart3,
   Users,
@@ -15,11 +15,16 @@ import {
   Layers,
   Zap,
   Briefcase,
+  Mail,
+  Phone,
+  Star,
   Menu,
   X
 } from 'lucide-react';
 // import Navbar from '../layout/Navbar';
 import { assets } from '../assets/assets';
+import BentoGrid from '../components/BentoGrid';
+import BentoCard from '../components/BentoCard';
 
 // Register GSAP ScrollTrigger
 gsap.registerPlugin(ScrollTrigger);
@@ -35,8 +40,12 @@ const LandingPage = () => {
   const problemRef = useRef(null);
   const solutionRef = useRef(null);
   const howItWorksRef = useRef(null);
-  const whoItsForRef = useRef(null);
   const ctaRef = useRef(null);
+  const handleContactSubmit = (e) => {
+    e.preventDefault();
+    alert('Message sent. We will contact you soon.');
+    e.target.reset();
+  };
 
   <button
     onClick={() => {
@@ -52,7 +61,6 @@ const LandingPage = () => {
 
 
   useEffect(() => {
-    // Hero Animation: Fade + Slide Up
     const heroCtx = gsap.context(() => {
       gsap.from(".hero-element", {
         y: 50,
@@ -63,7 +71,6 @@ const LandingPage = () => {
       });
     }, heroRef);
 
-    // Problem Section Animation: Cards Stagger
     const problemCtx = gsap.context(() => {
       gsap.from(".problem-card", {
         scrollTrigger: {
@@ -78,7 +85,6 @@ const LandingPage = () => {
       });
     }, problemRef);
 
-    // How It Works Animation: Slide In from Left/Right
     const howCtx = gsap.context(() => {
       gsap.from(".step-item", {
         scrollTrigger: {
@@ -92,11 +98,25 @@ const LandingPage = () => {
         ease: "power2.out"
       });
     }, howItWorksRef);
+    const bentoCtx = gsap.context(() => {
+      gsap.from(".bento-item", {
+        scrollTrigger: {
+          trigger: solutionRef.current,
+          start: "top 80%",
+        },
+        y: 30,
+        opacity: 0,
+        duration: 0.8,
+        stagger: 0.15,
+        ease: "power2.out"
+      });
+    }, solutionRef);
 
     return () => {
       heroCtx.revert();
       problemCtx.revert();
       howCtx.revert();
+      bentoCtx.revert();
     };
   }, []);
 
@@ -119,6 +139,7 @@ const LandingPage = () => {
         </button>
         <nav className="hidden md:flex items-center gap-8">
           <a href="#home" className="text-sm font-semibold text-gray-700 hover:text-primary transition-colors">Home</a>
+          <a href="#highlights" className="text-sm font-semibold text-gray-700 hover:text-primary transition-colors">Highlights</a>
           <a href="#how-it-works" className="text-sm font-semibold text-gray-700 hover:text-primary transition-colors">How It Works</a>
           <a href="#who" className="text-sm font-semibold text-gray-700 hover:text-primary transition-colors">Who It's For</a>
           <a href="#contact" className="text-sm font-semibold text-gray-700 hover:text-primary transition-colors">Contact</a>
@@ -153,6 +174,7 @@ const LandingPage = () => {
         <div className="fixed top-16 left-0 right-0 bg-white border-b border-gray-200 z-40 md:hidden">
           <div className="px-4 py-3 flex flex-col gap-2">
             <a href="#home" onClick={() => setMobileOpen(false)} className="py-2 text-sm font-semibold text-gray-800">Home</a>
+            <a href="#highlights" onClick={() => setMobileOpen(false)} className="py-2 text-sm font-semibold text-gray-800">Highlights</a>
             <a href="#how-it-works" onClick={() => setMobileOpen(false)} className="py-2 text-sm font-semibold text-gray-800">How It Works</a>
             <a href="#who" onClick={() => setMobileOpen(false)} className="py-2 text-sm font-semibold text-gray-800">Who It's For</a>
             <a href="#contact" onClick={() => setMobileOpen(false)} className="py-2 text-sm font-semibold text-gray-800">Contact</a>
@@ -186,48 +208,164 @@ const LandingPage = () => {
       )}
 
       {/* 1. HERO SECTION */}
-      <section id="home" ref={heroRef} className="relative pt-32 pb-20 px-6 md:px-12 max-w-7xl mx-auto flex flex-col items-center text-center scroll-mt-16">
-        {/* Decorative Background Blur */}
-        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[500px] bg-blue-100/50 blur-[100px] rounded-full -z-10 pointer-events-none" />
-
-        <div className="hero-element mb-6 inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white border border-gray-200 shadow-sm text-sm font-medium text-gray-600">
-          <span className="w-2 h-2 rounded-full bg-blue-500 animate-pulse" />
-          New Generation of LMS
-        </div>
-
-        <h1 className="hero-element text-5xl md:text-7xl font-bold tracking-tight mb-6 leading-[1.1]">
-          Manage Leads. <br className="hidden md:block" />
-          <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-indigo-600">
-            Track Growth.
-          </span>{' '}
-          Close Faster.
-        </h1>
-
-        <p className="hero-element text-lg md:text-xl text-gray-500 max-w-2xl mb-10 leading-relaxed">
-          A simple lead management system to track prospects, follow up efficiently, and convert more customers without the spreadsheet chaos.
-        </p>
-
-        <div className="hero-element flex flex-col sm:flex-row gap-4 w-full sm:w-auto">
-          {/* <button
-            onClick={() => (user ? navigate('/dashboard') : navigate('/login'))}
-            className="group px-8 py-4 bg-blue-600 text-white rounded-xl font-semibold text-lg shadow-lg shadow-blue-500/20 transition-all duration-300 hover:scale-105 hover:shadow-blue-500/40 flex items-center justify-center gap-2"
-          >
-            <LayoutDashboard className="w-5 h-5 group-hover:rotate-12 transition-transform" />
-            View Dashboard
-          </button> */}
-          {!user && (
-            <button
-              onClick={() => navigate('/login')}
-              className="group px-8 py-4 bg-blue-600 text-white border border-gray-200 rounded-xl font-semibold text-lg shadow-sm transition-all duration-300 hover:scale-105 hover:text-black hover:bg-gray-50 hover:border-blue-900 flex items-center justify-center gap-2"
-            >
-              <LogIn className="w-5 h-5" />
-              Login
-            </button>
-          )}
+      <section id="home" ref={heroRef} className="section-spacing scroll-mt-16">
+        <div className="container-section">
+          <BentoGrid>
+            <BentoCard variant="blue" span="row-span-3 md:col-span-7 md:row-span-2">
+              <div className="h-full flex flex-col justify-between">
+                <div className="text-center md:text-left">
+                  <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/10 border border-white/20 text-white text-sm font-medium">
+                    <span className="w-2 h-2 rounded-full bg-white/80" />
+                    LeadFlow
+                  </div>
+                  <h1 className="mt-6 text-5xl md:text-7xl font-bold leading-tight">
+                    Manage Leads. Track Growth. Close Faster.
+                  </h1>
+                  <p className="mt-4 text-white/90 text-lg">
+                    A modern, fast LMS for teams that want clarity and momentum.
+                  </p>
+                </div>
+                <div className="mt-4 md:mt-8" />
+              </div>
+            </BentoCard>
+            <BentoCard variant="light" span="md:col-span-5 md:row-span-2">
+              <div className="h-full flex items-center justify-center relative">
+                <img src={assets.leadflow} alt="LeadFlow" className="w-full h-full object-contain rounded-2xl" />
+              </div>
+            </BentoCard>
+            <BentoCard variant="glass" span="md:col-span-4">
+              <div className="flex flex-col h-full justify-between">
+                <h3 className="text-xl font-bold text-dark">Why Teams Love It</h3>
+                <p className="text-sm text-dark/70">Simple, focused, and fast. Everything your team needs, nothing it doesn’t.</p>
+              </div>
+            </BentoCard>
+            <BentoCard variant="dark" span="md:col-span-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm text-white/70">Active Users</p>
+                  <p className="text-3xl font-bold">2,431</p>
+                </div>
+                <div>
+                  <p className="text-sm text-white/70">Leads Tracked</p>
+                  <p className="text-3xl font-bold">48k+</p>
+                </div>
+              </div>
+            </BentoCard>
+            <BentoCard variant="warm" span="md:col-span-4">
+              <div className="flex items-center gap-3">
+                <LayoutDashboard className="w-7 h-7" />
+                <p className="text-white text-sm">Role-based dashboards for Admin and Sales</p>
+              </div>
+            </BentoCard>
+          </BentoGrid>
         </div>
       </section>
 
-      {/* 2. PROBLEM SECTION */}
+      {/* Login Buttons */}
+      <section className="py-10 px-6 md:px-12 bg-white border-y border-gray-100">
+        <div className="container-section">
+          <div className="flex flex-col sm:flex-row sm:flex-wrap gap-3 justify-center">
+            <button
+              onClick={() => (user ? navigate(dashboardPath) : navigate('/login'))}
+              className="px-6 py-3 bg-blue-600 text-white rounded-xl font-semibold shadow-sm hover:opacity-90 transition w-full sm:w-auto"
+            >
+              {user ? 'Open Dashboard' : 'Login'}
+            </button>
+            <button
+              onClick={() => navigate('/register')}
+              className="px-6 py-3 bg-white text-blue-600 rounded-xl font-semibold shadow-sm hover:scale-[1.02] transition border border-blue-200 w-full sm:w-auto"
+            >
+              Get Started
+            </button>
+          </div>
+        </div>
+      </section>
+
+      {/* 2.Features */}
+      <section id="features" ref={solutionRef} className="section-spacing scroll-mt-16">
+        <div className="container-section">
+          <div className="text-center mb-12">
+            <h2 className="heading-xl">Features</h2>
+            <p className="subheading">Modular tools that move with your workflow.</p>
+          </div>
+          <BentoGrid>
+            <BentoCard variant="blue" span="md:col-span-6 md:row-span-2">
+              <div className="flex items-center gap-3">
+                <LayoutDashboard className="w-8 h-8" />
+                <h3 className="text-2xl font-bold">Unified Dashboard</h3>
+              </div>
+              <p className="mt-4 text-white/90">Track leads, performance, and tasks in one place.</p>
+            </BentoCard>
+            <BentoCard variant="light" span="md:col-span-3">
+              <div className="flex items-center gap-3">
+                <Users className="w-7 h-7 text-blue-600" />
+                <h3 className="text-xl font-bold">Team Management</h3>
+              </div>
+              <p className="mt-3 text-gray-600">Assign leads and collaborate across teams.</p>
+            </BentoCard>
+            <BentoCard variant="dark" span="md:col-span-3">
+              <div className="flex items-center gap-3">
+                <Briefcase className="w-7 h-7 text-white" />
+                <h3 className="text-xl font-bold">Secure Access</h3>
+              </div>
+              <p className="mt-3 text-gray-300">Protected routes for admins and sales.</p>
+            </BentoCard>
+            <BentoCard variant="green" span="md:col-span-4 md:min-w-[580px] min-w-0">
+              <div className="flex items-center gap-3">
+                <CheckCircle2 className="w-7 h-7" />
+                <h3 className="text-xl font-bold">Status Tracking</h3>
+              </div>
+              <p className="mt-3 text-white/90">Move leads from New to Converted seamlessly.</p>
+            </BentoCard>
+            <BentoCard variant="light" span="md:col-span-4">
+              <div className="flex items-center gap-3">
+                <BarChart3 className="w-7 h-7 text-indigo-600" />
+                <h3 className="text-xl font-bold">Insights</h3>
+              </div>
+              <p className="mt-3 text-gray-600">Visualize funnel and performance metrics.</p>
+            </BentoCard>
+            <BentoCard variant="warm" span="md:col-span-4">
+              <div className="flex items-center gap-3">
+                <Zap className="w-7 h-7" />
+                <h3 className="text-xl font-bold">Fast Workflow</h3>
+              </div>
+              <p className="mt-3 text-white/90">Quick actions and frictionless UI.</p>
+            </BentoCard>
+            <BentoCard variant="light" span="md:col-span-3">
+              <h3 className="text-xl font-bold">Assignments</h3>
+              <p className="mt-3 text-gray-600">Pick the best owner for each lead.</p>
+            </BentoCard>
+          </BentoGrid>
+          <BentoGrid className="mt-8">
+            <BentoCard variant="blue" span="md:col-span-4">
+              <h3 className="text-xl font-bold">Lead Capture</h3>
+              <p className="mt-3 text-white/90">Quickly input leads and sources.</p>
+            </BentoCard>
+            <BentoCard variant="light" span="md:col-span-4">
+              <h3 className="text-xl font-bold">Pipeline</h3>
+              <p className="mt-3 text-gray-600">Visual stages and drag updates.</p>
+            </BentoCard>
+            <BentoCard variant="dark" span="md:col-span-4">
+              <h3 className="text-xl font-bold">Access Control</h3>
+              <p className="mt-3 text-gray-300">Simple role-based permissions.</p>
+            </BentoCard>
+            <BentoCard variant="green" span="md:col-span-6 md:row-span-2 h-[180px]">
+              <h3 className="text-2xl font-bold">Conversion Focus</h3>
+              <p className="mt-3 text-white/90">Tools geared to close deals faster.</p>
+            </BentoCard>
+            <BentoCard variant="light" span="md:col-span-3">
+              <h3 className="text-xl font-bold">Assignments</h3>
+              <p className="mt-3 text-gray-600">Pick the best owner for each lead.</p>
+            </BentoCard>
+            <BentoCard variant="warm" span="md:col-span-3">
+              <h3 className="text-xl font-bold">Speed</h3>
+              <p className="mt-3 text-white/90">Optimized for quick updates.</p>
+            </BentoCard>
+          </BentoGrid>
+        </div>
+      </section>
+
+      {/* 3. Why You Need This */}
       <section ref={problemRef} className="py-24 px-6 md:px-12 bg-white border-y border-gray-100">
         <div className="max-w-7xl mx-auto">
           <div className="text-center mb-16">
@@ -263,8 +401,8 @@ const LandingPage = () => {
         </div>
       </section>
 
-      {/* 3. SOLUTION SECTION */}
-      {/* <section ref={solutionRef} className="py-24 px-6 md:px-12 max-w-7xl mx-auto">
+      {/* 4.What This System Does */}
+      <section ref={solutionRef} className="py-24 px-6 md:px-12 max-w-7xl mx-auto">
         <div className="text-center mb-16">
           <h2 className="text-3xl md:text-5xl font-bold mb-4">What This System Does</h2>
           <p className="text-gray-500 text-lg">Simple tools for complex problems.</p>
@@ -286,96 +424,184 @@ const LandingPage = () => {
             </div>
           ))}
         </div>
-      </section> */}
+      </section>
 
-      {/* 4. HOW IT WORKS */}
-      <section id="how-it-works" ref={howItWorksRef} className="py-24 px-6 md:px-12 bg-gray-900 text-white scroll-mt-16">
-        <div className="max-w-7xl mx-auto">
-          <div className="text-center mb-20">
-            <h2 className="text-3xl md:text-5xl font-bold mb-4">How It Works</h2>
-            <p className="text-gray-400 text-lg">Four simple steps to sales success.</p>
+
+      {/* 5.Testimonials */}
+      <section id="testimonials" className="section-spacing scroll-mt-16">
+        <div className="container-section">
+          <div className="text-center mb-12">
+            <h2 className="heading-xl">Testimonials</h2>
+            <p className="subheading">What teams say.</p>
           </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-8 relative">
-            {/* Connecting Line (Desktop) */}
-            <div className="hidden md:block absolute top-12 left-0 w-full h-0.5 bg-gray-800 -z-10" />
-
-            {[
-              { step: "01", title: "Capture", desc: "Input lead details quickly." },
-              { step: "02", title: "Track", desc: "Monitor status & updates." },
-              { step: "03", title: "Follow Up", desc: "Never miss a conversation." },
-              { step: "04", title: "Convert", desc: "Close the deal & celebrate." },
-            ].map((item, idx) => (
-              <div key={idx} className="step-item relative flex flex-col items-center text-center">
-                <div className="w-24 h-24 rounded-full bg-gray-800 border-4 border-gray-900 flex items-center justify-center text-2xl font-bold mb-6 shadow-xl z-10">
-                  {item.step}
+          <BentoGrid>
+            <BentoCard variant="light" span="md:col-span-6 md:row-span-2">
+              <p className="text-lg text-gray-700">“LeadFlow changed how we work. It’s fast, focused, and clear.”</p>
+              <p className="mt-4 text-sm text-gray-500">— Growth Team</p>
+            </BentoCard>
+            <BentoCard variant="dark" span="md:col-span-3">
+              <p className="text-white">Trusted by 2,000+ teams</p>
+            </BentoCard>
+            <BentoCard variant="green" span="md:col-span-3">
+              <p className="text-white">Conversion up 18% in Q4</p>
+            </BentoCard>
+            <BentoCard variant="light" span="md:col-span-6 row-span-2 ">
+              <div className="space-y-4">
+                <div className="flex items-start gap-3">
+                  <div className="h-10 w-10 rounded-full bg-gray-200 flex items-center justify-center text-gray-600 font-semibold">AK</div>
+                  <div className="flex-1">
+                    <div className="flex items-center gap-1 text-yellow-500">
+                      <Star className="w-4 h-4" /><Star className="w-4 h-4" /><Star className="w-4 h-4" /><Star className="w-4 h-4" /><Star className="w-4 h-4" />
+                    </div>
+                    <p className="mt-1 text-sm text-gray-700">“Clear pipeline, faster updates. Our team finally has a system that gets out of the way.”</p>
+                    <p className="mt-1 text-xs text-gray-500">Aarav Kumar · Sales Lead</p>
+                  </div>
                 </div>
-                <h3 className="text-2xl font-bold mb-2">{item.title}</h3>
-                <p className="text-gray-400">{item.desc}</p>
+                <div className="flex items-start gap-3">
+                  <div className="h-10 w-10 rounded-full bg-gray-200 flex items-center justify-center text-gray-600 font-semibold">MS</div>
+                  <div className="flex-1">
+                    <div className="flex items-center gap-1 text-yellow-500">
+                      <Star className="w-4 h-4" /><Star className="w-4 h-4" /><Star className="w-4 h-4" /><Star className="w-4 h-4" /><Star className="w-4 h-4" />
+                    </div>
+                    <p className="mt-1 text-sm text-gray-700">“Setup took minutes. We moved deals through stages without training.”</p>
+                    <p className="mt-1 text-xs text-gray-500">Mira Shah · Operations</p>
+                  </div>
+                </div>
+                <div className="flex items-start gap-3">
+                  <div className="h-10 w-10 rounded-full bg-gray-200 flex items-center justify-center text-gray-600 font-semibold">RJ</div>
+                  <div className="flex-1">
+                    <div className="flex items-center gap-1 text-yellow-500">
+                      <Star className="w-4 h-4" /><Star className="w-4 h-4" /><Star className="w-4 h-4" /><Star className="w-4 h-4" /><Star className="w-4 h-4" />
+                    </div>
+                    <p className="mt-1 text-sm text-gray-700">“We track progress daily and never miss follow‑ups. It’s exactly what we needed.”</p>
+                    <p className="mt-1 text-xs text-gray-500">Rohan Joshi · Account Exec</p>
+                  </div>
+                </div>
               </div>
-            ))}
-          </div>
+            </BentoCard>
+          </BentoGrid>
         </div>
       </section>
 
-      {/* 5. WHO IT'S FOR */}
-      <section id="who" ref={whoItsForRef} className="py-24 px-6 md:px-12 max-w-4xl mx-auto text-center scroll-mt-16">
-        <h2 className="text-3xl md:text-5xl font-bold mb-12">Who Is This For?</h2>
 
-        <div className="flex flex-wrap justify-center gap-4">
-          {[
-            "Small Businesses",
-            "Sales Teams",
-            "Freelancers",
-            "Startups",
-            "Agencies",
-            "Consultants"
-          ].map((tag, idx) => (
-            <span key={idx} className="audience-tag px-6 py-3 rounded-full bg-blue-50 text-blue-800 font-semibold text-lg border border-blue-100">
-              {tag}
-            </span>
-          ))}
-        </div>
-      </section>
-
-      {/* 6. CALL TO ACTION */}
-      <section id="cta" ref={ctaRef} className="py-20 px-6 md:px-12 scroll-mt-16">
-        <div className="cta-content max-w-5xl mx-auto bg-blue-600 rounded-[2.5rem] p-12 md:p-24 text-center text-white relative overflow-hidden shadow-2xl">
-          {/* Abstract circles */}
-          <div className="absolute top-0 right-0 w-64 h-64 bg-white opacity-10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2" />
-          <div className="absolute bottom-0 left-0 w-64 h-64 bg-white opacity-10 rounded-full blur-3xl translate-y-1/2 -translate-x-1/2" />
-
-          <h2 className="text-4xl md:text-6xl font-bold mb-8 leading-tight">
-            Stop losing leads. <br />
-            Start closing smarter.
-          </h2>
-
-          <div className="flex flex-col sm:flex-row justify-center gap-4">
-            <button
-              onClick={() => (user ? navigate(dashboardPath) : navigate('/login'))}
-              className="px-8 py-4 bg-white text-blue-600 rounded-xl font-bold text-lg shadow-lg transition-transform hover:scale-105"
-            >
-              View Dashboard
-            </button>
-            <button
-              onClick={() => navigate('/register')}
-              className="px-8 py-4 bg-blue-700 text-white border border-blue-500 rounded-xl font-bold text-lg shadow-lg transition-transform hover:scale-105 hover:bg-blue-800"
-            >
-              Get Started
-            </button>
+      {/* 6.Contact Section */}
+      <section id="cta" ref={ctaRef} className="section-spacing scroll-mt-16">
+        <div className="container-section">
+          <div className="text-center mb-12">
+            <h2 className="heading-xl">Contact Us</h2>
+            {/* <p className="subheading">What teams say.</p> */}
           </div>
+          <BentoGrid>
+            <BentoCard variant="blue" span="row-span-2 md:col-span-5 md:row-span-2">
+              {/* <h2 className="text-3xl md:text-5xl font-bold">Contact Us</h2> */}
+              <p className="mt-4 text-white/90 text-sm md:text-base">
+                Have questions or need a demo? Send us a message and we’ll respond quickly.
+              </p>
+              <div className="mt-6 space-y-4 text-white/90">
+                <div className="flex items-center gap-3">
+                  <Mail className="w-5 h-5" />
+                  <span>support@leadflow.app</span>
+                </div>
+                <div className="flex items-center gap-3">
+                  <Phone className="w-5 h-5" />
+                  <span>+1 (555) 123-4567</span>
+                </div>
+                <div className="flex items-center gap-3">
+                  <Briefcase className="w-5 h-5" />
+                  <span>Mon–Fri, 9:00–18:00</span>
+                </div>
+              </div>
+            </BentoCard>
+            <BentoCard variant="light" span="row-span-3 md:col-span-7 md:row-span-2">
+              <form onSubmit={handleContactSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="md:col-span-1">
+                  <input
+                    name="name"
+                    type="text"
+                    placeholder="Your name"
+                    className="w-full px-4 py-3 rounded-xl border border-gray-200 outline-none focus:ring-2 focus:ring-blue-300 bg-white"
+                    required
+                  />
+                </div>
+                <div className="md:col-span-1">
+                  <input
+                    name="email"
+                    type="email"
+                    placeholder="Email address"
+                    className="w-full px-4 py-3 rounded-xl border border-gray-200 outline-none focus:ring-2 focus:ring-blue-300 bg-white"
+                    required
+                  />
+                </div>
+                <div className="md:col-span-2">
+                  <textarea
+                    name="message"
+                    rows="5"
+                    placeholder="How can we help?"
+                    className="w-full px-4 py-3 rounded-xl border border-gray-200 outline-none focus:ring-2 focus:ring-blue-300 bg-white resize-none"
+                    required
+                  />
+                </div>
+                <div className="md:col-span-2 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+                  <div className="flex items-center gap-2">
+                    <input id="consent" type="checkbox" className="h-4 w-4 rounded border-gray-300" />
+                    <label htmlFor="consent" className="text-sm text-gray-600">
+                      You agree to be contacted about LeadFlow. No spam, ever.
+                    </label>
+                  </div>
+                  <button
+                    type="submit"
+                    className="px-6 py-3 bg-gray-900 text-white rounded-xl font-semibold shadow-sm hover:bg-gray-800 transition"
+                  >
+                    Send Message
+                  </button>
+                </div>
+              </form>
+            </BentoCard>
+          </BentoGrid>
         </div>
       </section>
 
       {/* 7. FOOTER */}
-      <footer id="contact" className="py-12 px-6 border-t border-gray-100 bg-white text-center scroll-mt-16">
-        <div className="flex items-center justify-center gap-2 mb-4 text-blue-600 font-bold text-xl">
-          <Briefcase className="w-6 h-6" />
-          <span>LMS Pro</span>
+      {/* <footer id="contact" className="section-spacing scroll-mt-16">
+        <div className="container-section">
+          <BentoGrid>
+            <BentoCard variant="light" span="md:col-span-3">
+              <div className="flex items-center gap-2 text-blue-600 font-bold text-xl">
+                <Briefcase className="w-6 h-6" />
+                <span>LeadFlow</span>
+              </div>
+            </BentoCard>
+            <BentoCard variant="light" span="md:col-span-3">
+              <div className="grid grid-cols-2 gap-2 text-sm text-gray-700">
+                <a href="#home">Home</a>
+                <a href="#features">Features</a>
+                <a href="#product">Product</a>
+                <a href="#pricing">Pricing</a>
+                <a href="#testimonials">Testimonials</a>
+                <a href="#cta">Get Started</a>
+              </div>
+            </BentoCard>
+            <BentoCard variant="glass" span="md:col-span-3">
+              <div className="flex flex-wrap gap-2">
+                <span className="px-3 py-1 rounded-full bg-white/60 text-dark text-xs font-semibold">Fast</span>
+                <span className="px-3 py-1 rounded-full bg-white/60 text-dark text-xs font-semibold">Secure</span>
+                <span className="px-3 py-1 rounded-full bg-white/60 text-dark text-xs font-semibold">Role-based</span>
+                <span className="px-3 py-1 rounded-full bg-white/60 text-dark text-xs font-semibold">Responsive</span>
+              </div>
+            </BentoCard>
+            <BentoCard variant="dark" span="md:col-span-3">
+              <div className="flex items-center gap-3 text-white">
+                <div className="h-8 w-8 rounded-full bg-white/20" />
+                <div className="h-8 w-8 rounded-full bg-white/20" />
+                <div className="h-8 w-8 rounded-full bg-white/20" />
+              </div>
+            </BentoCard>
+            <BentoCard variant="light" span="md:col-span-12">
+              <p className="text-gray-500 text-center">© 2025 LeadFlow. All rights reserved.</p>
+            </BentoCard>
+          </BentoGrid>
         </div>
-        <p className="text-gray-500">© 2024 Lead Management System. All rights reserved.</p>
-      </footer>
-
+      </footer> */}
     </div>
   );
 };

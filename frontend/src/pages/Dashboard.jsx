@@ -6,8 +6,9 @@ import { Users, UserPlus, TrendingUp, AlertCircle, CheckCircle } from 'lucide-re
 import gsap from 'gsap';
 
 
-const StatCard = ({ title, value, icon: Icon, color, delay }) => {
+const StatCard = ({ title, value, icon, color, delay }) => {
   const cardRef = useRef(null);
+  const IconComp = icon;
 
   useEffect(() => {
     gsap.fromTo(cardRef.current,
@@ -24,7 +25,7 @@ const StatCard = ({ title, value, icon: Icon, color, delay }) => {
           <h3 className="text-4xl font-heading font-bold mt-2 text-dark">{value}</h3>
         </div>
         <div className={`p-3 rounded-xl ${color}`}>
-          <Icon size={24} className="text-white" />
+          <IconComp size={24} className="text-white" />
         </div>
       </div>
     </div>

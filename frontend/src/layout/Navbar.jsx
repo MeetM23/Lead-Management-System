@@ -1,12 +1,10 @@
 import React from 'react';
-import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { Menu } from 'lucide-react';
 import NavControls from '../components/NavControls';
 
 const Navbar = ({ onMenuClick }) => {
   const { user } = useAuth();
-  const navigate = useNavigate();
 
   return (
     <header className="fixed top-0 right-0 left-0 md:left-64 h-20 bg-white/80 backdrop-blur-md border-b border-gray-200 px-4 md:px-8 flex items-center justify-between z-40 transition-all duration-300">

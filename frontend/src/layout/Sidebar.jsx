@@ -7,35 +7,30 @@ import clsx from 'clsx';
 const Sidebar = ({ isOpen, onClose }) => {
   const location = useLocation();
   const { user } = useAuth();
-  const [profilePic, setProfilePic] = useState(null);
+  const [profilePic, setProfilePic] = useState(user?.profilePic || null);
 
   useEffect(() => {
-    // Get profile picture from user object or fetch it
-    if (user?.profilePic) {
-      setProfilePic(user.profilePic);
-    } else {
-      // Try to fetch from API
-      const fetchProfilePic = async () => {
-        try {
-          const token = localStorage.getItem('token');
-          const response = await fetch('/api/users/me', {
-            headers: {
-              'Content-Type': 'application/json',
-              Authorization: `Bearer ${token}`,
-            },
-          });
-          if (response.ok) {
-            const result = await response.json();
-            if (result.data?.profilePic) {
-              setProfilePic(result.data.profilePic);
-            }
+    if (user?.profilePic) return;
+    const fetchProfilePic = async () => {
+      try {
+        const token = localStorage.getItem('token');
+        const response = await fetch('/api/users/me', {
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${token}`,
+          },
+        });
+        if (response.ok) {
+          const result = await response.json();
+          if (result.data?.profilePic) {
+            setProfilePic(result.data.profilePic);
           }
-        } catch (error) {
-          // Silently fail
         }
-      };
-      fetchProfilePic();
-    }
+      } catch (error) {
+        console.error(error);
+      }
+    };
+    fetchProfilePic();
   }, [user]);
 
   const getDefaultAvatar = () => {
