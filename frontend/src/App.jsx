@@ -13,6 +13,7 @@ import Users from './pages/Users';
 import UserProfile from './pages/UserProfile';
 import AdminUserProfile from './pages/AdminUserProfile';
 import Profile from './pages/Profile';
+import LeadDetails from './pages/LeadDetails';
 
 // Protected Route Component
 const ProtectedRoute = ({ children, allowedRoles }) => {
@@ -54,6 +55,7 @@ function App() {
             }>
               <Route index element={<Dashboard />} />
               <Route path="leads" element={<Leads />} />
+              <Route path="leads/:id" element={<LeadDetails />} />
               <Route path="add-lead" element={<AddLead />} />
               <Route path="users" element={<Users />} />
               <Route path="users/:userId" element={<AdminUserProfile />} />
@@ -67,6 +69,7 @@ function App() {
             }>
               <Route index element={<Dashboard />} />
               <Route path="leads" element={<Leads />} />
+              <Route path="leads/:id" element={<LeadDetails />} />
               <Route path="add-lead" element={<AddLead />} />
               <Route path="profile" element={<Profile />} />
             </Route>

@@ -1,204 +1,282 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useMemo, useState } from 'react';
 import { useLeads } from '../context/LeadsContext';
 import { useAuth } from '../context/AuthContext';
-import { Link } from 'react-router-dom';
-import { Users, UserPlus, TrendingUp, AlertCircle, CheckCircle } from 'lucide-react';
-import gsap from 'gsap';
+import { Link, useNavigate } from 'react-router-dom';
+import { Users, UserPlus, TrendingUp, AlertCircle, CheckCircle, Calendar } from 'lucide-react';
+import StatCard from '../components/dashboard/StatCard';
+import AnalyticsCharts from '../components/dashboard/AnalyticsCharts';
+import { calculateTrend, filterLeadsByDate } from '../utils/analyticsUtils';
 
-
-const StatCard = ({ title, value, icon, color, delay }) => {
-  const cardRef = useRef(null);
-  const IconComp = icon;
-
-  useEffect(() => {
-    gsap.fromTo(cardRef.current,
-      { opacity: 0, y: 20 },
-      { opacity: 1, y: 0, duration: 0.5, delay: delay, ease: "power2.out" }
-    );
-  }, [delay]);
-
-  return (
-    <div ref={cardRef} className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 hover:shadow-md transition-shadow">
-      <div className="flex items-start justify-between">
-        <div>
-          <p className="text-gray-500 text-sm font-medium uppercase tracking-wider">{title}</p>
-          <h3 className="text-4xl font-heading font-bold mt-2 text-dark">{value}</h3>
-        </div>
-        <div className={`p-3 rounded-xl ${color}`}>
-          <IconComp size={24} className="text-white" />
-        </div>
-      </div>
-    </div>
-  );
-};
+import { SkeletonCard, SkeletonChart, SkeletonTable } from '../components/common/Skeleton';
 
 const Dashboard = () => {
-  const { stats, leads } = useLeads();
+  const { stats, leads, loading } = useLeads();
   const { user } = useAuth();
+  const navigate = useNavigate();
 
   // Recent Leads 
-  const recentLeads = leads.slice(0, 4);
+  const recentLeads = leads.slice(0, 5);
 
-  // Calculate stats based on role
-  const dashboardStats = React.useMemo(() => {
-    if (user?.role === 'admin' && stats) {
-      // Admin: Use backend stats
-      const leadsByStatus = stats.leadsByStatus || [];
-      const statusMap = {};
-      leadsByStatus.forEach(item => {
-        statusMap[item._id] = item.count;
-      });
+  // --- KPI CALCULATION ---
+  const dashboardStats = useMemo(() => {
+    // 1. Determine the "Active" leads set (Admin gets all via stats or leads, Sales gets filtered)
+    // Note: 'leads' from context is already the full list (if admin) or user's list (if sales)
+    // The previous implementation used 'stats' prop for Admin totals, but for TRENDS we need the actual lead objects/dates.
+    // So we will rely on 'leads' array for trends which is safer for this specific requirement.
 
-      return {
-        total: stats.totalLeads || 0,
-        new: statusMap['New'] || 0,
-        converted: statusMap['Converted'] || 0,
-        lost: statusMap['Lost'] || 0,
-      };
-    } else {
-      // Sales: Calculate from their leads
-      const total = leads.length;
-      const newCount = leads.filter(lead => lead.status === 'New').length;
-      const convertedCount = leads.filter(lead => lead.status === 'Converted').length;
-      const lostCount = leads.filter(lead => lead.status === 'Lost').length;
+    const currentLeads = leads || [];
+    const total = currentLeads.length;
 
-      return {
-        total,
-        new: newCount,
-        converted: convertedCount,
-        lost: lostCount,
-      };
-    }
-  }, [stats, leads, user]);
+    // Date Ranges
+    const now = new Date();
+    const sevenDaysAgo = new Date();
+    sevenDaysAgo.setDate(now.getDate() - 7);
+
+    const fourteenDaysAgo = new Date();
+    fourteenDaysAgo.setDate(now.getDate() - 14);
+
+    // -- Current Period (Last 7 Days) --
+    const currentPeriodLeads = filterLeadsByDate(currentLeads, sevenDaysAgo, now);
+
+    // -- Previous Period (7-14 Days ago) --
+    const prevPeriodLeads = filterLeadsByDate(currentLeads, fourteenDaysAgo, sevenDaysAgo);
+
+    // Helper to get stats for a subset
+    const getCounts = (subset) => ({
+      total: subset.length,
+      new: subset.filter(l => l.status === 'New').length,
+      converted: subset.filter(l => l.status === 'Converted').length,
+      lost: subset.filter(l => l.status === 'Lost').length
+    });
+
+    const currentCounts = getCounts(currentPeriodLeads);
+    const prevCounts = getCounts(prevPeriodLeads);
+
+    // -- Trends --
+    const trends = {
+      total: calculateTrend(currentCounts.total, prevCounts.total),
+      new: calculateTrend(currentCounts.new, prevCounts.new),
+      converted: calculateTrend(currentCounts.converted, prevCounts.converted),
+      lost: calculateTrend(currentCounts.lost, prevCounts.lost)
+    };
+
+    // -- Overall Totals (Lifetime) --
+    // Use backend stats for Admin if available (faster), else calculate
+    // However, to keep it consistent with the charts which use 'leads', let's just use 'leads' derived counts
+    // unless the list is huge. For this task/demo logic, 'leads' array is fine (60-80 items).
+
+    const lifeTimeCounts = getCounts(currentLeads);
+
+    return {
+      total: lifeTimeCounts.total,
+      new: lifeTimeCounts.new,
+      converted: lifeTimeCounts.converted,
+      lost: lifeTimeCounts.lost,
+      trends
+    };
+
+  }, [leads]); // Recalculate when leads change
 
   return (
-    <div className="space-y-8">
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+    <div className="space-y-8 pb-10">
+
+      {/* HEADER */}
+      <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-heading font-bold text-dark">Dashboard</h1>
-          <p className="text-gray-500 mt-1">Overview of your lead performance</p>
+          <h1 className="text-3xl font-heading font-bold text-dark">
+            Welcome back, {user?.name?.split(' ')[0] || 'User'}
+          </h1>
+          <p className="text-gray-500 mt-1">Here's what's happening with your leads today.</p>
         </div>
-        {/* <Link
-          to='/add-lead'
-          className="inline-flex items-center gap-2 bg-dark text-white px-5 py-2.5 rounded-lg hover:bg-gray-800 transition-colors font-medium shadow-lg shadow-dark/20">
-          <UserPlus size={18} />
-          <span>Add New Lead</span>
-        </Link> */}
+
+        {/* Date Filter (UI Only) */}
+        <div className="flex items-center gap-2 bg-white border border-gray-200 rounded-xl px-4 py-2 shadow-sm hover:border-blue-300 transition-colors cursor-pointer group">
+          <Calendar size={16} className="text-gray-500 group-hover:text-blue-500 transition-colors" />
+          <span className="text-sm font-medium text-gray-700">Last 7 Days (Trends)</span>
+        </div>
       </div>
 
+      {/* STATS ROW */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        <StatCard
-          title="Total Leads"
-          value={dashboardStats.total}
-          icon={Users}
-          color="bg-blue-500"
-          delay={0.1}
-        />
-        <StatCard
-          title="New Leads"
-          value={dashboardStats.new}
-          icon={UserPlus}
-          color="bg-primary"
-          delay={0.2}
-        />
-        <StatCard
-          title="Converted"
-          value={dashboardStats.converted}
-          icon={CheckCircle}
-          color="bg-green-500"
-          delay={0.3}
-        />
-        <StatCard
-          title="Lost"
-          value={dashboardStats.lost}
-          icon={AlertCircle}
-          color="bg-red-500"
-          delay={0.4}
-        />
+        {loading ? (
+          <>
+            <SkeletonCard />
+            <SkeletonCard />
+            <SkeletonCard />
+            <SkeletonCard />
+          </>
+        ) : (
+          <>
+            <StatCard
+              title="Total Leads"
+              value={dashboardStats.total}
+              icon={Users}
+              color="text-blue-600 bg-blue-50"
+              trend={dashboardStats.trends.total.value}
+              trendUp={dashboardStats.trends.total.isPositive}
+              delay={0.1}
+              onClick={() => navigate(user?.role === 'admin' ? '/admin/dashboard/leads' : '/sales/dashboard/leads')}
+            />
+            <StatCard
+              title="New Leads"
+              value={dashboardStats.new}
+              icon={UserPlus}
+              color="text-indigo-600 bg-indigo-50"
+              trend={dashboardStats.trends.new.value}
+              trendUp={dashboardStats.trends.new.isPositive}
+              delay={0.2}
+            />
+            <StatCard
+              title="Converted"
+              value={dashboardStats.converted}
+              icon={CheckCircle}
+              color="text-green-600 bg-green-50"
+              trend={dashboardStats.trends.converted.value}
+              trendUp={dashboardStats.trends.converted.isPositive}
+              delay={0.3}
+            />
+            <StatCard
+              title="Lost Leads"
+              value={dashboardStats.lost}
+              icon={AlertCircle}
+              color="text-red-600 bg-red-50"
+              trend={dashboardStats.trends.lost.value}
+              trendUp={dashboardStats.trends.lost.isPositive}
+              inverseTrend={true}
+              delay={0.4}
+            />
+          </>
+        )}
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        {/* Short Leads */}
-        <div className="lg:col-span-2 bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
+      {/* ANALYTICS ROW */}
+      {loading ? (
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+          <SkeletonChart />
+          <SkeletonChart />
+        </div>
+      ) : (
+        <AnalyticsCharts leads={leads} />
+      )}
+
+      {/* BOTTOM ROW: RECENT LEADS & TIPS */}
+      <div className="grid grid-cols-1 xl:grid-cols-3 gap-8">
+
+        {/* Recent Leads Table */}
+        <div className="xl:col-span-2 bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
           <div className="flex items-center justify-between mb-6">
-            <h2 className="text-xl font-heading font-bold text-dark">Recent Leads</h2>
+            <h2 className="text-xl font-heading font-bold text-dark">Recent Activity</h2>
             <Link
               to={user?.role === 'admin' ? '/admin/dashboard/leads' : '/sales/dashboard/leads'}
-              className="text-primary hover:text-violet-700 text-sm font-medium"
+              className="text-primary hover:text-indigo-700 text-sm font-semibold flex items-center gap-1 transition-colors"
             >
               View All
             </Link>
           </div>
 
           <div className="overflow-x-auto">
-            <table className="w-full text-left">
-              <thead>
-                <tr className="border-b border-gray-100">
-                  <th className="pb-3 text-sm font-semibold text-gray-500">Name</th>
-                  <th className="pb-3 text-sm font-semibold text-gray-500">Status</th>
-                  <th className="pb-3 text-sm font-semibold text-gray-500">Source</th>
-                  <th className="pb-3 text-sm font-semibold text-gray-500">Date</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-50">
-                {recentLeads.map((lead) => (
-                  <tr key={lead._id || lead.id} className="group hover:bg-gray-50 transition-colors">
-                    <td className="py-4">
-                      <p className="font-medium text-dark">{lead.name}</p>
-                      <p className="text-xs text-gray-500">{lead.email}</p>
-                    </td>
-                    <td className="py-4">
-                      <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium
-                        ${lead.status === 'New' ? 'bg-blue-100 text-blue-800' :
-                          lead.status === 'Converted' ? 'bg-green-100 text-green-800' :
-                            'bg-red-100 text-red-800'}`}>
-                        {lead.status}
-                      </span>
-                    </td>
-                    <td className="py-4 text-sm text-gray-600">{lead.source}</td>
-                    <td className="py-4 text-sm text-gray-500">Today</td>
+            {loading ? (
+              <div className="p-4">
+                <SkeletonTable rows={3} />
+              </div>
+            ) : (
+              <table className="w-full text-left">
+                <thead>
+                  <tr className="border-b border-gray-100">
+                    <th className="pb-3 text-xs font-bold text-gray-400 uppercase tracking-wider pl-2">Lead Name</th>
+                    <th className="pb-3 text-xs font-bold text-gray-400 uppercase tracking-wider">Status</th>
+                    <th className="pb-3 text-xs font-bold text-gray-400 uppercase tracking-wider hidden sm:table-cell">Source</th>
+                    <th className="pb-3 text-xs font-bold text-gray-400 uppercase tracking-wider hidden sm:table-cell text-right pr-2">Date</th>
                   </tr>
-                ))}
-                {recentLeads.length === 0 && (
-                  <tr key="no-leads">
-                    <td colSpan="4" className="py-8 text-center text-gray-500">
-                      No leads found. Start by adding one!
-                    </td>
-                  </tr>
-                )}
-              </tbody>
-            </table>
+                </thead>
+                <tbody className="divide-y divide-gray-50">
+                  {recentLeads.map((lead) => (
+                    <tr key={lead._id} className="group hover:bg-gray-50/50 transition-colors">
+                      <td className="py-3 pl-2">
+                        <div className="flex items-center gap-3">
+                          <div className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center text-xs font-bold text-gray-500 group-hover:bg-indigo-50 group-hover:text-indigo-600 transition-colors">
+                            {lead.name.charAt(0)}
+                          </div>
+                          <div>
+                            <p className="font-semibold text-sm text-gray-900">{lead.name}</p>
+                            <p className="text-xs text-gray-400">{lead.email}</p>
+                          </div>
+                        </div>
+                      </td>
+                      <td className="py-3">
+                        <span className={`inline-flex items-center px-2.5 py-1 rounded-md text-xs font-medium border
+                        ${lead.status === 'New' ? 'bg-blue-50 text-blue-700 border-blue-100' :
+                            lead.status === 'Converted' ? 'bg-green-50 text-green-700 border-green-100' :
+                              lead.status === 'Lost' ? 'bg-red-50 text-red-700 border-red-100' :
+                                'bg-gray-50 text-gray-700 border-gray-100'}`}>
+                          {lead.status}
+                        </span>
+                      </td>
+                      <td className="py-3 text-sm text-gray-600 hidden sm:table-cell">{lead.source || 'Direct'}</td>
+                      <td className="py-3 text-sm text-gray-400 hidden sm:table-cell text-right pr-2">
+                        {/* Check if createdAt exists, else 'Today' */}
+                        {lead.createdAt ? new Date(lead.createdAt).toLocaleDateString() : 'Today'}
+                      </td>
+                    </tr>
+                  ))}
+                  {recentLeads.length === 0 && (
+                    <tr key="no-leads">
+                      <td colSpan="4" className="py-12 text-center text-gray-400">
+                        <div className="flex flex-col items-center gap-2">
+                          <div className="w-12 h-12 bg-gray-50 rounded-full flex items-center justify-center text-gray-300">
+                            <Users size={20} />
+                          </div>
+                          <p>No recently active leads.</p>
+                        </div>
+                      </td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            )}
           </div>
         </div>
-        {/* Quick Tips */}
-        <div className="bg-gradient-to-br from-primary to-violet-700 rounded-2xl shadow-lg p-6 text-white relative overflow-hidden">
-          <div className="relative z-10">
-            <h2 className="text-xl font-heading font-bold mb-2">Quick Tips</h2>
-            <p className="text-white/80 text-sm mb-6">Boost your conversion rate by following up within the first hour.</p>
 
-            <div className="space-y-4">
-              <div className="bg-white/10 backdrop-blur-sm p-4 rounded-xl border border-white/10">
-                <div className="flex items-center gap-3 mb-2">
-                  <TrendingUp size={18} className="text-secondary" />
-                  <span className="font-bold">Follow Up</span>
+        {/* Quick Tips / Insights Panel */}
+        <div className="flex flex-col gap-6">
+          {/* Pro Tip Card */}
+          <div className="bg-gradient-to-br from-indigo-600 to-violet-700 rounded-2xl shadow-lg p-6 text-white relative overflow-hidden flex-1">
+            <div className="relative z-10 h-full flex flex-col justify-between">
+              <div>
+                <div className="flex items-center gap-2 mb-3 bg-white/20 w-fit px-3 py-1 rounded-full border border-white/10 backdrop-blur-md">
+                  <TrendingUp size={14} className="text-white" />
+                  <span className="text-xs font-bold uppercase tracking-wide">Pro Tip</span>
                 </div>
-                <p className="text-xs text-white/70">Call new leads immediately to increase chances by 50%.</p>
+                <h3 className="font-heading font-bold text-lg leading-tight mb-2">Faster Response = Higher Conversion</h3>
+                <p className="text-indigo-100 text-sm leading-relaxed mb-4">
+                  Contacting leads within 5 minutes increases conversion odds by <strong>21x</strong>.
+                </p>
               </div>
+            </div>
+            {/* Decor */}
+            <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full blur-2xl -mr-10 -mt-10"></div>
+            <div className="absolute bottom-0 left-0 w-24 h-24 bg-indigo-500/30 rounded-full blur-xl -ml-6 -mb-6"></div>
+          </div>
 
-              <div className="bg-white/10 backdrop-blur-sm p-4 rounded-xl border border-white/10">
-                <div className="flex items-center gap-3 mb-2">
-                  <CheckCircle size={18} className="text-secondary" />
-                  <span className="font-bold">Qualify</span>
-                </div>
-                <p className="text-xs text-white/70">Ensure leads match your ideal customer profile.</p>
+          {/* AI/ Insight Mini Card */}
+          <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 flex-1">
+            <div className="flex items-start gap-3">
+              <div className="w-10 h-10 rounded-full bg-orange-50 flex items-center justify-center text-orange-600 flex-shrink-0">
+                <AlertCircle size={20} />
+              </div>
+              <div>
+                <h4 className="font-bold text-gray-900 text-sm mb-1">Needs Attention</h4>
+                <p className="text-xs text-gray-500 leading-relaxed">
+                  You have <span className="font-bold text-gray-800">{dashboardStats.new} new leads</span> that haven't been contacted yet.
+                </p>
+                <button className="mt-3 text-xs font-semibold text-indigo-600 hover:text-indigo-700 hover:underline" onClick={() => navigate(user?.role === 'admin' ? '/admin/dashboard/leads' : '/sales/dashboard/leads')}>
+                  View pending leads
+                </button>
               </div>
             </div>
           </div>
-
-          {/* Decor */}
-          <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full blur-2xl -mr-10 -mt-10"></div>
-          <div className="absolute bottom-0 left-0 w-32 h-32 bg-secondary/20 rounded-full blur-2xl -ml-10 -mb-10"></div>
         </div>
+
       </div>
     </div>
   );

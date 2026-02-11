@@ -11,13 +11,6 @@ const AdminUserProfile = () => {
   const [profile, setProfile] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
-
-  useEffect(() => {
-    if (user?.role === 'admin') {
-      fetchUser();
-    }
-  }, [user, fetchUser]);
-
   const fetchUser = useCallback(async () => {
     try {
       const token = localStorage.getItem('token');
@@ -45,6 +38,12 @@ const AdminUserProfile = () => {
       setLoading(false);
     }
   }, [userId]);
+
+  useEffect(() => {
+    if (user?.role === 'admin') {
+      fetchUser();
+    }
+  }, [user, fetchUser]);
 
   const handleTerminate = async () => {
     if (!window.confirm(`Are you sure you want to DELETE ${profile.name}? \n\nThis will:\n1. PERMANENTLY delete this user\n2. Reassign all their assigned leads to YOU`)) {

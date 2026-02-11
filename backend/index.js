@@ -8,10 +8,16 @@ import connectDB from "./config/db.js";
 import authRoutes from "./routes/authRoutes.js";
 import leadRoutes from "./routes/leadRoutes.js";
 import userRoutes from "./routes/userRoutes.js";
+import seedDummyData from "./utils/seedDummyData.js";
 
 dotenv.config();
 
-connectDB();
+connectDB().then(() => {
+  // Run seeder only in development
+  if (process.env.NODE_ENV !== 'production') {
+    seedDummyData();
+  }
+});
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);

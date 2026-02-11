@@ -1,0 +1,1571 @@
+
+// USERS (20)
+db.users.insertMany([
+  {
+    "name": "Sales Rep 1",
+    "email": "sales1@leadflow.app",
+    "password": "hashed_password_placeholder",
+    "role": "sales",
+    "createdAt": {
+      "$date": "2026-02-11T09:28:38.516Z"
+    },
+    "updatedAt": {
+      "$date": "2026-02-11T09:28:38.516Z"
+    }
+  },
+  {
+    "name": "Sales Rep 2",
+    "email": "sales2@leadflow.app",
+    "password": "hashed_password_placeholder",
+    "role": "sales",
+    "createdAt": {
+      "$date": "2026-02-11T09:28:38.516Z"
+    },
+    "updatedAt": {
+      "$date": "2026-02-11T09:28:38.516Z"
+    }
+  },
+  {
+    "name": "Sales Rep 3",
+    "email": "sales3@leadflow.app",
+    "password": "hashed_password_placeholder",
+    "role": "sales",
+    "createdAt": {
+      "$date": "2026-02-11T09:28:38.516Z"
+    },
+    "updatedAt": {
+      "$date": "2026-02-11T09:28:38.516Z"
+    }
+  },
+  {
+    "name": "Sales Rep 4",
+    "email": "sales4@leadflow.app",
+    "password": "hashed_password_placeholder",
+    "role": "sales",
+    "createdAt": {
+      "$date": "2026-02-11T09:28:38.516Z"
+    },
+    "updatedAt": {
+      "$date": "2026-02-11T09:28:38.516Z"
+    }
+  },
+  {
+    "name": "Sales Rep 5",
+    "email": "sales5@leadflow.app",
+    "password": "hashed_password_placeholder",
+    "role": "sales",
+    "createdAt": {
+      "$date": "2026-02-11T09:28:38.516Z"
+    },
+    "updatedAt": {
+      "$date": "2026-02-11T09:28:38.516Z"
+    }
+  },
+  {
+    "name": "Sales Rep 6",
+    "email": "sales6@leadflow.app",
+    "password": "hashed_password_placeholder",
+    "role": "sales",
+    "createdAt": {
+      "$date": "2026-02-11T09:28:38.516Z"
+    },
+    "updatedAt": {
+      "$date": "2026-02-11T09:28:38.516Z"
+    }
+  },
+  {
+    "name": "Sales Rep 7",
+    "email": "sales7@leadflow.app",
+    "password": "hashed_password_placeholder",
+    "role": "sales",
+    "createdAt": {
+      "$date": "2026-02-11T09:28:38.516Z"
+    },
+    "updatedAt": {
+      "$date": "2026-02-11T09:28:38.516Z"
+    }
+  },
+  {
+    "name": "Sales Rep 8",
+    "email": "sales8@leadflow.app",
+    "password": "hashed_password_placeholder",
+    "role": "sales",
+    "createdAt": {
+      "$date": "2026-02-11T09:28:38.516Z"
+    },
+    "updatedAt": {
+      "$date": "2026-02-11T09:28:38.516Z"
+    }
+  },
+  {
+    "name": "Sales Rep 9",
+    "email": "sales9@leadflow.app",
+    "password": "hashed_password_placeholder",
+    "role": "sales",
+    "createdAt": {
+      "$date": "2026-02-11T09:28:38.516Z"
+    },
+    "updatedAt": {
+      "$date": "2026-02-11T09:28:38.516Z"
+    }
+  },
+  {
+    "name": "Sales Rep 10",
+    "email": "sales10@leadflow.app",
+    "password": "hashed_password_placeholder",
+    "role": "sales",
+    "createdAt": {
+      "$date": "2026-02-11T09:28:38.516Z"
+    },
+    "updatedAt": {
+      "$date": "2026-02-11T09:28:38.516Z"
+    }
+  },
+  {
+    "name": "Sales Rep 11",
+    "email": "sales11@leadflow.app",
+    "password": "hashed_password_placeholder",
+    "role": "sales",
+    "createdAt": {
+      "$date": "2026-02-11T09:28:38.516Z"
+    },
+    "updatedAt": {
+      "$date": "2026-02-11T09:28:38.516Z"
+    }
+  },
+  {
+    "name": "Sales Rep 12",
+    "email": "sales12@leadflow.app",
+    "password": "hashed_password_placeholder",
+    "role": "sales",
+    "createdAt": {
+      "$date": "2026-02-11T09:28:38.516Z"
+    },
+    "updatedAt": {
+      "$date": "2026-02-11T09:28:38.516Z"
+    }
+  },
+  {
+    "name": "Sales Rep 13",
+    "email": "sales13@leadflow.app",
+    "password": "hashed_password_placeholder",
+    "role": "sales",
+    "createdAt": {
+      "$date": "2026-02-11T09:28:38.516Z"
+    },
+    "updatedAt": {
+      "$date": "2026-02-11T09:28:38.516Z"
+    }
+  },
+  {
+    "name": "Sales Rep 14",
+    "email": "sales14@leadflow.app",
+    "password": "hashed_password_placeholder",
+    "role": "sales",
+    "createdAt": {
+      "$date": "2026-02-11T09:28:38.516Z"
+    },
+    "updatedAt": {
+      "$date": "2026-02-11T09:28:38.516Z"
+    }
+  },
+  {
+    "name": "Sales Rep 15",
+    "email": "sales15@leadflow.app",
+    "password": "hashed_password_placeholder",
+    "role": "sales",
+    "createdAt": {
+      "$date": "2026-02-11T09:28:38.516Z"
+    },
+    "updatedAt": {
+      "$date": "2026-02-11T09:28:38.516Z"
+    }
+  },
+  {
+    "name": "Sales Rep 16",
+    "email": "sales16@leadflow.app",
+    "password": "hashed_password_placeholder",
+    "role": "sales",
+    "createdAt": {
+      "$date": "2026-02-11T09:28:38.516Z"
+    },
+    "updatedAt": {
+      "$date": "2026-02-11T09:28:38.516Z"
+    }
+  },
+  {
+    "name": "Sales Rep 17",
+    "email": "sales17@leadflow.app",
+    "password": "hashed_password_placeholder",
+    "role": "sales",
+    "createdAt": {
+      "$date": "2026-02-11T09:28:38.516Z"
+    },
+    "updatedAt": {
+      "$date": "2026-02-11T09:28:38.516Z"
+    }
+  },
+  {
+    "name": "Sales Rep 18",
+    "email": "sales18@leadflow.app",
+    "password": "hashed_password_placeholder",
+    "role": "sales",
+    "createdAt": {
+      "$date": "2026-02-11T09:28:38.516Z"
+    },
+    "updatedAt": {
+      "$date": "2026-02-11T09:28:38.516Z"
+    }
+  },
+  {
+    "name": "Sales Rep 19",
+    "email": "sales19@leadflow.app",
+    "password": "hashed_password_placeholder",
+    "role": "sales",
+    "createdAt": {
+      "$date": "2026-02-11T09:28:38.516Z"
+    },
+    "updatedAt": {
+      "$date": "2026-02-11T09:28:38.516Z"
+    }
+  },
+  {
+    "name": "Sales Rep 20",
+    "email": "sales20@leadflow.app",
+    "password": "hashed_password_placeholder",
+    "role": "sales",
+    "createdAt": {
+      "$date": "2026-02-11T09:28:38.516Z"
+    },
+    "updatedAt": {
+      "$date": "2026-02-11T09:28:38.516Z"
+    }
+  }
+]);
+
+// LEADS (60)
+db.leads.insertMany([
+  {
+    "name": "Lead 1",
+    "email": "lead1@example.com",
+    "phone": "555-0101",
+    "source": "Referral",
+    "priority": "Medium",
+    "status": "New",
+    "createdAt": {
+      "$date": "2026-01-30T09:28:38.515Z"
+    },
+    "updatedAt": {
+      "$date": "2026-02-11T09:28:38.516Z"
+    },
+    "createdBy": {
+      "$oid": "PUT_USER_ID_HERE"
+    },
+    "assignedTo": {
+      "$oid": "PUT_SALES_ID_HERE"
+    },
+    "notes": []
+  },
+  {
+    "name": "Lead 2",
+    "email": "lead2@example.com",
+    "phone": "555-0102",
+    "source": "Advertisement",
+    "priority": "High",
+    "status": "New",
+    "createdAt": {
+      "$date": "2026-02-06T09:28:38.516Z"
+    },
+    "updatedAt": {
+      "$date": "2026-02-11T09:28:38.516Z"
+    },
+    "createdBy": {
+      "$oid": "PUT_USER_ID_HERE"
+    },
+    "assignedTo": {
+      "$oid": "PUT_SALES_ID_HERE"
+    },
+    "notes": []
+  },
+  {
+    "name": "Lead 3",
+    "email": "lead3@example.com",
+    "phone": "555-0103",
+    "source": "Manual",
+    "priority": "Medium",
+    "status": "New",
+    "createdAt": {
+      "$date": "2026-01-23T09:28:38.516Z"
+    },
+    "updatedAt": {
+      "$date": "2026-02-11T09:28:38.516Z"
+    },
+    "createdBy": {
+      "$oid": "PUT_USER_ID_HERE"
+    },
+    "assignedTo": {
+      "$oid": "PUT_SALES_ID_HERE"
+    },
+    "notes": []
+  },
+  {
+    "name": "Lead 4",
+    "email": "lead4@example.com",
+    "phone": "555-0104",
+    "source": "LinkedIn",
+    "priority": "Low",
+    "status": "New",
+    "createdAt": {
+      "$date": "2026-01-18T09:28:38.516Z"
+    },
+    "updatedAt": {
+      "$date": "2026-02-11T09:28:38.516Z"
+    },
+    "createdBy": {
+      "$oid": "PUT_USER_ID_HERE"
+    },
+    "assignedTo": {
+      "$oid": "PUT_SALES_ID_HERE"
+    },
+    "notes": []
+  },
+  {
+    "name": "Lead 5",
+    "email": "lead5@example.com",
+    "phone": "555-0105",
+    "source": "LinkedIn",
+    "priority": "High",
+    "status": "New",
+    "createdAt": {
+      "$date": "2026-01-22T09:28:38.516Z"
+    },
+    "updatedAt": {
+      "$date": "2026-02-11T09:28:38.516Z"
+    },
+    "createdBy": {
+      "$oid": "PUT_USER_ID_HERE"
+    },
+    "assignedTo": {
+      "$oid": "PUT_SALES_ID_HERE"
+    },
+    "notes": []
+  },
+  {
+    "name": "Lead 6",
+    "email": "lead6@example.com",
+    "phone": "555-0106",
+    "source": "Referral",
+    "priority": "Medium",
+    "status": "New",
+    "createdAt": {
+      "$date": "2026-01-27T09:28:38.516Z"
+    },
+    "updatedAt": {
+      "$date": "2026-02-11T09:28:38.516Z"
+    },
+    "createdBy": {
+      "$oid": "PUT_USER_ID_HERE"
+    },
+    "assignedTo": {
+      "$oid": "PUT_SALES_ID_HERE"
+    },
+    "notes": []
+  },
+  {
+    "name": "Lead 7",
+    "email": "lead7@example.com",
+    "phone": "555-0107",
+    "source": "Advertisement",
+    "priority": "High",
+    "status": "New",
+    "createdAt": {
+      "$date": "2026-01-22T09:28:38.516Z"
+    },
+    "updatedAt": {
+      "$date": "2026-02-11T09:28:38.516Z"
+    },
+    "createdBy": {
+      "$oid": "PUT_USER_ID_HERE"
+    },
+    "assignedTo": {
+      "$oid": "PUT_SALES_ID_HERE"
+    },
+    "notes": []
+  },
+  {
+    "name": "Lead 8",
+    "email": "lead8@example.com",
+    "phone": "555-0108",
+    "source": "Referral",
+    "priority": "Low",
+    "status": "New",
+    "createdAt": {
+      "$date": "2026-02-10T09:28:38.516Z"
+    },
+    "updatedAt": {
+      "$date": "2026-02-11T09:28:38.516Z"
+    },
+    "createdBy": {
+      "$oid": "PUT_USER_ID_HERE"
+    },
+    "assignedTo": {
+      "$oid": "PUT_SALES_ID_HERE"
+    },
+    "notes": []
+  },
+  {
+    "name": "Lead 9",
+    "email": "lead9@example.com",
+    "phone": "555-0109",
+    "source": "LinkedIn",
+    "priority": "High",
+    "status": "New",
+    "createdAt": {
+      "$date": "2026-02-05T09:28:38.516Z"
+    },
+    "updatedAt": {
+      "$date": "2026-02-11T09:28:38.516Z"
+    },
+    "createdBy": {
+      "$oid": "PUT_USER_ID_HERE"
+    },
+    "assignedTo": {
+      "$oid": "PUT_SALES_ID_HERE"
+    },
+    "notes": []
+  },
+  {
+    "name": "Lead 10",
+    "email": "lead10@example.com",
+    "phone": "555-0110",
+    "source": "Referral",
+    "priority": "Medium",
+    "status": "New",
+    "createdAt": {
+      "$date": "2026-01-15T09:28:38.516Z"
+    },
+    "updatedAt": {
+      "$date": "2026-02-11T09:28:38.516Z"
+    },
+    "createdBy": {
+      "$oid": "PUT_USER_ID_HERE"
+    },
+    "assignedTo": {
+      "$oid": "PUT_SALES_ID_HERE"
+    },
+    "notes": [
+      {
+        "content": "Interested in enterprise plan",
+        "createdAt": {
+          "$date": "2026-02-11T09:28:38.516Z"
+        }
+      }
+    ]
+  },
+  {
+    "name": "Lead 11",
+    "email": "lead11@example.com",
+    "phone": "555-0111",
+    "source": "Advertisement",
+    "priority": "Medium",
+    "status": "New",
+    "createdAt": {
+      "$date": "2026-01-27T09:28:38.516Z"
+    },
+    "updatedAt": {
+      "$date": "2026-02-11T09:28:38.516Z"
+    },
+    "createdBy": {
+      "$oid": "PUT_USER_ID_HERE"
+    },
+    "assignedTo": {
+      "$oid": "PUT_SALES_ID_HERE"
+    },
+    "notes": []
+  },
+  {
+    "name": "Lead 12",
+    "email": "lead12@example.com",
+    "phone": "555-0112",
+    "source": "Referral",
+    "priority": "Low",
+    "status": "New",
+    "createdAt": {
+      "$date": "2026-01-28T09:28:38.516Z"
+    },
+    "updatedAt": {
+      "$date": "2026-02-11T09:28:38.516Z"
+    },
+    "createdBy": {
+      "$oid": "PUT_USER_ID_HERE"
+    },
+    "assignedTo": {
+      "$oid": "PUT_SALES_ID_HERE"
+    },
+    "notes": []
+  },
+  {
+    "name": "Lead 13",
+    "email": "lead13@example.com",
+    "phone": "555-0113",
+    "source": "Manual",
+    "priority": "High",
+    "status": "New",
+    "createdAt": {
+      "$date": "2026-01-13T09:28:38.516Z"
+    },
+    "updatedAt": {
+      "$date": "2026-02-11T09:28:38.516Z"
+    },
+    "createdBy": {
+      "$oid": "PUT_USER_ID_HERE"
+    },
+    "assignedTo": {
+      "$oid": "PUT_SALES_ID_HERE"
+    },
+    "notes": []
+  },
+  {
+    "name": "Lead 14",
+    "email": "lead14@example.com",
+    "phone": "555-0114",
+    "source": "Referral",
+    "priority": "High",
+    "status": "New",
+    "createdAt": {
+      "$date": "2026-01-30T09:28:38.516Z"
+    },
+    "updatedAt": {
+      "$date": "2026-02-11T09:28:38.516Z"
+    },
+    "createdBy": {
+      "$oid": "PUT_USER_ID_HERE"
+    },
+    "assignedTo": {
+      "$oid": "PUT_SALES_ID_HERE"
+    },
+    "notes": []
+  },
+  {
+    "name": "Lead 15",
+    "email": "lead15@example.com",
+    "phone": "555-0115",
+    "source": "Manual",
+    "priority": "Low",
+    "status": "New",
+    "createdAt": {
+      "$date": "2026-02-09T09:28:38.516Z"
+    },
+    "updatedAt": {
+      "$date": "2026-02-11T09:28:38.516Z"
+    },
+    "createdBy": {
+      "$oid": "PUT_USER_ID_HERE"
+    },
+    "assignedTo": {
+      "$oid": "PUT_SALES_ID_HERE"
+    },
+    "notes": [
+      {
+        "content": "Interested in enterprise plan",
+        "createdAt": {
+          "$date": "2026-02-11T09:28:38.516Z"
+        }
+      }
+    ]
+  },
+  {
+    "name": "Lead 16",
+    "email": "lead16@example.com",
+    "phone": "555-0116",
+    "source": "Manual",
+    "priority": "Low",
+    "status": "New",
+    "createdAt": {
+      "$date": "2026-02-10T09:28:38.516Z"
+    },
+    "updatedAt": {
+      "$date": "2026-02-11T09:28:38.516Z"
+    },
+    "createdBy": {
+      "$oid": "PUT_USER_ID_HERE"
+    },
+    "assignedTo": {
+      "$oid": "PUT_SALES_ID_HERE"
+    },
+    "notes": [
+      {
+        "content": "Interested in enterprise plan",
+        "createdAt": {
+          "$date": "2026-02-11T09:28:38.516Z"
+        }
+      }
+    ]
+  },
+  {
+    "name": "Lead 17",
+    "email": "lead17@example.com",
+    "phone": "555-0117",
+    "source": "Referral",
+    "priority": "Low",
+    "status": "New",
+    "createdAt": {
+      "$date": "2026-02-06T09:28:38.516Z"
+    },
+    "updatedAt": {
+      "$date": "2026-02-11T09:28:38.516Z"
+    },
+    "createdBy": {
+      "$oid": "PUT_USER_ID_HERE"
+    },
+    "assignedTo": {
+      "$oid": "PUT_SALES_ID_HERE"
+    },
+    "notes": []
+  },
+  {
+    "name": "Lead 18",
+    "email": "lead18@example.com",
+    "phone": "555-0118",
+    "source": "Advertisement",
+    "priority": "Medium",
+    "status": "New",
+    "createdAt": {
+      "$date": "2026-01-30T09:28:38.516Z"
+    },
+    "updatedAt": {
+      "$date": "2026-02-11T09:28:38.516Z"
+    },
+    "createdBy": {
+      "$oid": "PUT_USER_ID_HERE"
+    },
+    "assignedTo": {
+      "$oid": "PUT_SALES_ID_HERE"
+    },
+    "notes": []
+  },
+  {
+    "name": "Lead 19",
+    "email": "lead19@example.com",
+    "phone": "555-0119",
+    "source": "Referral",
+    "priority": "Low",
+    "status": "New",
+    "createdAt": {
+      "$date": "2026-02-03T09:28:38.516Z"
+    },
+    "updatedAt": {
+      "$date": "2026-02-11T09:28:38.516Z"
+    },
+    "createdBy": {
+      "$oid": "PUT_USER_ID_HERE"
+    },
+    "assignedTo": {
+      "$oid": "PUT_SALES_ID_HERE"
+    },
+    "notes": []
+  },
+  {
+    "name": "Lead 20",
+    "email": "lead20@example.com",
+    "phone": "555-0120",
+    "source": "LinkedIn",
+    "priority": "High",
+    "status": "New",
+    "createdAt": {
+      "$date": "2026-02-02T09:28:38.516Z"
+    },
+    "updatedAt": {
+      "$date": "2026-02-11T09:28:38.516Z"
+    },
+    "createdBy": {
+      "$oid": "PUT_USER_ID_HERE"
+    },
+    "assignedTo": {
+      "$oid": "PUT_SALES_ID_HERE"
+    },
+    "notes": []
+  },
+  {
+    "name": "Lead 21",
+    "email": "lead21@example.com",
+    "phone": "555-0121",
+    "source": "LinkedIn",
+    "priority": "Low",
+    "status": "New",
+    "createdAt": {
+      "$date": "2026-02-05T09:28:38.516Z"
+    },
+    "updatedAt": {
+      "$date": "2026-02-11T09:28:38.516Z"
+    },
+    "createdBy": {
+      "$oid": "PUT_USER_ID_HERE"
+    },
+    "assignedTo": {
+      "$oid": "PUT_SALES_ID_HERE"
+    },
+    "notes": []
+  },
+  {
+    "name": "Lead 22",
+    "email": "lead22@example.com",
+    "phone": "555-0122",
+    "source": "Referral",
+    "priority": "High",
+    "status": "New",
+    "createdAt": {
+      "$date": "2026-01-22T09:28:38.516Z"
+    },
+    "updatedAt": {
+      "$date": "2026-02-11T09:28:38.516Z"
+    },
+    "createdBy": {
+      "$oid": "PUT_USER_ID_HERE"
+    },
+    "assignedTo": {
+      "$oid": "PUT_SALES_ID_HERE"
+    },
+    "notes": []
+  },
+  {
+    "name": "Lead 23",
+    "email": "lead23@example.com",
+    "phone": "555-0123",
+    "source": "Manual",
+    "priority": "Medium",
+    "status": "New",
+    "createdAt": {
+      "$date": "2026-02-08T09:28:38.516Z"
+    },
+    "updatedAt": {
+      "$date": "2026-02-11T09:28:38.516Z"
+    },
+    "createdBy": {
+      "$oid": "PUT_USER_ID_HERE"
+    },
+    "assignedTo": {
+      "$oid": "PUT_SALES_ID_HERE"
+    },
+    "notes": []
+  },
+  {
+    "name": "Lead 24",
+    "email": "lead24@example.com",
+    "phone": "555-0124",
+    "source": "LinkedIn",
+    "priority": "Low",
+    "status": "New",
+    "createdAt": {
+      "$date": "2026-01-26T09:28:38.516Z"
+    },
+    "updatedAt": {
+      "$date": "2026-02-11T09:28:38.516Z"
+    },
+    "createdBy": {
+      "$oid": "PUT_USER_ID_HERE"
+    },
+    "assignedTo": {
+      "$oid": "PUT_SALES_ID_HERE"
+    },
+    "notes": []
+  },
+  {
+    "name": "Lead 25",
+    "email": "lead25@example.com",
+    "phone": "555-0125",
+    "source": "LinkedIn",
+    "priority": "Low",
+    "status": "New",
+    "createdAt": {
+      "$date": "2026-02-02T09:28:38.516Z"
+    },
+    "updatedAt": {
+      "$date": "2026-02-11T09:28:38.516Z"
+    },
+    "createdBy": {
+      "$oid": "PUT_USER_ID_HERE"
+    },
+    "assignedTo": {
+      "$oid": "PUT_SALES_ID_HERE"
+    },
+    "notes": [
+      {
+        "content": "Interested in enterprise plan",
+        "createdAt": {
+          "$date": "2026-02-11T09:28:38.516Z"
+        }
+      }
+    ]
+  },
+  {
+    "name": "Lead 26",
+    "email": "lead26@example.com",
+    "phone": "555-0126",
+    "source": "Referral",
+    "priority": "Low",
+    "status": "New",
+    "createdAt": {
+      "$date": "2026-02-07T09:28:38.516Z"
+    },
+    "updatedAt": {
+      "$date": "2026-02-11T09:28:38.516Z"
+    },
+    "createdBy": {
+      "$oid": "PUT_USER_ID_HERE"
+    },
+    "assignedTo": {
+      "$oid": "PUT_SALES_ID_HERE"
+    },
+    "notes": []
+  },
+  {
+    "name": "Lead 27",
+    "email": "lead27@example.com",
+    "phone": "555-0127",
+    "source": "LinkedIn",
+    "priority": "High",
+    "status": "New",
+    "createdAt": {
+      "$date": "2026-02-05T09:28:38.516Z"
+    },
+    "updatedAt": {
+      "$date": "2026-02-11T09:28:38.516Z"
+    },
+    "createdBy": {
+      "$oid": "PUT_USER_ID_HERE"
+    },
+    "assignedTo": {
+      "$oid": "PUT_SALES_ID_HERE"
+    },
+    "notes": []
+  },
+  {
+    "name": "Lead 28",
+    "email": "lead28@example.com",
+    "phone": "555-0128",
+    "source": "Manual",
+    "priority": "High",
+    "status": "New",
+    "createdAt": {
+      "$date": "2026-01-28T09:28:38.516Z"
+    },
+    "updatedAt": {
+      "$date": "2026-02-11T09:28:38.516Z"
+    },
+    "createdBy": {
+      "$oid": "PUT_USER_ID_HERE"
+    },
+    "assignedTo": {
+      "$oid": "PUT_SALES_ID_HERE"
+    },
+    "notes": []
+  },
+  {
+    "name": "Lead 29",
+    "email": "lead29@example.com",
+    "phone": "555-0129",
+    "source": "Manual",
+    "priority": "High",
+    "status": "New",
+    "createdAt": {
+      "$date": "2026-02-09T09:28:38.516Z"
+    },
+    "updatedAt": {
+      "$date": "2026-02-11T09:28:38.516Z"
+    },
+    "createdBy": {
+      "$oid": "PUT_USER_ID_HERE"
+    },
+    "assignedTo": {
+      "$oid": "PUT_SALES_ID_HERE"
+    },
+    "notes": []
+  },
+  {
+    "name": "Lead 30",
+    "email": "lead30@example.com",
+    "phone": "555-0130",
+    "source": "Referral",
+    "priority": "Medium",
+    "status": "New",
+    "createdAt": {
+      "$date": "2026-02-06T09:28:38.516Z"
+    },
+    "updatedAt": {
+      "$date": "2026-02-11T09:28:38.516Z"
+    },
+    "createdBy": {
+      "$oid": "PUT_USER_ID_HERE"
+    },
+    "assignedTo": {
+      "$oid": "PUT_SALES_ID_HERE"
+    },
+    "notes": []
+  },
+  {
+    "name": "Lead 31",
+    "email": "lead31@example.com",
+    "phone": "555-0131",
+    "source": "LinkedIn",
+    "priority": "Medium",
+    "status": "Converted",
+    "createdAt": {
+      "$date": "2026-01-28T09:28:38.516Z"
+    },
+    "updatedAt": {
+      "$date": "2026-02-11T09:28:38.516Z"
+    },
+    "createdBy": {
+      "$oid": "PUT_USER_ID_HERE"
+    },
+    "assignedTo": {
+      "$oid": "PUT_SALES_ID_HERE"
+    },
+    "notes": []
+  },
+  {
+    "name": "Lead 32",
+    "email": "lead32@example.com",
+    "phone": "555-0132",
+    "source": "Advertisement",
+    "priority": "High",
+    "status": "Converted",
+    "createdAt": {
+      "$date": "2026-01-27T09:28:38.516Z"
+    },
+    "updatedAt": {
+      "$date": "2026-02-11T09:28:38.516Z"
+    },
+    "createdBy": {
+      "$oid": "PUT_USER_ID_HERE"
+    },
+    "assignedTo": {
+      "$oid": "PUT_SALES_ID_HERE"
+    },
+    "notes": []
+  },
+  {
+    "name": "Lead 33",
+    "email": "lead33@example.com",
+    "phone": "555-0133",
+    "source": "Advertisement",
+    "priority": "High",
+    "status": "Converted",
+    "createdAt": {
+      "$date": "2026-01-25T09:28:38.516Z"
+    },
+    "updatedAt": {
+      "$date": "2026-02-11T09:28:38.516Z"
+    },
+    "createdBy": {
+      "$oid": "PUT_USER_ID_HERE"
+    },
+    "assignedTo": {
+      "$oid": "PUT_SALES_ID_HERE"
+    },
+    "notes": []
+  },
+  {
+    "name": "Lead 34",
+    "email": "lead34@example.com",
+    "phone": "555-0134",
+    "source": "Advertisement",
+    "priority": "Low",
+    "status": "Converted",
+    "createdAt": {
+      "$date": "2026-02-06T09:28:38.516Z"
+    },
+    "updatedAt": {
+      "$date": "2026-02-11T09:28:38.516Z"
+    },
+    "createdBy": {
+      "$oid": "PUT_USER_ID_HERE"
+    },
+    "assignedTo": {
+      "$oid": "PUT_SALES_ID_HERE"
+    },
+    "notes": [
+      {
+        "content": "Interested in enterprise plan",
+        "createdAt": {
+          "$date": "2026-02-11T09:28:38.516Z"
+        }
+      }
+    ]
+  },
+  {
+    "name": "Lead 35",
+    "email": "lead35@example.com",
+    "phone": "555-0135",
+    "source": "LinkedIn",
+    "priority": "High",
+    "status": "Converted",
+    "createdAt": {
+      "$date": "2026-01-14T09:28:38.516Z"
+    },
+    "updatedAt": {
+      "$date": "2026-02-11T09:28:38.516Z"
+    },
+    "createdBy": {
+      "$oid": "PUT_USER_ID_HERE"
+    },
+    "assignedTo": {
+      "$oid": "PUT_SALES_ID_HERE"
+    },
+    "notes": [
+      {
+        "content": "Interested in enterprise plan",
+        "createdAt": {
+          "$date": "2026-02-11T09:28:38.516Z"
+        }
+      }
+    ]
+  },
+  {
+    "name": "Lead 36",
+    "email": "lead36@example.com",
+    "phone": "555-0136",
+    "source": "Advertisement",
+    "priority": "High",
+    "status": "Converted",
+    "createdAt": {
+      "$date": "2026-01-13T09:28:38.516Z"
+    },
+    "updatedAt": {
+      "$date": "2026-02-11T09:28:38.516Z"
+    },
+    "createdBy": {
+      "$oid": "PUT_USER_ID_HERE"
+    },
+    "assignedTo": {
+      "$oid": "PUT_SALES_ID_HERE"
+    },
+    "notes": []
+  },
+  {
+    "name": "Lead 37",
+    "email": "lead37@example.com",
+    "phone": "555-0137",
+    "source": "Advertisement",
+    "priority": "Medium",
+    "status": "Converted",
+    "createdAt": {
+      "$date": "2026-01-30T09:28:38.516Z"
+    },
+    "updatedAt": {
+      "$date": "2026-02-11T09:28:38.516Z"
+    },
+    "createdBy": {
+      "$oid": "PUT_USER_ID_HERE"
+    },
+    "assignedTo": {
+      "$oid": "PUT_SALES_ID_HERE"
+    },
+    "notes": []
+  },
+  {
+    "name": "Lead 38",
+    "email": "lead38@example.com",
+    "phone": "555-0138",
+    "source": "Referral",
+    "priority": "Low",
+    "status": "Converted",
+    "createdAt": {
+      "$date": "2026-01-24T09:28:38.516Z"
+    },
+    "updatedAt": {
+      "$date": "2026-02-11T09:28:38.516Z"
+    },
+    "createdBy": {
+      "$oid": "PUT_USER_ID_HERE"
+    },
+    "assignedTo": {
+      "$oid": "PUT_SALES_ID_HERE"
+    },
+    "notes": []
+  },
+  {
+    "name": "Lead 39",
+    "email": "lead39@example.com",
+    "phone": "555-0139",
+    "source": "Manual",
+    "priority": "High",
+    "status": "Converted",
+    "createdAt": {
+      "$date": "2026-02-09T09:28:38.516Z"
+    },
+    "updatedAt": {
+      "$date": "2026-02-11T09:28:38.516Z"
+    },
+    "createdBy": {
+      "$oid": "PUT_USER_ID_HERE"
+    },
+    "assignedTo": {
+      "$oid": "PUT_SALES_ID_HERE"
+    },
+    "notes": []
+  },
+  {
+    "name": "Lead 40",
+    "email": "lead40@example.com",
+    "phone": "555-0140",
+    "source": "Advertisement",
+    "priority": "High",
+    "status": "Converted",
+    "createdAt": {
+      "$date": "2026-02-04T09:28:38.516Z"
+    },
+    "updatedAt": {
+      "$date": "2026-02-11T09:28:38.516Z"
+    },
+    "createdBy": {
+      "$oid": "PUT_USER_ID_HERE"
+    },
+    "assignedTo": {
+      "$oid": "PUT_SALES_ID_HERE"
+    },
+    "notes": []
+  },
+  {
+    "name": "Lead 41",
+    "email": "lead41@example.com",
+    "phone": "555-0141",
+    "source": "LinkedIn",
+    "priority": "High",
+    "status": "Converted",
+    "createdAt": {
+      "$date": "2026-01-18T09:28:38.516Z"
+    },
+    "updatedAt": {
+      "$date": "2026-02-11T09:28:38.516Z"
+    },
+    "createdBy": {
+      "$oid": "PUT_USER_ID_HERE"
+    },
+    "assignedTo": {
+      "$oid": "PUT_SALES_ID_HERE"
+    },
+    "notes": []
+  },
+  {
+    "name": "Lead 42",
+    "email": "lead42@example.com",
+    "phone": "555-0142",
+    "source": "LinkedIn",
+    "priority": "Low",
+    "status": "Converted",
+    "createdAt": {
+      "$date": "2026-02-02T09:28:38.516Z"
+    },
+    "updatedAt": {
+      "$date": "2026-02-11T09:28:38.516Z"
+    },
+    "createdBy": {
+      "$oid": "PUT_USER_ID_HERE"
+    },
+    "assignedTo": {
+      "$oid": "PUT_SALES_ID_HERE"
+    },
+    "notes": []
+  },
+  {
+    "name": "Lead 43",
+    "email": "lead43@example.com",
+    "phone": "555-0143",
+    "source": "Advertisement",
+    "priority": "Medium",
+    "status": "Converted",
+    "createdAt": {
+      "$date": "2026-02-05T09:28:38.516Z"
+    },
+    "updatedAt": {
+      "$date": "2026-02-11T09:28:38.516Z"
+    },
+    "createdBy": {
+      "$oid": "PUT_USER_ID_HERE"
+    },
+    "assignedTo": {
+      "$oid": "PUT_SALES_ID_HERE"
+    },
+    "notes": []
+  },
+  {
+    "name": "Lead 44",
+    "email": "lead44@example.com",
+    "phone": "555-0144",
+    "source": "LinkedIn",
+    "priority": "Medium",
+    "status": "Converted",
+    "createdAt": {
+      "$date": "2026-02-07T09:28:38.516Z"
+    },
+    "updatedAt": {
+      "$date": "2026-02-11T09:28:38.516Z"
+    },
+    "createdBy": {
+      "$oid": "PUT_USER_ID_HERE"
+    },
+    "assignedTo": {
+      "$oid": "PUT_SALES_ID_HERE"
+    },
+    "notes": []
+  },
+  {
+    "name": "Lead 45",
+    "email": "lead45@example.com",
+    "phone": "555-0145",
+    "source": "LinkedIn",
+    "priority": "High",
+    "status": "Converted",
+    "createdAt": {
+      "$date": "2026-02-11T09:28:38.516Z"
+    },
+    "updatedAt": {
+      "$date": "2026-02-11T09:28:38.516Z"
+    },
+    "createdBy": {
+      "$oid": "PUT_USER_ID_HERE"
+    },
+    "assignedTo": {
+      "$oid": "PUT_SALES_ID_HERE"
+    },
+    "notes": []
+  },
+  {
+    "name": "Lead 46",
+    "email": "lead46@example.com",
+    "phone": "555-0146",
+    "source": "LinkedIn",
+    "priority": "Low",
+    "status": "Converted",
+    "createdAt": {
+      "$date": "2026-01-25T09:28:38.516Z"
+    },
+    "updatedAt": {
+      "$date": "2026-02-11T09:28:38.516Z"
+    },
+    "createdBy": {
+      "$oid": "PUT_USER_ID_HERE"
+    },
+    "assignedTo": {
+      "$oid": "PUT_SALES_ID_HERE"
+    },
+    "notes": []
+  },
+  {
+    "name": "Lead 47",
+    "email": "lead47@example.com",
+    "phone": "555-0147",
+    "source": "Advertisement",
+    "priority": "Medium",
+    "status": "Converted",
+    "createdAt": {
+      "$date": "2026-02-11T09:28:38.516Z"
+    },
+    "updatedAt": {
+      "$date": "2026-02-11T09:28:38.516Z"
+    },
+    "createdBy": {
+      "$oid": "PUT_USER_ID_HERE"
+    },
+    "assignedTo": {
+      "$oid": "PUT_SALES_ID_HERE"
+    },
+    "notes": []
+  },
+  {
+    "name": "Lead 48",
+    "email": "lead48@example.com",
+    "phone": "555-0148",
+    "source": "Referral",
+    "priority": "Low",
+    "status": "Converted",
+    "createdAt": {
+      "$date": "2026-01-26T09:28:38.516Z"
+    },
+    "updatedAt": {
+      "$date": "2026-02-11T09:28:38.516Z"
+    },
+    "createdBy": {
+      "$oid": "PUT_USER_ID_HERE"
+    },
+    "assignedTo": {
+      "$oid": "PUT_SALES_ID_HERE"
+    },
+    "notes": []
+  },
+  {
+    "name": "Lead 49",
+    "email": "lead49@example.com",
+    "phone": "555-0149",
+    "source": "Manual",
+    "priority": "High",
+    "status": "Lost",
+    "createdAt": {
+      "$date": "2026-01-28T09:28:38.516Z"
+    },
+    "updatedAt": {
+      "$date": "2026-02-11T09:28:38.516Z"
+    },
+    "createdBy": {
+      "$oid": "PUT_USER_ID_HERE"
+    },
+    "assignedTo": {
+      "$oid": "PUT_SALES_ID_HERE"
+    },
+    "notes": [
+      {
+        "content": "Interested in enterprise plan",
+        "createdAt": {
+          "$date": "2026-02-11T09:28:38.516Z"
+        }
+      }
+    ]
+  },
+  {
+    "name": "Lead 50",
+    "email": "lead50@example.com",
+    "phone": "555-0150",
+    "source": "Manual",
+    "priority": "Low",
+    "status": "Lost",
+    "createdAt": {
+      "$date": "2026-02-10T09:28:38.516Z"
+    },
+    "updatedAt": {
+      "$date": "2026-02-11T09:28:38.516Z"
+    },
+    "createdBy": {
+      "$oid": "PUT_USER_ID_HERE"
+    },
+    "assignedTo": {
+      "$oid": "PUT_SALES_ID_HERE"
+    },
+    "notes": []
+  },
+  {
+    "name": "Lead 51",
+    "email": "lead51@example.com",
+    "phone": "555-0151",
+    "source": "Referral",
+    "priority": "Medium",
+    "status": "Lost",
+    "createdAt": {
+      "$date": "2026-01-27T09:28:38.516Z"
+    },
+    "updatedAt": {
+      "$date": "2026-02-11T09:28:38.516Z"
+    },
+    "createdBy": {
+      "$oid": "PUT_USER_ID_HERE"
+    },
+    "assignedTo": {
+      "$oid": "PUT_SALES_ID_HERE"
+    },
+    "notes": [
+      {
+        "content": "Interested in enterprise plan",
+        "createdAt": {
+          "$date": "2026-02-11T09:28:38.516Z"
+        }
+      }
+    ]
+  },
+  {
+    "name": "Lead 52",
+    "email": "lead52@example.com",
+    "phone": "555-0152",
+    "source": "Manual",
+    "priority": "Medium",
+    "status": "Lost",
+    "createdAt": {
+      "$date": "2026-01-23T09:28:38.516Z"
+    },
+    "updatedAt": {
+      "$date": "2026-02-11T09:28:38.516Z"
+    },
+    "createdBy": {
+      "$oid": "PUT_USER_ID_HERE"
+    },
+    "assignedTo": {
+      "$oid": "PUT_SALES_ID_HERE"
+    },
+    "notes": []
+  },
+  {
+    "name": "Lead 53",
+    "email": "lead53@example.com",
+    "phone": "555-0153",
+    "source": "LinkedIn",
+    "priority": "High",
+    "status": "Lost",
+    "createdAt": {
+      "$date": "2026-01-22T09:28:38.516Z"
+    },
+    "updatedAt": {
+      "$date": "2026-02-11T09:28:38.516Z"
+    },
+    "createdBy": {
+      "$oid": "PUT_USER_ID_HERE"
+    },
+    "assignedTo": {
+      "$oid": "PUT_SALES_ID_HERE"
+    },
+    "notes": []
+  },
+  {
+    "name": "Lead 54",
+    "email": "lead54@example.com",
+    "phone": "555-0154",
+    "source": "Referral",
+    "priority": "Low",
+    "status": "Lost",
+    "createdAt": {
+      "$date": "2026-02-01T09:28:38.516Z"
+    },
+    "updatedAt": {
+      "$date": "2026-02-11T09:28:38.516Z"
+    },
+    "createdBy": {
+      "$oid": "PUT_USER_ID_HERE"
+    },
+    "assignedTo": {
+      "$oid": "PUT_SALES_ID_HERE"
+    },
+    "notes": []
+  },
+  {
+    "name": "Lead 55",
+    "email": "lead55@example.com",
+    "phone": "555-0155",
+    "source": "Advertisement",
+    "priority": "High",
+    "status": "Lost",
+    "createdAt": {
+      "$date": "2026-01-27T09:28:38.516Z"
+    },
+    "updatedAt": {
+      "$date": "2026-02-11T09:28:38.516Z"
+    },
+    "createdBy": {
+      "$oid": "PUT_USER_ID_HERE"
+    },
+    "assignedTo": {
+      "$oid": "PUT_SALES_ID_HERE"
+    },
+    "notes": []
+  },
+  {
+    "name": "Lead 56",
+    "email": "lead56@example.com",
+    "phone": "555-0156",
+    "source": "Advertisement",
+    "priority": "High",
+    "status": "Lost",
+    "createdAt": {
+      "$date": "2026-01-19T09:28:38.516Z"
+    },
+    "updatedAt": {
+      "$date": "2026-02-11T09:28:38.516Z"
+    },
+    "createdBy": {
+      "$oid": "PUT_USER_ID_HERE"
+    },
+    "assignedTo": {
+      "$oid": "PUT_SALES_ID_HERE"
+    },
+    "notes": []
+  },
+  {
+    "name": "Lead 57",
+    "email": "lead57@example.com",
+    "phone": "555-0157",
+    "source": "Manual",
+    "priority": "High",
+    "status": "Lost",
+    "createdAt": {
+      "$date": "2026-01-22T09:28:38.516Z"
+    },
+    "updatedAt": {
+      "$date": "2026-02-11T09:28:38.516Z"
+    },
+    "createdBy": {
+      "$oid": "PUT_USER_ID_HERE"
+    },
+    "assignedTo": {
+      "$oid": "PUT_SALES_ID_HERE"
+    },
+    "notes": [
+      {
+        "content": "Interested in enterprise plan",
+        "createdAt": {
+          "$date": "2026-02-11T09:28:38.516Z"
+        }
+      }
+    ]
+  },
+  {
+    "name": "Lead 58",
+    "email": "lead58@example.com",
+    "phone": "555-0158",
+    "source": "LinkedIn",
+    "priority": "Medium",
+    "status": "Lost",
+    "createdAt": {
+      "$date": "2026-01-30T09:28:38.516Z"
+    },
+    "updatedAt": {
+      "$date": "2026-02-11T09:28:38.516Z"
+    },
+    "createdBy": {
+      "$oid": "PUT_USER_ID_HERE"
+    },
+    "assignedTo": {
+      "$oid": "PUT_SALES_ID_HERE"
+    },
+    "notes": []
+  },
+  {
+    "name": "Lead 59",
+    "email": "lead59@example.com",
+    "phone": "555-0159",
+    "source": "Advertisement",
+    "priority": "High",
+    "status": "Lost",
+    "createdAt": {
+      "$date": "2026-01-21T09:28:38.516Z"
+    },
+    "updatedAt": {
+      "$date": "2026-02-11T09:28:38.516Z"
+    },
+    "createdBy": {
+      "$oid": "PUT_USER_ID_HERE"
+    },
+    "assignedTo": {
+      "$oid": "PUT_SALES_ID_HERE"
+    },
+    "notes": []
+  },
+  {
+    "name": "Lead 60",
+    "email": "lead60@example.com",
+    "phone": "555-0160",
+    "source": "LinkedIn",
+    "priority": "High",
+    "status": "Lost",
+    "createdAt": {
+      "$date": "2026-01-16T09:28:38.516Z"
+    },
+    "updatedAt": {
+      "$date": "2026-02-11T09:28:38.516Z"
+    },
+    "createdBy": {
+      "$oid": "PUT_USER_ID_HERE"
+    },
+    "assignedTo": {
+      "$oid": "PUT_SALES_ID_HERE"
+    },
+    "notes": []
+  }
+]);

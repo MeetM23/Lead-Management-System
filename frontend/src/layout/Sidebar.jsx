@@ -1,12 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { LayoutDashboard, Users, PlusCircle, X, UserCheck } from 'lucide-react';
+import { LayoutDashboard, Users, PlusCircle, X, UserCheck, LogOut } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import clsx from 'clsx';
 
-const Sidebar = ({ isOpen, onClose }) => {
+const Sidebar = ({ isOpen, onClose, isCollapsed }) => {
   const location = useLocation();
-  const { user } = useAuth();
+  const { user, logout } = useAuth();
   const [profilePic, setProfilePic] = useState(user?.profilePic || null);
 
   useEffect(() => {
@@ -37,6 +37,15 @@ const Sidebar = ({ isOpen, onClose }) => {
     return `https://ui-avatars.com/api/?name=${encodeURIComponent(user?.name || 'User')}&background=6366f1&color=fff&size=80`;
   };
 
+  const getInitials = (name) => {
+    if (!name) return '?';
+    const parts = name.trim().split(/\s+/);
+    if (parts.length >= 2) {
+      return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+    }
+    return parts[0][0].toUpperCase();
+  };
+
   // Determine base path based on user role
   const basePath = user?.role === 'admin' ? '/admin/dashboard' : '/sales/dashboard';
   const profilePath = user?.role === 'admin' ? '/admin/dashboard/profile' : '/sales/dashboard/profile';
@@ -52,17 +61,35 @@ const Sidebar = ({ isOpen, onClose }) => {
   ];
 
   const links = user?.role === 'admin' ? [...commonLinks, ...adminLinks] : commonLinks;
-
   return (
     <aside
-      className={clsx(
-        "fixed left-0 top-0 h-full w-64 bg-dark text-white p-6 z-50 border-r border-white/10 transition-transform duration-300 md:translate-x-0",
-        isOpen ? "translate-x-0" : "-translate-x-full"
-      )}
+
+
+    className={clsx(
+      "fixed left-0 top-0 h-full bg-dark text-white z-50 border-r border-white/10 transition-all duration-300 flex flex-col",
+      // Desktop: respect collapsed state
+      isCollapsed ? "md:w-20" : "md:w-64",
+      // Mobile: always full width when open, slide in/out
+      isOpen ? "translate-x-0 w-64" : "-translate-x-full md:translate-x-0",
+    )}
     >
-      <div className="flex items-center justify-between mb-10">
+      {/* Header */}
+      <div className={clsx(
+        "flex items-center shrink-0 h-16 border-b border-white/10",
+        isCollapsed ? "md:justify-center md:px-2 px-6" : "justify-between px-6"
+      )}>
         <Link to="/" onClick={onClose} className="inline-block">
-          <h1 className="text-3xl font-bold tracking-tighter text-secondary">Leed<span className="text-primary">Flow</span></h1>
+          {isCollapsed ? (
+            <h1 className="hidden md:block text-xl font-bold tracking-tighter text-secondary">
+              L<span className="text-primary">F</span>
+            </h1>
+          ) : null}
+          <h1 className={clsx(
+            "text-2xl font-bold tracking-tighter text-secondary",
+            isCollapsed ? "md:hidden" : ""
+          )}>
+            Lead<span className="text-primary">Flow</span>
+          </h1>
         </Link>
         <button
           onClick={onClose}
@@ -72,7 +99,8 @@ const Sidebar = ({ isOpen, onClose }) => {
         </button>
       </div>
 
-      <nav className="flex flex-col gap-4">
+      {/* Navigation */}
+      <nav className={clsx("flex flex-col gap-1.5 flex-1 mt-4", isCollapsed ? "md:px-2 px-4" : "px-4")}>
         {links.map((link) => {
           const Icon = link.icon;
           const isActive = location.pathname === link.path;
@@ -81,30 +109,53 @@ const Sidebar = ({ isOpen, onClose }) => {
             <Link
               key={link.path}
               to={link.path}
-              onClick={() => onClose()} // Close sidebar on mobile when link is clicked
+              onClick={() => onClose()}
               className={clsx(
-                "flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-300 group",
+                "relative flex items-center gap-3 rounded-lg transition-all duration-200 group",
+                isCollapsed ? "md:justify-center md:px-0 md:py-3 px-4 py-3" : "px-4 py-3",
                 isActive
                   ? "bg-primary text-white shadow-lg shadow-primary/30"
                   : "text-gray-400 hover:bg-white/10 hover:text-white"
               )}
             >
-              <Icon size={20} className={clsx("transition-transform duration-300", isActive ? "scale-110" : "group-hover:scale-110")} />
-              <span className="font-medium tracking-wide text-lg font-heading">{link.name}</span>
+              <Icon
+                size={20}
+                className={clsx(
+                  "shrink-0 transition-transform duration-300",
+                  isActive ? "scale-110" : "group-hover:scale-110"
+                )}
+              />
+              {/* Label: always show on mobile, hide on desktop when collapsed */}
+              <span className={clsx(
+                "font-medium tracking-wide text-[15px] font-heading whitespace-nowrap",
+                isCollapsed ? "md:hidden" : ""
+              )}>
+                {link.name}
+              </span>
+
+              {/* Tooltip on hover for collapsed state (desktop only) */}
+              {isCollapsed && (
+                <div className="hidden md:block absolute left-full ml-3 px-3 py-1.5 bg-gray-900 text-white text-sm rounded-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 whitespace-nowrap z-[60] shadow-lg pointer-events-none">
+                  {link.name}
+                  <div className="absolute top-1/2 -left-1 -translate-y-1/2 w-2 h-2 bg-gray-900 rotate-45" />
+                </div>
+              )}
             </Link>
           );
         })}
-
       </nav>
 
-      <div className="absolute bottom-10 left-6 right-6 flex flex-col gap-4">
-
+      {/* Bottom Profile Section */}
+      <div className={clsx("shrink-0 border-t border-white/10", isCollapsed ? "md:px-2 px-4" : "px-4")}>
         <Link
           to={profilePath}
           onClick={() => onClose()}
-          className="flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-300 text-gray-400 hover:bg-white/10 hover:text-white"
+          className={clsx(
+            "flex items-center gap-3 rounded-lg transition-all duration-200 text-gray-400 hover:bg-white/10 hover:text-white my-2",
+            isCollapsed ? "md:justify-center md:px-0 md:py-3 px-4 py-3" : "px-4 py-3"
+          )}
         >
-          <div className="w-10 h-10 rounded-full overflow-hidden bg-primary/10 flex items-center justify-center shrink-0">
+          <div className="w-9 h-9 rounded-full overflow-hidden bg-primary/10 flex items-center justify-center shrink-0">
             {profilePic ? (
               <img
                 src={profilePic}
@@ -122,15 +173,18 @@ const Sidebar = ({ isOpen, onClose }) => {
               />
             )}
           </div>
-          <div className="text-left">
-            <p className="text-sm font-bold leading-none">{user?.name}</p>
+          <div className={clsx("text-left min-w-0", isCollapsed ? "md:hidden" : "")}>
+            <p className="text-sm font-bold leading-none truncate">{user?.name}</p>
             <p className="text-xs text-gray-400 uppercase tracking-wider mt-1">{user?.role}</p>
-            {/* <p className="text-xs text-primary mt-0.5">My Profile</p> */}
           </div>
         </Link>
       </div>
-      <div className="absolute bottom-6 left-6 text-xs text-gray-500">
-        <p>&copy; 2025 Leedflow</p>
+
+      <div className={clsx(
+        "shrink-0 pb-4 text-xs text-gray-500",
+        isCollapsed ? "md:text-center md:px-1 px-6" : "px-6"
+      )}>
+        <p>&copy; 2025 Leadflow</p>
       </div>
     </aside>
   );

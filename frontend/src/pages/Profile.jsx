@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { Save, Camera, User as UserIcon, Pencil } from 'lucide-react';
 import { LogOut, User, Menu } from 'lucide-react';
+import { SkeletonForm } from '../components/common/Skeleton';
 
 const Profile = () => {
     // const { user } = useAuth();
@@ -26,7 +27,6 @@ const Profile = () => {
    transition-all duration-200 \
    shadow-md shadow-primary/30 \
    hover:shadow-lg hover:scale-[1.03]";
-
     const LogOutbuttonClass =
         "flex items-center justify-center gap-2 \
    px-8 py-3\
@@ -210,8 +210,14 @@ const Profile = () => {
 
     if (loading) {
         return (
-            <div className="flex justify-center items-center h-64">
-                <div className="text-gray-500">Loading profile...</div>
+            <div className="max-w-4xl mx-auto space-y-8 p-4">
+                <div className="text-center space-y-3">
+                    <div className="h-12 w-64 bg-gray-200 rounded mx-auto animate-pulse"></div>
+                    <div className="h-4 w-96 bg-gray-200 rounded mx-auto animate-pulse"></div>
+                </div>
+                <div className="bg-white rounded-3xl shadow-xl border border-gray-200 overflow-hidden p-8">
+                    <SkeletonForm />
+                </div>
             </div>
         );
     }

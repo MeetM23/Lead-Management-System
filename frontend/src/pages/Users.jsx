@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import { Search } from 'lucide-react';
+import { SkeletonTable } from '../components/common/Skeleton';
 
 const Users = () => {
     const [users, setUsers] = useState([]);
@@ -42,7 +43,16 @@ const Users = () => {
     };
 
     if (loading) {
-        return <div className="flex justify-center items-center h-64">Loading...</div>;
+        return (
+            <div className="space-y-6">
+                <div>
+                    <div className="h-8 w-48 bg-gray-200 rounded animate-pulse mb-2"></div>
+                    <div className="h-4 w-32 bg-gray-200 rounded animate-pulse"></div>
+                </div>
+                <div className="h-10 w-full md:w-80 bg-gray-200 rounded animate-pulse"></div>
+                <SkeletonTable rows={5} />
+            </div>
+        );
     }
 
     const filteredUsers = users.filter((u) => {

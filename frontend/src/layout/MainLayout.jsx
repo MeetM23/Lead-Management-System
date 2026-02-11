@@ -7,6 +7,7 @@ import gsap from 'gsap';
 const MainLayout = () => {
   const mainRef = useRef(null);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [isCollapsed, setIsCollapsed] = useState(true);
 
   useEffect(() => {
     // Simple entry animation for the main content area
@@ -24,14 +25,23 @@ const MainLayout = () => {
     setIsSidebarOpen(false);
   };
 
+  const toggleCollapse = () => {
+    setIsCollapsed(!isCollapsed);
+  };
+
   return (
     <div className="min-h-screen bg-light">
-      <Sidebar isOpen={isSidebarOpen} onClose={closeSidebar} />
-      <Navbar onMenuClick={toggleSidebar} />
+      <Sidebar isOpen={isSidebarOpen} onClose={closeSidebar} isCollapsed={isCollapsed} />
+      <Navbar
+        onMenuClick={toggleSidebar}
+        isCollapsed={isCollapsed}
+        onToggleCollapse={toggleCollapse}
+      />
 
       <main
         ref={mainRef}
-        className="pt-24 pb-8 px-4 md:px-8 md:ml-64 min-h-screen transition-all duration-300"
+        className={`pt-20 pb-8 px-4 md:px-8 min-h-screen transition-all duration-300 ${isCollapsed ? 'md:ml-20' : 'md:ml-64'
+          }`}
       >
         <div className="max-w-7xl mx-auto">
           <Outlet />

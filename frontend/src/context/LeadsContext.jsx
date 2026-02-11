@@ -166,6 +166,24 @@ export const LeadsProvider = ({ children }) => {
     }
   };
 
+  const addNote = async (leadId, content) => {
+    try {
+      const response = await fetch(`/api/leads/${leadId}/notes`, {
+        method: 'POST',
+        headers: getAuthHeaders(),
+        body: JSON.stringify({ content }),
+      });
+      const result = await response.json();
+      if (response.ok) {
+        setLeads((prev) => prev.map((lead) => (lead._id === leadId ? result.data : lead)));
+        return { success: true, data: result.data };
+      }
+      return { success: false, message: result.message };
+    } catch {
+      return { success: false, message: 'Network error' };
+    }
+  };
+
   return (
     <LeadsContext.Provider
       value={{
@@ -178,6 +196,7 @@ export const LeadsProvider = ({ children }) => {
         updateLeadStatus,
         assignLead,
         deleteLead,
+        addNote,
         refetchLeads: fetchLeads,
       }}
     >
