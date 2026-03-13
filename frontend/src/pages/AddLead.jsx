@@ -16,7 +16,7 @@ const AddLead = () => {
     email: '',
     phone: '',
     source: 'Website',
-    priority: 'High',
+    priority: 'Medium',
     assignedTo: '', // Admin must assign to sales user
   });
 
@@ -148,8 +148,8 @@ const AddLead = () => {
               className="w-full px-4 py-3 rounded-lg border border-gray-200 focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all bg-white"
             >
               <option value="High">High</option>
-              <option value="Medium" selected>Medium</option>
-              <option value="Low">Low</option>
+              <option value="Medium">Medium</option>
+              <option value="Low" >Low</option>
             </select>
           </div>
 

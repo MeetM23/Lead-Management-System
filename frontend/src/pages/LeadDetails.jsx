@@ -5,7 +5,7 @@ import { useLeads } from '../context/LeadsContext';
 import {
     ArrowLeft, Mail, Phone, Globe, Calendar,
     Send, MessageSquare, Clock, User as UserIcon,
-    Pencil, Save, X
+    Pencil, Save, X, Sparkles, Copy, Check, RefreshCw, Loader2
 } from 'lucide-react';
 import gsap from 'gsap';
 import { SkeletonLeadDetails } from '../components/common/Skeleton';
@@ -32,6 +32,12 @@ const LeadDetails = () => {
         source: ''
     });
     const [saving, setSaving] = useState(false);
+
+    // AI Generator State
+    const [aiLoading, setAiLoading] = useState(false);
+    const [aiMessage, setAiMessage] = useState('');
+    const [selectedTone, setSelectedTone] = useState('Professional');
+    const [copied, setCopied] = useState(false);
 
     const basePath = user?.role === 'admin' ? '/admin/dashboard' : '/sales/dashboard';
 
@@ -130,6 +136,40 @@ const LeadDetails = () => {
         }
     };
 
+    const handleGenerateAI = async () => {
+        setAiLoading(true);
+        setAiMessage('');
+        try {
+            const token = localStorage.getItem('token');
+            const res = await fetch(`/api/ai/generate-followup/${lead._id}`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    Authorization: `Bearer ${token}`,
+                },
+                body: JSON.stringify({ tone: selectedTone }),
+            });
+            const data = await res.json();
+            if (data.success) {
+                setAiMessage(data.message);
+            } else {
+                alert(data.message || 'Failed to generate message');
+            }
+        } catch (error) {
+            console.error('AI Generation Error:', error);
+            alert('Failed to connect to AI service');
+        } finally {
+            setAiLoading(false);
+        }
+    };
+
+    const copyToClipboard = () => {
+        if (!aiMessage) return;
+        navigator.clipboard.writeText(aiMessage);
+        setCopied(true);
+        setTimeout(() => setCopied(false), 2000);
+    };
+
     const getStatusColor = (status) => {
         switch (status) {
             case 'New': return 'bg-blue-100 text-blue-700 border-blue-200';
@@ -171,33 +211,19 @@ const LeadDetails = () => {
         <div ref={pageRef} className="space-y-6">
             {/* Header */}
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-                <div>
-                    <button
-                        onClick={() => navigate(`${basePath}/leads`)}
-                        className="text-gray-500 hover:text-dark flex items-center gap-2 mb-2 transition-colors text-sm"
-                    >
-                        <ArrowLeft size={16} /> Back to Leads
-                    </button>
-                    {isEditing ? (
-                        <input
-                            type="text"
-                            value={editFormData.name}
-                            onChange={(e) => setEditFormData({ ...editFormData, name: e.target.value })}
-                            className="text-3xl font-heading font-bold text-dark border-b-2 border-primary/50 focus:border-primary outline-none bg-transparent w-full md:w-auto"
-                            placeholder="Lead Name"
-                        />
-                    ) : (
-                        <h1 className="text-3xl font-heading font-bold text-dark flex items-center gap-3">
-                            {lead.name}
-                            <button
-                                onClick={() => setIsEditing(true)}
-                                className="text-gray-400 hover:text-primary transition-colors"
-                            >
-                                <Pencil size={18} />
-                            </button>
-                        </h1>
+                <div className="flex items-center gap-3">
+                    <h1 className="text-3xl font-heading font-bold text-dark">
+                        {lead.name}
+                    </h1>
+
+                    {!isEditing && (
+                        <button
+                            onClick={() => setIsEditing(true)}
+                            className="p-2 rounded-lg hover:bg-gray-100 text-gray-500 hover:text-primary transition-all"
+                        >
+                            <Pencil size={18} />
+                        </button>
                     )}
-                    <p className="text-gray-400 text-sm mt-1 font-mono">ID: {lead._id}</p>
                 </div>
 
                 {/* Edit Controls */}
@@ -372,7 +398,85 @@ const LeadDetails = () => {
                 </div>
 
                 {/* Activity Timeline */}
-                <div className="lg:col-span-2">
+                <div className="lg:col-span-2 space-y-6">
+                    {/* AI Follow-Up Generator */}
+                    <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
+                        <div className="flex items-center justify-between mb-4">
+                            <div className="flex items-center gap-2">
+                                <Sparkles size={20} className="text-violet-600" />
+                                <h3 className="font-bold text-dark text-lg">AI Follow-Up Generator</h3>
+                            </div>
+                            <span className="text-[10px] font-bold uppercase bg-gradient-to-r from-violet-600 to-indigo-600 text-white px-2 py-0.5 rounded-full">
+                                AI Powered
+                            </span>
+                        </div>
+
+                        <div className="bg-gray-50/50 rounded-xl p-4 border border-gray-100">
+                            <div className="flex flex-wrap items-end gap-4 mb-4">
+                                <div className="flex-1 min-w-[200px]">
+                                    <label className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2 block">
+                                        Select Tone
+                                    </label>
+                                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                                        {['Professional', 'Friendly', 'Assertive', 'Urgent'].map((tone) => (
+                                            <button
+                                                key={tone}
+                                                onClick={() => setSelectedTone(tone)}
+                                                className={`px-3 py-2 rounded-lg text-sm font-medium transition-all ${selectedTone === tone
+                                                        ? 'bg-white text-primary border border-primary shadow-sm ring-1 ring-primary/20'
+                                                        : 'bg-white text-gray-500 border border-gray-200 hover:border-gray-300'
+                                                    }`}
+                                            >
+                                                {tone}
+                                            </button>
+                                        ))}
+                                    </div>
+                                </div>
+                                <button
+                                    onClick={handleGenerateAI}
+                                    disabled={aiLoading}
+                                    className="flex items-center gap-2 bg-gradient-to-r from-violet-600 to-indigo-600 text-white px-6 py-2.5 rounded-xl hover:shadow-lg hover:shadow-violet-500/20 transition-all font-medium disabled:opacity-70 disabled:cursor-not-allowed"
+                                >
+                                    {aiLoading ? (
+                                        <>
+                                            <Loader2 size={18} className="animate-spin" />
+                                            Generating...
+                                        </>
+                                    ) : (
+                                        <>
+                                            <Sparkles size={18} />
+                                            Generate Follow-Up
+                                        </>
+                                    )}
+                                </button>
+                            </div>
+
+                            {aiMessage && (
+                                <div className="relative group">
+                                    <div className="bg-white border border-gray-200 rounded-xl p-4 text-gray-700 text-sm leading-relaxed whitespace-pre-wrap shadow-sm">
+                                        {aiMessage}
+                                    </div>
+                                    <div className="absolute top-2 right-2 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                                        <button
+                                            onClick={copyToClipboard}
+                                            className="p-1.5 bg-white text-gray-500 hover:text-primary border border-gray-200 rounded-lg shadow-sm transition-colors"
+                                            title="Copy to clipboard"
+                                        >
+                                            {copied ? <Check size={14} /> : <Copy size={14} />}
+                                        </button>
+                                        <button
+                                            onClick={() => setAiMessage('')}
+                                            className="p-1.5 bg-white text-gray-500 hover:text-red-500 border border-gray-200 rounded-lg shadow-sm transition-colors"
+                                            title="Clear message"
+                                        >
+                                            <X size={14} />
+                                        </button>
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+                    </div>
+
                     <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
                         <div className="flex items-center gap-2 mb-6">
                             <MessageSquare size={20} className="text-primary" />

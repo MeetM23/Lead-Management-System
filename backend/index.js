@@ -8,6 +8,7 @@ import connectDB from "./config/db.js";
 import authRoutes from "./routes/authRoutes.js";
 import leadRoutes from "./routes/leadRoutes.js";
 import userRoutes from "./routes/userRoutes.js";
+import aiRoutes from "./routes/aiRoutes.js";
 import seedDummyData from "./utils/seedDummyData.js";
 
 dotenv.config();
@@ -31,6 +32,7 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use("/api/auth", authRoutes);
 app.use("/api/leads", leadRoutes);
 app.use("/api/users", userRoutes);
+app.use("/api/ai", aiRoutes);
 
 // Make uploads folder static
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
