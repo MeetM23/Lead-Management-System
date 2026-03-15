@@ -19,7 +19,7 @@ export const generateFollowUp = async (req, res) => {
 
 
         // 1. Validate Lead ID & Fetch Lead
-        const lead = await Lead.findById(leadId)
+        const lead = await Lead.findOne({ leadId })
             .populate("assignedTo", "name email")
             .populate("createdBy", "name")
             .populate("notes");

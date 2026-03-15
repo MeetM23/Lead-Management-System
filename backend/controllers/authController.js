@@ -29,11 +29,16 @@ const registerUser = async (req, res) => {
     // 🔐 ADMIN BY EMAIL RULE
     const role = email === ADMIN_EMAIL ? "admin" : "sales";
 
+    // Generate sequential Employee ID (USR-XXXX)
+    const count = await User.countDocuments();
+    const employeeId = `USR-${String(count + 1).padStart(4, "0")}`;
+
     const user = await User.create({
       name,
       email,
       password: hashedPassword,
       role,
+      employeeId,
     });
 
     const token = jwt.sign(
@@ -98,7 +103,7 @@ const loginUser = async (req, res) => {
       message: "Login successful",
       token,
       user: {
-        id: user._id,
+        _id: user._id,
         name: user.name,
         email: user.email,
         role: user.role,

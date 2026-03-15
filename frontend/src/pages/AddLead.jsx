@@ -2,6 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useLeads } from '../context/LeadsContext';
 import { useAuth } from '../context/AuthContext';
+import { useNotifications } from '../context/NotificationContext';
 import { Save, X } from 'lucide-react';
 import gsap from 'gsap';
 
@@ -9,6 +10,7 @@ const AddLead = () => {
   const navigate = useNavigate();
   const { addLead, users } = useLeads();
   const { user } = useAuth();
+  const { refetchNotifications } = useNotifications();
   const formRef = useRef(null);
 
   const [formData, setFormData] = useState({
@@ -55,6 +57,7 @@ const AddLead = () => {
     const result = await addLead(leadData);
 
     if (result?.success) {
+      refetchNotifications(); // Refresh notifications in case any were generated for this user
       setFormData({
         name: '',
         email: '',

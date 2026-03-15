@@ -6,6 +6,8 @@ import {
   updateLead,
   deleteLead,
   addNote,
+  updateNote,
+  deleteNote,
   getStats,
   assignLead
 } from '../controllers/leadController.js';
@@ -17,23 +19,24 @@ const router = express.Router();
 // Apply auth middleware to all routes
 router.use(protect);
 
-// Admin Dashboard Stats
-router.get('/stats', authorize('admin'), getStats);
+// Dashboard Stats (Role-based logic in controller)
+router.get('/stats', getStats);
 
 // General Lead Routes
 router.route('/')
   .get(getLeads)
   .post(createLead); // Both admin and sales can create (logic in controller)
 
-router.route('/:id')
+router.route('/:leadId')
   .get(getLeadById)
   .put(updateLead) // Logic inside controller handles role specifics
   .delete(authorize('admin'), deleteLead);
 
 // Assign/Reassign Lead (Admin Only)
-router.patch('/:id/assign', authorize('admin'), assignLead);
+router.patch('/:leadId/assign', authorize('admin'), assignLead);
 
 // Notes
-router.post('/:id/notes', addNote);
+router.post('/:leadId/notes', addNote);
+router.route('/:leadId/notes/:noteId').put(updateNote).delete(deleteNote);
 
 export default router;

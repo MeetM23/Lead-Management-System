@@ -5,6 +5,7 @@ const leadSchema = new mongoose.Schema(
     leadId: {
       type: String,
       unique: true,
+      required: true,
     },
     name: {
       type: String,
@@ -68,7 +69,32 @@ const noteSchema = new mongoose.Schema(
   }
 );
 
-leadSchema.add({ notes: [noteSchema] });
+const activitySchema = new mongoose.Schema(
+  {
+    type: {
+      type: String,
+      required: true,
+    },
+    description: {
+      type: String,
+      required: true,
+    },
+    createdBy: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      required: true,
+    },
+    noteId: {
+      type: mongoose.Schema.Types.ObjectId,
+    },
+    createdAt: {
+      type: Date,
+      default: Date.now,
+    },
+  }
+);
+
+leadSchema.add({ notes: [noteSchema], activities: [activitySchema] });
 
 const Lead = mongoose.model("Lead", leadSchema);
 export default Lead;

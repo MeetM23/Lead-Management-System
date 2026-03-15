@@ -4,6 +4,7 @@ import { Menu, PanelLeftClose, PanelLeft } from 'lucide-react';
 import Breadcrumb from '../components/Breadcrumb';
 import { Link } from 'react-router-dom';
 import { useNavigate } from "react-router-dom";
+import NotificationDropdown from '../components/layout/NotificationDropdown';
 
 const Navbar = ({ onMenuClick, isCollapsed, onToggleCollapse }) => {
   const navigate = useNavigate();
@@ -52,27 +53,31 @@ const Navbar = ({ onMenuClick, isCollapsed, onToggleCollapse }) => {
           <Breadcrumb />
         </div>
       </div>
-      <div className="flex items-center"
-        onClick={() => navigate(`/${user?.role}/dashboard/profile`)}>
-        {/* Decorative Avatar — non-clickable, no dropdown, no events */}
-        <div className="w-9 h-9 rounded-full overflow-hidden bg-primary/10 flex items-center justify-center shrink-0 select-none" style={{ cursor: 'default' }}>
-          {user?.profilePic ? (
-            <img
-              src={user.profilePic}
-              alt=""
-              className="w-full h-full object-cover cursor-pointer"
-              draggable={false}
-              onError={(e) => {
-                e.target.style.display = 'none';
-                e.target.nextSibling && (e.target.nextSibling.style.display = 'flex');
-              }}
-            />
-          ) : null}
-          <Link to={`/${user?.role}/dashboard/profile`}
-            className={`text-sm font-bold text-primary ${user?.profilePic ? 'hidden' : 'flex'} items-center justify-center w-full h-full`}
-          >
-            {getInitials(user?.name)}
-          </Link>
+      <div className="flex items-center gap-2 md:gap-4">
+        {user && <NotificationDropdown />}
+
+        <div className="flex items-center"
+          onClick={() => navigate(`/${user?.role}/dashboard/profile`)}>
+          {/* Decorative Avatar — non-clickable, no dropdown, no events */}
+          <div className="w-9 h-9 rounded-full overflow-hidden bg-primary/10 flex items-center justify-center shrink-0 select-none" style={{ cursor: 'default' }}>
+            {user?.profilePic ? (
+              <img
+                src={user.profilePic}
+                alt=""
+                className="w-full h-full object-cover cursor-pointer"
+                draggable={false}
+                onError={(e) => {
+                  e.target.style.display = 'none';
+                  e.target.nextSibling && (e.target.nextSibling.style.display = 'flex');
+                }}
+              />
+            ) : null}
+            <Link to={`/${user?.role}/dashboard/profile`}
+              className={`text-sm font-bold text-primary ${user?.profilePic ? 'hidden' : 'flex'} items-center justify-center w-full h-full`}
+            >
+              {getInitials(user?.name)}
+            </Link>
+          </div>
         </div>
       </div>
     </header>

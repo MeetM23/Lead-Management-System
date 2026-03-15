@@ -2,15 +2,47 @@ import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { groupLeadsByDay, groupLeadsBySource } from '../../utils/analyticsUtils';
 
-const AnalyticsCharts = ({ leads = [] }) => {
+const AnalyticsCharts = ({ stats, leads = [] }) => {
     const [hoveredPoint, setHoveredPoint] = useState(null);
     const [timeRange, setTimeRange] = useState(7); // 7 or 30 days
 
     // --- 1. DATA PREPARATION ---
 
-    // A) Leads Trend (Dynamic)
-    const groupedData = groupLeadsByDay(leads, timeRange);
-    // groupedData = [{ date: 'Mon', count: 5, fullDate: '...' }, ...]
+    const processGrowthData = () => {
+        if (stats?.leadsOverTime?.length > 0) {
+            // Map backend data by YYYY-MM-DD
+            const statsMap = {};
+            stats.leadsOverTime.forEach(item => {
+                statsMap[item._id] = item.count;
+            });
+
+            const result = [];
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+
+            for (let i = timeRange - 1; i >= 0; i--) {
+                const d = new Date(today);
+                d.setDate(today.getDate() - i);
+
+                // Format local date to match backend's $dateToString output
+                const year = d.getFullYear();
+                const month = String(d.getMonth() + 1).padStart(2, '0');
+                const day = String(d.getDate()).padStart(2, '0');
+                const key = `${year}-${month}-${day}`;
+
+                result.push({
+                    date: d.toLocaleDateString(undefined, { month: 'short', day: 'numeric' }),
+                    fullDate: d.toLocaleDateString(undefined, { weekday: 'short', year: 'numeric', month: 'long', day: 'numeric' }),
+                    count: statsMap[key] || 0
+                });
+            }
+            return result;
+        }
+        // Fallback to client-side grouping if needed
+        return groupLeadsByDay(leads || [], timeRange);
+    };
+
+    const groupedData = processGrowthData();
 
     const counts = groupedData.map(d => d.count);
     const maxCount = Math.max(...counts, 1); // Ensure at least 1 to avoid div by zero
@@ -22,8 +54,7 @@ const AnalyticsCharts = ({ leads = [] }) => {
 
     // Generate SVG Path
     const points = groupedData.map((d, i) => {
-        const x = (i / (groupedData.length - 1)) * chartWidth;
-        // Invert Y axis (SVG 0 is top)
+        const x = (i / (Math.max(groupedData.length - 1, 1))) * chartWidth;
         const y = chartHeight - (d.count / maxY) * chartHeight;
         return `${i === 0 ? 'M' : 'L'} ${x} ${y}`;
     }).join(' ');
@@ -31,9 +62,33 @@ const AnalyticsCharts = ({ leads = [] }) => {
     // Area Path (Close the loop at bottom corners)
     const areaPath = `${points} L ${chartWidth} ${chartHeight} L 0 ${chartHeight} Z`;
 
-    // B) Source Distribution (Dynamic)
-    const sources = groupLeadsBySource(leads);
-    const totalLeads = leads.length || 0;
+    // B) Source Distribution
+    const processSourceData = () => {
+        const COLORS = ['bg-violet-500', 'bg-blue-500', 'bg-emerald-500', 'bg-amber-500', 'bg-red-500', 'bg-pink-500', 'bg-indigo-500'];
+        const STROKES = ['#8b5cf6', '#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#ec4899', '#6366f1'];
+
+        if (stats?.leadsBySource?.length > 0) {
+            let total = 0;
+            const sortedSources = [...stats.leadsBySource].sort((a, b) => b.count - a.count);
+            const sources = sortedSources.map((item, index) => {
+                total += item.count;
+                return {
+                    name: item._id || 'Unknown',
+                    value: item.count,
+                    hex: STROKES[index % STROKES.length],
+                    bg: COLORS[index % COLORS.length]
+                };
+            });
+            if (total > 0) sources.forEach(s => s.percent = Math.round((s.value / total) * 100));
+            return { sources, total };
+        }
+        // Fallback implementation
+        const sources = groupLeadsBySource(leads || []);
+        const total = (leads || []).length;
+        return { sources, total };
+    };
+
+    const { sources, total: totalLeads } = processSourceData();
 
     // --- RENDER ---
     return (
@@ -94,7 +149,7 @@ const AnalyticsCharts = ({ leads = [] }) => {
 
                         {/* Interactive Dots */}
                         {groupedData.map((d, i) => {
-                            const x = (i / (groupedData.length - 1)) * chartWidth;
+                            const x = (i / (Math.max(groupedData.length - 1, 1))) * chartWidth;
                             const y = chartHeight - (d.count / maxY) * chartHeight;
                             return (
                                 <circle
@@ -161,8 +216,11 @@ const AnalyticsCharts = ({ leads = [] }) => {
                                 {(() => {
                                     let accumulated = 0;
                                     return sources.map((item, i) => {
+                                        // Use exact percentages to prevent gap accumulation
                                         const percent = (item.value / totalLeads) * 100;
-                                        const dashArray = `${percent}, 100`;
+                                        // The dashArray MUST sum to exactly 100 (the full circumference)
+                                        // so that dashOffset arithmetic aligns perfectly without shifting.
+                                        const dashArray = `${percent} ${100 - percent}`;
                                         const dashOffset = 100 - accumulated;
                                         accumulated += percent;
 

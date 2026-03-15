@@ -129,7 +129,7 @@ const Users = () => {
                                     <td className='px-6 py-4'>
                                         <div className='flex gap-3' >
                                             {u._id && (
-                                                <button onClick={() => navigate(`/admin/dashboard/users/${u._id}`)} className='px-2 text-sm rounded-md bg-blue-100 text-blue-500 hover:bg-blue-200 transition ' >View Profile</button>
+                                                <button onClick={() => navigate(`/admin/dashboard/users/${u.employeeId}`)} className='px-2 text-sm rounded-md bg-blue-100 text-blue-500 hover:bg-blue-200 transition ' >View Profile</button>
                                             )}
                                         </div>
                                     </td>

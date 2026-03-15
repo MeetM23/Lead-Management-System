@@ -4,7 +4,7 @@ import { useAuth } from '../context/AuthContext';
 import { ArrowLeft, Trash2, Calendar, Mail, Phone, Hash, Shield, User } from 'lucide-react';
 
 const AdminUserProfile = () => {
-  const { userId } = useParams();
+  const { employeeId } = useParams();
   const { user } = useAuth();
   const navigate = useNavigate();
 
@@ -14,7 +14,7 @@ const AdminUserProfile = () => {
   const fetchUser = useCallback(async () => {
     try {
       const token = localStorage.getItem('token');
-      const res = await fetch(`/api/users/${userId}`, {
+      const res = await fetch(`/api/users/${employeeId}`, {
         headers: {
           'Content-Type': 'application/json',
           Authorization: `Bearer ${token}`,
@@ -37,7 +37,7 @@ const AdminUserProfile = () => {
     } finally {
       setLoading(false);
     }
-  }, [userId]);
+  }, [employeeId]);
 
   useEffect(() => {
     if (user?.role === 'admin') {
@@ -52,7 +52,7 @@ const AdminUserProfile = () => {
 
     try {
       const token = localStorage.getItem('token');
-      const res = await fetch(`/api/users/${userId}/terminate`, {
+      const res = await fetch(`/api/users/${employeeId}/terminate`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',

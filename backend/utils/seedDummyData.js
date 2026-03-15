@@ -134,7 +134,7 @@ const seedDummyData = async () => {
             }
 
             leads.push({
-                leadId: `LEAD-${1000 + i}`,
+                leadId: `LD-${String(i + 1).padStart(4, "0")}`,
                 name: name,
                 email: name.toLowerCase().replace(" ", ".") + "@example.com",
                 phone: `+91 9${getRandomInt(100000000, 999999999)}`,
