@@ -42,6 +42,8 @@ const limiter = rateLimit({
 });
 app.use("/api", limiter);
 
+app.use(cors()); // Allow all temporarily as requested
+
 app.use(cors({
   origin: [
     "http://localhost:5173",
