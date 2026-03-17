@@ -42,27 +42,14 @@ const limiter = rateLimit({
 });
 app.use("/api", limiter);
 
+app.set("trust proxy", 1);
+
 app.use(cors({
-  origin: function (origin, callback) {
-    const allowedOrigins = [
-      "http://localhost:5173",
-      "https://lead-management-system-seven-pi.vercel.app"
-    ];
-    // Allow if no origin (e.g., mobile apps, curl)
-    if (!origin) return callback(null, true);
-    
-    // Check strict matches
-    if (allowedOrigins.indexOf(origin) !== -1) {
-      return callback(null, true);
-    }
-    
-    // Check regex matches for Vercel preview domains
-    if (/\.vercel\.app$/.test(origin)) {
-      return callback(null, true);
-    }
-    
-    callback(new Error('Not allowed by CORS'));
-  },
+  origin: [
+    "http://localhost:5173",
+    "https://leadflow-sigma-brown.vercel.app",
+    "https://leadflow-app.vercel.app"
+  ],
   credentials: true
 }));
 app.options("*", cors()); // Ensure preflight is handled across all routes
