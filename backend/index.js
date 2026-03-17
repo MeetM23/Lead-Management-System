@@ -63,6 +63,14 @@ app.use(cors({
     
     callback(new Error('Not allowed by CORS'));
   },
+app.set("trust proxy", 1);
+
+app.use(cors({
+  origin: [
+    "http://localhost:5173",
+    "https://leadflow-sigma-brown.vercel.app",
+    "https://leadflow-app.vercel.app"
+  ],
   credentials: true
 }));
 app.options("*", cors()); // Ensure preflight is handled across all routes
