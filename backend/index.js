@@ -30,15 +30,17 @@ const app = express();
 
 app.set("trust proxy", 1);
 
-app.use(cors({
+const corsOptions = {
   origin: [
     "http://localhost:5173",
     "https://leadflow-sigma-brown.vercel.app",
     "https://leadflow-app.vercel.app"
   ],
   credentials: true
-}));
-app.options("*", cors()); // Ensure preflight is handled across all routes
+};
+
+app.use(cors(corsOptions));
+app.options("*", cors(corsOptions)); // Ensure preflight is handled across all routes with correct options
 
 if (process.env.NODE_ENV === 'development') {
   app.use(morgan('dev'));
