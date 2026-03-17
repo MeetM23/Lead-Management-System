@@ -5,6 +5,7 @@ import Breadcrumb from '../components/Breadcrumb';
 import { Link } from 'react-router-dom';
 import { useNavigate } from "react-router-dom";
 import NotificationDropdown from '../components/layout/NotificationDropdown';
+import logoImg from '../assets/favicon.png';
 
 const Navbar = ({ onMenuClick, isCollapsed, onToggleCollapse }) => {
   const navigate = useNavigate();
@@ -36,7 +37,7 @@ const Navbar = ({ onMenuClick, isCollapsed, onToggleCollapse }) => {
 
         {/* Mobile logo */}
         <div className="md:hidden flex items-center gap-2">
-          <img src="/src/assets/favicon.png" alt="Logo" className="w-7 h-7 rounded-md shrink-0" />
+          <img src={logoImg} alt="Logo" className="w-7 h-7 rounded-md shrink-0" />
           <span className="font-bold text-lg font-heading text-dark">LeadFlow</span>
         </div>
 

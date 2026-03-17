@@ -22,6 +22,7 @@ import Features from '../components/landing/Features';
 import Testimonials from '../components/landing/Testimonials';
 import Problem from '../components/landing/Problem';
 import Contact from '../components/landing/Contact';
+import logoImg from '../assets/favicon.png';
 
 const LandingPage = () => {
   const navigate = useNavigate();
@@ -45,7 +46,7 @@ const LandingPage = () => {
           onClick={() => { navigate('/'); setMobileOpen(false); }}
           className="font-bold text-2xl text-gray-900 flex items-center gap-2"
         >
-          <img src="/src/assets/favicon.png" alt="Logo" className="w-8 h-8 rounded-md shrink-0" />
+          <img src={logoImg} alt="Logo" className="w-8 h-8 rounded-md shrink-0" />
           <span>Lead<span className="text-blue-600">Flow</span></span>
         </button>
         <nav className="hidden md:flex items-center gap-8">

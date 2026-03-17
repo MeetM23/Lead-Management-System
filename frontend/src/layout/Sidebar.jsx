@@ -3,6 +3,7 @@ import { Link, useLocation } from 'react-router-dom';
 import { LayoutDashboard, Users, PlusCircle, X, UserCheck, LogOut } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import clsx from 'clsx';
+import logoImg from '../assets/favicon.png';
 
 // Get API URL from environment variables
 const API_URL = import.meta.env.VITE_API_URL || '';
@@ -82,7 +83,7 @@ const Sidebar = ({ isOpen, onClose, isCollapsed }) => {
         isCollapsed ? "md:justify-center md:px-2 px-6" : "justify-between px-6"
       )}>
         <Link to="/" onClick={onClose} className="flex items-center gap-2">
-          <img src="/src/assets/favicon.png" alt="Logo" className="w-8 h-8 rounded-lg shrink-0" />
+          <img src={logoImg} alt="Logo" className="w-8 h-8 rounded-lg shrink-0" />
           <h1 className={clsx(
             "text-2xl font-bold tracking-tighter text-secondary truncate",
             isCollapsed ? "hidden" : "block"
