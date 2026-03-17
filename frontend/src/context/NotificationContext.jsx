@@ -1,6 +1,9 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { useAuth } from './AuthContext';
 
+// Get API URL from environment variables
+const API_URL = import.meta.env.VITE_API_URL || '';
+
 const NotificationContext = createContext();
 
 export const NotificationProvider = ({ children }) => {
@@ -13,7 +16,7 @@ export const NotificationProvider = ({ children }) => {
             const token = localStorage.getItem('token');
             if (!token) return;
 
-            const res = await fetch('/api/notifications', {
+            const res = await fetch(`${API_URL}/api/notifications`, {
                 headers: {
                     'Authorization': `Bearer ${token}`
                 }
@@ -44,7 +47,7 @@ export const NotificationProvider = ({ children }) => {
     const markAsRead = async (id) => {
         try {
             const token = localStorage.getItem('token');
-            const res = await fetch(`/api/notifications/${id}/read`, {
+            const res = await fetch(`${API_URL}/api/notifications/${id}/read`, {
                 method: 'PATCH',
                 headers: {
                     'Authorization': `Bearer ${token}`
@@ -64,7 +67,7 @@ export const NotificationProvider = ({ children }) => {
     const markAllAsRead = async () => {
         try {
             const token = localStorage.getItem('token');
-            const res = await fetch('/api/notifications/read-all', {
+            const res = await fetch(`${API_URL}/api/notifications/read-all`, {
                 method: 'PATCH',
                 headers: {
                     'Authorization': `Bearer ${token}`

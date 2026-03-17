@@ -4,6 +4,9 @@ import { useNavigate } from 'react-router-dom';
 import { Search } from 'lucide-react';
 import { SkeletonTable } from '../components/common/Skeleton';
 
+// Get API URL from environment variables
+const API_URL = import.meta.env.VITE_API_URL || '';
+
 const Users = () => {
     const [users, setUsers] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -19,7 +22,7 @@ const Users = () => {
     const fetchUsers = async () => {
         try {
             const token = localStorage.getItem('token');
-            const response = await fetch('/api/users/sales', {
+            const response = await fetch(`${API_URL}/api/users/sales`, {
                 headers: {
                     'Content-Type': 'application/json',
                     Authorization: `Bearer ${token}`,

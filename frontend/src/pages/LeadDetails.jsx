@@ -11,6 +11,9 @@ import {
 import gsap from 'gsap';
 import { SkeletonLeadDetails } from '../components/common/Skeleton';
 
+// Get API URL from environment variables
+const API_URL = import.meta.env.VITE_API_URL || '';
+
 const LeadDetails = () => {
     const { leadId } = useParams();
     const { user } = useAuth();
@@ -198,7 +201,7 @@ const LeadDetails = () => {
         try {
             const token = localStorage.getItem('token');
 
-            const res = await fetch("/api/ai/generate-followup", {
+            const res = await fetch(`${API_URL}/api/ai/generate-followup`, {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",

@@ -4,6 +4,9 @@ import { Save, Camera, User as UserIcon, Pencil } from 'lucide-react';
 import { LogOut, User, Menu } from 'lucide-react';
 import { SkeletonForm } from '../components/common/Skeleton';
 
+// Get API URL from environment variables
+const API_URL = import.meta.env.VITE_API_URL || '';
+
 const Profile = () => {
     // const { user } = useAuth();
     const { user, logout, updateUser } = useAuth();
@@ -45,7 +48,7 @@ const Profile = () => {
     const fetchProfile = async () => {
         try {
             const token = localStorage.getItem('token');
-            const response = await fetch('/api/users/me', {
+            const response = await fetch(`${API_URL}/api/users/me`, {
                 headers: {
                     'Content-Type': 'application/json',
                     Authorization: `Bearer ${token}`,
@@ -158,7 +161,7 @@ const Profile = () => {
         setSaving(true);
         try {
             const token = localStorage.getItem('token');
-            const response = await fetch('/api/users/me', {
+            const response = await fetch(`${API_URL}/api/users/me`, {
                 method: 'PUT',
                 headers: {
                     'Content-Type': 'application/json',

@@ -4,6 +4,9 @@ import { LayoutDashboard, Users, PlusCircle, X, UserCheck, LogOut } from 'lucide
 import { useAuth } from '../context/AuthContext';
 import clsx from 'clsx';
 
+// Get API URL from environment variables
+const API_URL = import.meta.env.VITE_API_URL || '';
+
 const Sidebar = ({ isOpen, onClose, isCollapsed }) => {
   const location = useLocation();
   const { user, logout } = useAuth();
@@ -14,7 +17,7 @@ const Sidebar = ({ isOpen, onClose, isCollapsed }) => {
     const fetchProfilePic = async () => {
       try {
         const token = localStorage.getItem('token');
-        const response = await fetch('/api/users/me', {
+        const response = await fetch(`${API_URL}/api/users/me`, {
           headers: {
             'Content-Type': 'application/json',
             Authorization: `Bearer ${token}`,
