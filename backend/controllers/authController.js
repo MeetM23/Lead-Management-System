@@ -41,11 +41,7 @@ const registerUser = async (req, res) => {
       employeeId,
     });
 
-    const token = jwt.sign(
-      { id: user._id },
-      process.env.JWT_SECRET,
-      { expiresIn: "30d" }
-    );
+    const token = generateToken(user._id);
 
     res.status(201).json({
       message: "User registered successfully",
@@ -68,6 +64,7 @@ const registerUser = async (req, res) => {
 const loginUser = async (req, res) => {
   try {
     const { email, password } = req.body;
+    console.log("Login Payload received:", req.body);
 
     if (!email || !password) {
       return res.status(400).json({ message: "Please enter all fields" });
