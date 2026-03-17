@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useLeads } from '../context/LeadsContext';
 import { useNotifications } from '../context/NotificationContext';
+import { apiGet } from '../utils/api.js';
 import {
     ArrowLeft, Mail, Phone, Globe, Calendar,
     Send, MessageSquare, Clock, User as UserIcon,
@@ -12,7 +13,7 @@ import gsap from 'gsap';
 import { SkeletonLeadDetails } from '../components/common/Skeleton';
 
 // Get API URL from environment variables
-const API_URL = import.meta.env.VITE_API_URL || '';
+
 
 const LeadDetails = () => {
     const { leadId } = useParams();
@@ -53,13 +54,7 @@ const LeadDetails = () => {
 
     const fetchLead = useCallback(async (silent = false) => {
         try {
-            const token = localStorage.getItem('token');
-            const res = await fetch(`/api/leads/${leadId}`, {
-                headers: {
-                    'Content-Type': 'application/json',
-                    Authorization: `Bearer ${token}`,
-                },
-            });
+            const res = await apiGet(`/api/leads/${leadId}`);
             if (res.ok) {
                 const result = await res.json();
                 setLead(result.data);

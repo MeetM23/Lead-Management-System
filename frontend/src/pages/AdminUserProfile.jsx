@@ -1,6 +1,7 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { apiGet, apiPut } from '../utils/api.js';
 import { ArrowLeft, Trash2, Calendar, Mail, Phone, Hash, Shield, User } from 'lucide-react';
 
 const AdminUserProfile = () => {
@@ -13,22 +14,11 @@ const AdminUserProfile = () => {
   const [error, setError] = useState('');
   const fetchUser = useCallback(async () => {
     try {
-      const token = localStorage.getItem('token');
-      const res = await fetch(`/api/users/${employeeId}`, {
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`,
-        },
-      });
-      if (res.ok) {
-        const result = await res.json();
-        if (result.success) {
-          setProfile(result.data);
-        } else {
-          setError(result.message || 'Failed to load user');
-        }
+      const res = await apiGet(`/api/users/${employeeId}`);
+      const result = await res.json();
+      if (result.success) {
+        setProfile(result.data);
       } else {
-        const result = await res.json();
         setError(result.message || 'Failed to load user');
       }
     } catch (err) {
@@ -51,14 +41,7 @@ const AdminUserProfile = () => {
     }
 
     try {
-      const token = localStorage.getItem('token');
-      const res = await fetch(`/api/users/${employeeId}/terminate`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`,
-        },
-      });
+      const res = await apiPut(`/api/users/${employeeId}/terminate`);
 
       const result = await res.json();
 

@@ -1,7 +1,5 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
-
-// Get API URL from environment variables
-const API_URL = import.meta.env.VITE_API_URL || '';
+import { apiFetch, apiPost } from '../utils/api.js';
 
 const AuthContext = createContext();
 
@@ -16,7 +14,7 @@ export const AuthProvider = ({ children }) => {
       const token = localStorage.getItem('token');
       if (token) {
         try {
-          const res = await fetch(`${API_URL}/api/users/me`, {
+          const res = await apiFetch('/api/users/me', {
             headers: {
               'Authorization': `Bearer ${token}`
             }
@@ -47,13 +45,7 @@ export const AuthProvider = ({ children }) => {
     try {
       setError('');
 
-      const res = await fetch(`${API_URL}/api/auth/login`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ email, password }),
-      });
+      const res = await apiPost('/api/auth/login', { email, password });
 
       const data = await res.json();
 
@@ -77,13 +69,7 @@ export const AuthProvider = ({ children }) => {
     try {
       setError('');
 
-      const res = await fetch(`${API_URL}/api/auth/register`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(userData),
-      });
+      const res = await apiPost('/api/auth/register', userData);
 
       const data = await res.json();
 
