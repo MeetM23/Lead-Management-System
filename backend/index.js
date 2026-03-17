@@ -42,12 +42,12 @@ const limiter = rateLimit({
 });
 app.use("/api", limiter);
 
-app.use(cors()); // Allow all temporarily as requested
-
 app.use(cors({
   origin: [
     "http://localhost:5173",
-    "https://lead-management-system-seven-pi.vercel.app"
+    "https://lead-management-system-seven-pi.vercel.app",
+    // Allow any other vercel preview domains dynamically
+    /\.vercel\.app$/
   ],
   credentials: true
 }));
