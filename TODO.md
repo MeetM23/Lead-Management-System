@@ -1,12 +1,20 @@
-# Lead Management System - 404 Login Fix Progress
+# Lead Management System TODO
 
-## Plan Steps (Approved)
-- [x] **Phase 1**: Create/update frontend/.env + Refactor AuthContext.jsx to use api.js
-- [x] **Phase 2**: Fix relative paths in AdminUserProfile.jsx, LeadDetails.jsx, UserProfile.jsx
-- [ ] **Phase 3**: Verify/update other contexts/components
-- [x] **Phase 4**: Build frontend (`cd frontend && npm run build`) + Deploy + Test
+## Current Task: Fix Login 404 Error (Completed ✅)
 
-**Current Status**: Phases 1-2 complete, Phase 3 verification, Phase 4 build
+### Steps Completed:
+- [x] Create `frontend/.env` with `VITE_API_URL=https://lead-management-system-n6kg.onrender.com`
+- [x] Verified login uses correct POST method via `apiPost('/api/auth/login')`
+- [x] No code changes needed (already correct implementation)
 
-**Next**: Final verification + rebuild frontend
+### Follow-up Verification Steps:
+1. `cd frontend`
+2. Restart dev server: `npm run dev`
+3. Open browser DevTools → Network tab
+4. Try login → Verify **POST** request to `https://lead-management-system-n6kg.onrender.com/api/auth/login`
+5. Should succeed without 404
 
+### Additional Notes:
+- Dev proxy in `vite.config.js` handles localhost correctly
+- Production deploys will now use correct backend URL
+- Test in incognito to avoid cached empty API_URL

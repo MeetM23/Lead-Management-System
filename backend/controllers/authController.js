@@ -1,6 +1,6 @@
 import bcrypt from "bcryptjs";
-import jwt from "jsonwebtoken";
 import User from "../models/User.js";
+import { generateToken } from "../utils/generateToken.js";
 
 /* =========================
    CONFIG
@@ -41,11 +41,7 @@ const registerUser = async (req, res) => {
       employeeId,
     });
 
-    const token = jwt.sign(
-      { id: user._id },
-      process.env.JWT_SECRET,
-      { expiresIn: "30d" }
-    );
+    const token = generateToken(user._id);
 
     res.status(201).json({
       message: "User registered successfully",
@@ -68,22 +64,30 @@ const registerUser = async (req, res) => {
 const loginUser = async (req, res) => {
   try {
     const { email, password } = req.body;
+    console.log("Login Payload received:", req.body);
 
     if (!email || !password) {
       return res.status(400).json({ message: "Please enter all fields" });
     }
 
     const user = await User.findOne({ email });
+    console.log('🔍 Login attempt - Email found:', !!user); // Debug
+    
     if (!user) {
+      console.log('❌ User not found for email:', email);
       return res.status(400).json({ message: "Invalid credentials" });
     }
 
     if (user.isActive === false) {
+      console.log('❌ User deactivated:', user.email);
       return res.status(403).json({ message: "Account has been deactivated. Contact admin." });
     }
 
     const isMatch = await bcrypt.compare(password, user.password);
+    console.log('🔐 Password match:', isMatch, 'for user:', user.email); // Debug
+    
     if (!isMatch) {
+      console.log('❌ Password mismatch for:', user.email);
       return res.status(400).json({ message: "Invalid credentials" });
     }
 
@@ -93,11 +97,7 @@ const loginUser = async (req, res) => {
       await user.save();
     }
 
-    const token = jwt.sign(
-      { id: user._id },
-      process.env.JWT_SECRET,
-      { expiresIn: "30d" }
-    );
+    const token = generateToken(user._id);
 
     res.json({
       message: "Login successful",
@@ -110,6 +110,7 @@ const loginUser = async (req, res) => {
       },
     });
   } catch (error) {
+    console.error('Login error:', error); // Debug
     res.status(500).json({ message: error.message });
   }
 };

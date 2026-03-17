@@ -42,7 +42,16 @@ const limiter = rateLimit({
 });
 app.use("/api", limiter);
 
-app.use(cors());
+app.use(cors()); // Allow all temporarily as requested
+
+app.use(cors({
+  origin: [
+    "http://localhost:5173",
+    "https://lead-management-system-seven-pi.vercel.app"
+  ],
+  credentials: true
+}));
+app.options("*", cors()); // Ensure preflight is handled across all routes
 app.use(express.json({ limit: '10mb' })); // Increased limit for base64 images
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
