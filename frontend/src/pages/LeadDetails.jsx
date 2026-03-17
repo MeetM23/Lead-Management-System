@@ -13,7 +13,7 @@ import gsap from 'gsap';
 import { SkeletonLeadDetails } from '../components/common/Skeleton';
 
 // Get API URL from environment variables
-const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
+const API_URL = import.meta.env.VITE_API_URL;
 const LeadDetails = () => {
     const { leadId } = useParams();
     const { user } = useAuth();
