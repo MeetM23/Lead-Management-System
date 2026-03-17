@@ -35,7 +35,8 @@ const Navbar = ({ onMenuClick, isCollapsed, onToggleCollapse }) => {
         </button>
 
         {/* Mobile logo */}
-        <div className="md:hidden">
+        <div className="md:hidden flex items-center gap-2">
+          <img src="/src/assets/favicon.png" alt="Logo" className="w-7 h-7 rounded-md shrink-0" />
           <span className="font-bold text-lg font-heading text-dark">LeadFlow</span>
         </div>
 

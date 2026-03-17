@@ -81,15 +81,11 @@ const Sidebar = ({ isOpen, onClose, isCollapsed }) => {
         "flex items-center shrink-0 h-16 border-b border-white/10",
         isCollapsed ? "md:justify-center md:px-2 px-6" : "justify-between px-6"
       )}>
-        <Link to="/" onClick={onClose} className="inline-block">
-          {isCollapsed ? (
-            <h1 className="hidden md:block text-xl font-bold tracking-tighter text-secondary">
-              L<span className="text-primary">F</span>
-            </h1>
-          ) : null}
+        <Link to="/" onClick={onClose} className="flex items-center gap-2">
+          <img src="/src/assets/favicon.png" alt="Logo" className="w-8 h-8 rounded-lg shrink-0" />
           <h1 className={clsx(
-            "text-2xl font-bold tracking-tighter text-secondary",
-            isCollapsed ? "md:hidden" : ""
+            "text-2xl font-bold tracking-tighter text-secondary truncate",
+            isCollapsed ? "hidden" : "block"
           )}>
             Lead<span className="text-primary">Flow</span>
           </h1>

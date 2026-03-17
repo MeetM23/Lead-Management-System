@@ -63,8 +63,8 @@ const Login = () => {
 
       <div ref={cardRef} className="bg-white border border-gray-200 p-8 rounded-2xl w-full max-w-md shadow-xl z-10">
         <div className="text-center mb-8">
-          <div className="w-14 h-14 bg-primary/10 rounded-2xl flex items-center justify-center mx-auto mb-4">
-            <LogIn size={24} className="text-primary" />
+          <div className="w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-4 overflow-hidden shadow-sm bg-white border border-gray-100 p-1">
+            <img src="/src/assets/favicon.png" alt="LeadFlow Logo" className="w-full h-full object-contain rounded-xl" />
           </div>
           <h1 ref={titleRef} className="text-3xl font-heading font-bold text-dark mb-2">Welcome Back</h1>
           <p className="text-gray-400">Sign in to manage your leads</p>

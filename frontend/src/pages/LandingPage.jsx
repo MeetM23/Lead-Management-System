@@ -43,9 +43,10 @@ const LandingPage = () => {
         </button>
         <button
           onClick={() => { navigate('/'); setMobileOpen(false); }}
-          className="font-bold text-2xl text-gray-900"
+          className="font-bold text-2xl text-gray-900 flex items-center gap-2"
         >
-          Lead<span className="text-blue-600">Flow</span>
+          <img src="/src/assets/favicon.png" alt="Logo" className="w-8 h-8 rounded-md shrink-0" />
+          <span>Lead<span className="text-blue-600">Flow</span></span>
         </button>
         <nav className="hidden md:flex items-center gap-8">
           <a href="#home" className="text-sm font-semibold text-gray-700 hover:text-blue-600 transition-colors">Home</a>
