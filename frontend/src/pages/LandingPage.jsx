@@ -52,7 +52,6 @@ const LandingPage = () => {
         <nav className="hidden md:flex items-center gap-8">
           <a href="#home" className="text-sm font-semibold text-gray-700 hover:text-blue-600 transition-colors">Home</a>
           <a href="#features" className="text-sm font-semibold text-gray-700 hover:text-blue-600 transition-colors">Features</a>
-          <a href="#how-it-works" className="text-sm font-semibold text-gray-700 hover:text-blue-600 transition-colors">How It Works</a>
           <a href="#testimonials" className="text-sm font-semibold text-gray-700 hover:text-blue-600 transition-colors">Testimonials</a>
           <a href="#cta" className="text-sm font-semibold text-gray-700 hover:text-blue-600 transition-colors">Contact</a>
         </nav>
@@ -87,7 +86,6 @@ const LandingPage = () => {
           <div className="px-4 py-3 flex flex-col gap-2">
             <a href="#home" onClick={() => setMobileOpen(false)} className="py-2 text-sm font-semibold text-gray-800">Home</a>
             <a href="#features" onClick={() => setMobileOpen(false)} className="py-2 text-sm font-semibold text-gray-800">Features</a>
-            <a href="#how-it-works" onClick={() => setMobileOpen(false)} className="py-2 text-sm font-semibold text-gray-800">How It Works</a>
             <a href="#testimonials" onClick={() => setMobileOpen(false)} className="py-2 text-sm font-semibold text-gray-800">Testimonials</a>
             <a href="#cta" onClick={() => setMobileOpen(false)} className="py-2 text-sm font-semibold text-gray-800">Contact</a>
             <div className="pt-2 flex gap-2">

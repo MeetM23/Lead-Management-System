@@ -9,6 +9,7 @@ const Login = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [localError, setLocalError] = useState('');
+  const [loading, setLoading] = useState(false);
   const { login, error, user } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
@@ -45,7 +46,9 @@ const Login = () => {
       return;
     }
 
+    setLoading(true);
     await login(email, password);
+    setLoading(false);
   };
 
   return (
@@ -108,9 +111,10 @@ const Login = () => {
 
           <button
             type="submit"
-            className="w-full bg-primary hover:bg-violet-700 text-white font-bold py-3 px-4 rounded-xl transition-all duration-300 transform hover:scale-[1.02] shadow-lg shadow-primary/25"
+            disabled={loading}
+            className="w-full bg-primary hover:bg-violet-700 text-white font-bold py-3 px-4 rounded-xl transition-all duration-300 transform hover:scale-[1.02] shadow-lg shadow-primary/25 disabled:opacity-70 disabled:cursor-not-allowed disabled:hover:scale-100"
           >
-            LOG IN
+            {loading ? 'Connecting...' : 'LOG IN'}
           </button>
         </form>
 

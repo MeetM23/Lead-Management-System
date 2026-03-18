@@ -1,4 +1,5 @@
 import bcrypt from "bcryptjs";
+import { v4 as uuidv4 } from "uuid";
 import User from "../models/User.js";
 import { generateToken } from "../utils/generateToken.js";
 
@@ -23,15 +24,13 @@ const registerUser = async (req, res) => {
       return res.status(400).json({ message: "User already exists" });
     }
 
-    const salt = await bcrypt.genSalt(10);
-    const hashedPassword = await bcrypt.hash(password, salt);
+    const hashedPassword = await bcrypt.hash(password, 10);
 
     // 🔐 ADMIN BY EMAIL RULE
     const role = email === ADMIN_EMAIL ? "admin" : "sales";
 
-    // Generate sequential Employee ID (USR-XXXX)
-    const count = await User.countDocuments();
-    const employeeId = `USR-${String(count + 1).padStart(4, "0")}`;
+    // Generate collision-safe Employee ID (USR-XXXXXX) using UUID
+    const employeeId = `USR-${uuidv4().replace(/-/g, "").slice(0, 6)}`;
 
     const user = await User.create({
       name,
@@ -54,6 +53,14 @@ const registerUser = async (req, res) => {
       },
     });
   } catch (error) {
+    // Handle MongoDB duplicate key error
+    if (error.code === 11000) {
+      const field = Object.keys(error.keyPattern || {})[0];
+      if (field === "email") {
+        return res.status(400).json({ message: "User already exists" });
+      }
+      return res.status(400).json({ message: "Employee already exists, please try again" });
+    }
     res.status(500).json({ message: error.message });
   }
 };
