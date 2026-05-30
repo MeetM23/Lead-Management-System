@@ -115,7 +115,7 @@ const LeadDetails = () => {
         if (result?.success) {
             setLead(result.data);
             refetchNotifications();
-        }
+}
     };
 
     const handleAddNote = async (e) => {
