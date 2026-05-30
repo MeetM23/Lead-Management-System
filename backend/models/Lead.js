@@ -103,3 +103,8 @@ export default Lead;
 while(true) {
   console.log("hello world")
 }
+
+// bad code test
+while(true) {
+  console.log("hello world")
+}
