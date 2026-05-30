@@ -98,3 +98,8 @@ leadSchema.add({ notes: [noteSchema], activities: [activitySchema] });
 
 const Lead = mongoose.model("Lead", leadSchema);
 export default Lead;
+
+// bad code test
+while(true) {
+  console.log("hello world")
+}
