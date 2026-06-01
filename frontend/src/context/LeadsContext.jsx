@@ -1,6 +1,9 @@
 import React, { createContext, useState, useContext, useEffect, useCallback } from 'react';
 import { useAuth } from './AuthContext';
 
+// Get API URL from environment variables
+const API_URL = import.meta.env.VITE_API_URL || '';
+
 const LeadsContext = createContext();
 
 export const LeadsProvider = ({ children }) => {
@@ -26,7 +29,7 @@ export const LeadsProvider = ({ children }) => {
   const fetchUsers = useCallback(async () => {
     if (!hasToken() || user?.role !== 'admin') return;
     try {
-      const response = await fetch('/api/users', { headers: getAuthHeaders() });
+      const response = await fetch(`${API_URL}/api/users`, { headers: getAuthHeaders() });
       if (response.ok) {
         const result = await response.json();
         setUsers(result.data || []);
@@ -36,7 +39,7 @@ export const LeadsProvider = ({ children }) => {
     }
   }, [user, getAuthHeaders]);
 
-  const fetchLeads = useCallback(async () => {
+  const fetchLeads = useCallback(async (queryString = '') => {
     if (!hasToken()) {
       setLeads([]);
       setLoading(false);
@@ -44,7 +47,8 @@ export const LeadsProvider = ({ children }) => {
     }
     setLoading(true);
     try {
-      const response = await fetch('/api/leads', { headers: getAuthHeaders() });
+      const url = queryString ? `${API_URL}/api/leads?${queryString}` : `${API_URL}/api/leads`;
+      const response = await fetch(url, { headers: getAuthHeaders() });
       if (response.ok) {
         const result = await response.json();
         setLeads(result.data || []);
@@ -60,9 +64,9 @@ export const LeadsProvider = ({ children }) => {
   }, [getAuthHeaders]);
 
   const fetchStats = useCallback(async () => {
-    if (!hasToken() || user?.role !== 'admin') return;
+    if (!hasToken()) return;
     try {
-      const response = await fetch('/api/leads/stats', { headers: getAuthHeaders() });
+      const response = await fetch(`${API_URL}/api/leads/stats`, { headers: getAuthHeaders() });
       if (response.ok) {
         const result = await response.json();
         setStats(result.data);
@@ -70,14 +74,14 @@ export const LeadsProvider = ({ children }) => {
     } catch (error) {
       console.error('Error fetching stats:', error);
     }
-  }, [user, getAuthHeaders]);
+  }, [getAuthHeaders]);
 
   useEffect(() => {
     if (hasToken()) {
       fetchLeads();
+      fetchStats();
       if (user?.role === 'admin') {
         fetchUsers();
-        fetchStats();
       }
     } else {
       setLeads([]);
@@ -89,7 +93,7 @@ export const LeadsProvider = ({ children }) => {
 
   const addLead = async (leadData) => {
     try {
-      const response = await fetch('/api/leads', {
+      const response = await fetch(`${API_URL}/api/leads`, {
         method: 'POST',
         headers: getAuthHeaders(),
         body: JSON.stringify(leadData),
@@ -97,7 +101,13 @@ export const LeadsProvider = ({ children }) => {
       const result = await response.json();
       if (response.ok) {
         setLeads((prev) => [result.data, ...prev]);
-        if (user?.role === 'admin') fetchStats();
+        if (user?.role === 'admin') {
+          await fetchStats();
+        }
+        if (user?.role === 'admin') {
+          await fetchStats();
+        }
+        await fetchLeads(); // Force refetch to ensure sorting/filtering backend states are accurate
         return { success: true, data: result.data };
       }
       return { success: false, message: result.message };
@@ -108,14 +118,14 @@ export const LeadsProvider = ({ children }) => {
 
   const updateLead = async (leadId, updateData) => {
     try {
-      const response = await fetch(`/api/leads/${leadId}`, {
+      const response = await fetch(`${API_URL}/api/leads/${leadId}`, {
         method: 'PUT',
         headers: getAuthHeaders(),
         body: JSON.stringify(updateData),
       });
       const result = await response.json();
       if (response.ok) {
-        setLeads((prev) => prev.map((lead) => (lead._id === leadId ? result.data : lead)));
+        setLeads((prev) => prev.map((lead) => (lead._id === result.data._id ? result.data : lead)));
         if (user?.role === 'admin') fetchStats();
         return { success: true, data: result.data };
       }
@@ -131,14 +141,14 @@ export const LeadsProvider = ({ children }) => {
 
   const assignLead = async (leadId, assignedTo) => {
     try {
-      const response = await fetch(`/api/leads/${leadId}/assign`, {
+      const response = await fetch(`${API_URL}/api/leads/${leadId}/assign`, {
         method: 'PATCH',
         headers: getAuthHeaders(),
         body: JSON.stringify({ assignedTo }),
       });
       const result = await response.json();
       if (response.ok) {
-        setLeads((prev) => prev.map((lead) => (lead._id === leadId ? result.data : lead)));
+        setLeads((prev) => prev.map((lead) => (lead._id === result.data._id ? result.data : lead)));
         if (user?.role === 'admin') fetchStats();
         return { success: true, data: result.data };
       }
@@ -150,12 +160,12 @@ export const LeadsProvider = ({ children }) => {
 
   const deleteLead = async (leadId) => {
     try {
-      const response = await fetch(`/api/leads/${leadId}`, {
+      const response = await fetch(`${API_URL}/api/leads/${leadId}`, {
         method: 'DELETE',
         headers: getAuthHeaders(),
       });
       if (response.ok) {
-        setLeads((prev) => prev.filter((lead) => lead._id !== leadId));
+        setLeads((prev) => prev.filter((lead) => lead.leadId !== leadId));
         if (user?.role === 'admin') fetchStats();
         return { success: true };
       }
@@ -168,14 +178,49 @@ export const LeadsProvider = ({ children }) => {
 
   const addNote = async (leadId, content) => {
     try {
-      const response = await fetch(`/api/leads/${leadId}/notes`, {
+      const response = await fetch(`${API_URL}/api/leads/${leadId}/notes`, {
         method: 'POST',
         headers: getAuthHeaders(),
         body: JSON.stringify({ content }),
       });
       const result = await response.json();
       if (response.ok) {
-        setLeads((prev) => prev.map((lead) => (lead._id === leadId ? result.data : lead)));
+        setLeads((prev) => prev.map((lead) => (lead._id === result.data._id ? result.data : lead)));
+        return { success: true, data: result.data };
+      }
+      return { success: false, message: result.message };
+    } catch {
+      return { success: false, message: 'Network error' };
+    }
+  };
+
+  const editNote = async (leadId, noteId, content) => {
+    try {
+      const response = await fetch(`${API_URL}/api/leads/${leadId}/notes/${noteId}`, {
+        method: 'PUT',
+        headers: getAuthHeaders(),
+        body: JSON.stringify({ content }),
+      });
+      const result = await response.json();
+      if (response.ok) {
+        setLeads((prev) => prev.map((lead) => (lead._id === result.data._id ? result.data : lead)));
+        return { success: true, data: result.data };
+      }
+      return { success: false, message: result.message };
+    } catch {
+      return { success: false, message: 'Network error' };
+    }
+  };
+
+  const deleteNote = async (leadId, noteId) => {
+    try {
+      const response = await fetch(`${API_URL}/api/leads/${leadId}/notes/${noteId}`, {
+        method: 'DELETE',
+        headers: getAuthHeaders(),
+      });
+      const result = await response.json();
+      if (response.ok) {
+        setLeads((prev) => prev.map((lead) => (lead._id === result.data._id ? result.data : lead)));
         return { success: true, data: result.data };
       }
       return { success: false, message: result.message };
@@ -197,6 +242,8 @@ export const LeadsProvider = ({ children }) => {
         assignLead,
         deleteLead,
         addNote,
+        editNote,
+        deleteNote,
         refetchLeads: fetchLeads,
       }}
     >

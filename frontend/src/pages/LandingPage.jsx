@@ -22,6 +22,7 @@ import Features from '../components/landing/Features';
 import Testimonials from '../components/landing/Testimonials';
 import Problem from '../components/landing/Problem';
 import Contact from '../components/landing/Contact';
+import logoImg from '../assets/favicon.png';
 
 const LandingPage = () => {
   const navigate = useNavigate();
@@ -43,14 +44,14 @@ const LandingPage = () => {
         </button>
         <button
           onClick={() => { navigate('/'); setMobileOpen(false); }}
-          className="font-bold text-2xl text-gray-900"
+          className="font-bold text-2xl text-gray-900 flex items-center gap-2"
         >
-          Lead<span className="text-blue-600">Flow</span>
+          <img src={logoImg} alt="Logo" className="w-8 h-8 rounded-md shrink-0" />
+          <span>Lead<span className="text-blue-600">Flow</span></span>
         </button>
         <nav className="hidden md:flex items-center gap-8">
           <a href="#home" className="text-sm font-semibold text-gray-700 hover:text-blue-600 transition-colors">Home</a>
           <a href="#features" className="text-sm font-semibold text-gray-700 hover:text-blue-600 transition-colors">Features</a>
-          <a href="#how-it-works" className="text-sm font-semibold text-gray-700 hover:text-blue-600 transition-colors">How It Works</a>
           <a href="#testimonials" className="text-sm font-semibold text-gray-700 hover:text-blue-600 transition-colors">Testimonials</a>
           <a href="#cta" className="text-sm font-semibold text-gray-700 hover:text-blue-600 transition-colors">Contact</a>
         </nav>
@@ -85,7 +86,6 @@ const LandingPage = () => {
           <div className="px-4 py-3 flex flex-col gap-2">
             <a href="#home" onClick={() => setMobileOpen(false)} className="py-2 text-sm font-semibold text-gray-800">Home</a>
             <a href="#features" onClick={() => setMobileOpen(false)} className="py-2 text-sm font-semibold text-gray-800">Features</a>
-            <a href="#how-it-works" onClick={() => setMobileOpen(false)} className="py-2 text-sm font-semibold text-gray-800">How It Works</a>
             <a href="#testimonials" onClick={() => setMobileOpen(false)} className="py-2 text-sm font-semibold text-gray-800">Testimonials</a>
             <a href="#cta" onClick={() => setMobileOpen(false)} className="py-2 text-sm font-semibold text-gray-800">Contact</a>
             <div className="pt-2 flex gap-2">

@@ -1,6 +1,7 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import { useParams } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { apiGet } from '../utils/api.js';
 
 const UserProfile = () => {
   const { userId } = useParams();
@@ -17,20 +18,10 @@ const UserProfile = () => {
 
   const fetchUser = useCallback(async () => {
     try {
-      const token = localStorage.getItem('token');
-      const res = await fetch(`/api/users/${userId}`, {
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`,
-        },
-      });
-      if (res.ok) {
-        const result = await res.json();
-        if (result.success) {
-          setProfile(result.data);
-        } else {
-          setProfile(null);
-        }
+      const res = await apiGet(`/api/users/${userId}`);
+      const result = await res.json();
+      if (result.success) {
+        setProfile(result.data);
       } else {
         setProfile(null);
       }

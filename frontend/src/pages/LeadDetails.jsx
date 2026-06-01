@@ -2,18 +2,23 @@ import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useLeads } from '../context/LeadsContext';
+import { useNotifications } from '../context/NotificationContext';
+import { apiGet } from '../utils/api.js';
 import {
     ArrowLeft, Mail, Phone, Globe, Calendar,
     Send, MessageSquare, Clock, User as UserIcon,
-    Pencil, Save, X
+    Pencil, Save, X, Sparkles, Copy, Check, RefreshCw, Loader2, Trash2
 } from 'lucide-react';
 import gsap from 'gsap';
 import { SkeletonLeadDetails } from '../components/common/Skeleton';
 
+// Get API URL from environment variables
+const API_URL = import.meta.env.VITE_API_URL;
 const LeadDetails = () => {
-    const { id } = useParams();
+    const { leadId } = useParams();
     const { user } = useAuth();
-    const { updateLeadStatus, assignLead, updateLead, users, addNote } = useLeads();
+    const { updateLeadStatus, assignLead, updateLead, users, addNote, editNote, deleteNote } = useLeads();
+    const { refetchNotifications } = useNotifications();
     const navigate = useNavigate();
     const pageRef = useRef(null);
 
@@ -33,41 +38,59 @@ const LeadDetails = () => {
     });
     const [saving, setSaving] = useState(false);
 
+    // Note Edit State
+    const [editingNoteId, setEditingNoteId] = useState(null);
+    const [editNoteContent, setEditNoteContent] = useState('');
+    const [updatingNote, setUpdatingNote] = useState(false);
+
+    // AI Generator State
+    const [aiLoading, setAiLoading] = useState(false);
+    const [aiMessage, setAiMessage] = useState('');
+    const [selectedTone, setSelectedTone] = useState('Professional');
+    const [copied, setCopied] = useState(false);
+
     const basePath = user?.role === 'admin' ? '/admin/dashboard' : '/sales/dashboard';
 
-    const fetchLead = useCallback(async () => {
+    const fetchLead = useCallback(async (silent = false) => {
         try {
-            const token = localStorage.getItem('token');
-            const res = await fetch(`/api/leads/${id}`, {
-                headers: {
-                    'Content-Type': 'application/json',
-                    Authorization: `Bearer ${token}`,
-                },
-            });
+            const res = await apiGet(`/api/leads/${leadId}`);
             if (res.ok) {
                 const result = await res.json();
                 setLead(result.data);
-                setEditFormData({
-                    name: result.data.name || '',
-                    email: result.data.email || '',
-                    phone: result.data.phone || '',
-                    source: result.data.source || ''
-                });
+                if (!silent) {
+                    setEditFormData({
+                        name: result.data.name || '',
+                        email: result.data.email || '',
+                        phone: result.data.phone || '',
+                        source: result.data.source || ''
+                    });
+                }
             } else {
                 const result = await res.json();
-                setError(result.message || 'Failed to load lead');
+                if (!silent) setError(result.message || 'Failed to load lead');
             }
         } catch (err) {
             console.error('Failed to load lead', err);
-            setError('Network error');
+            if (!silent) setError('Network error');
         } finally {
-            setLoading(false);
+            if (!silent) setLoading(false);
         }
-    }, [id]);
+    }, [leadId]);
 
     useEffect(() => {
         fetchLead();
     }, [fetchLead]);
+
+    // Live polling: re-fetch every 5s to sync notes/activities across sessions.
+    // Paused when the user is actively typing a note to avoid clobbering their draft.
+    useEffect(() => {
+        const interval = setInterval(() => {
+            if (!noteContent && !submittingNote && !isEditing) {
+                fetchLead(true); // silent = no loading spinner
+            }
+        }, 5000);
+        return () => clearInterval(interval);
+    }, [fetchLead, noteContent, submittingNote, isEditing]);
 
     useEffect(() => {
         if (pageRef.current && !loading) {
@@ -80,7 +103,7 @@ const LeadDetails = () => {
 
     const handleStatusChange = async (e) => {
         const newStatus = e.target.value;
-        const result = await updateLeadStatus(lead._id, newStatus);
+        const result = await updateLeadStatus(lead.leadId, newStatus);
         if (result?.success) {
             setLead(prev => ({ ...prev, status: newStatus }));
         }
@@ -88,9 +111,10 @@ const LeadDetails = () => {
 
     const handleAssignChange = async (e) => {
         const newAssignee = e.target.value;
-        const result = await assignLead(lead._id, newAssignee);
+        const result = await assignLead(lead.leadId, newAssignee);
         if (result?.success) {
             setLead(result.data);
+            refetchNotifications();
         }
     };
 
@@ -100,7 +124,7 @@ const LeadDetails = () => {
 
         setSubmittingNote(true);
         try {
-            const result = await addNote(lead._id, noteContent.trim());
+            const result = await addNote(lead.leadId, noteContent.trim());
             if (result?.success) {
                 setLead(result.data);
                 setNoteContent('');
@@ -112,11 +136,43 @@ const LeadDetails = () => {
         }
     };
 
+    const handleEditNote = async (e, noteId) => {
+        e.preventDefault();
+        if (!editNoteContent.trim()) return;
+
+        setUpdatingNote(true);
+        try {
+            const result = await editNote(lead.leadId, noteId, editNoteContent.trim());
+            if (result?.success) {
+                setLead(result.data);
+                setEditingNoteId(null);
+                setEditNoteContent('');
+            }
+        } catch (err) {
+            console.error('Failed to edit note', err);
+        } finally {
+            setUpdatingNote(false);
+        }
+    };
+
+    const handleDeleteNote = async (noteId) => {
+        if (!window.confirm('Are you sure you want to delete this note?')) return;
+
+        try {
+            const result = await deleteNote(lead.leadId, noteId);
+            if (result?.success) {
+                setLead(result.data);
+            }
+        } catch (err) {
+            console.error('Failed to delete note', err);
+        }
+    };
+
     const handleEditSubmit = async (e) => {
         e.preventDefault();
         setSaving(true);
         try {
-            const result = await updateLead(lead._id, editFormData);
+            const result = await updateLead(lead.leadId, editFormData);
             if (result?.success) {
                 setLead(result.data);
                 setIsEditing(false);
@@ -128,6 +184,49 @@ const LeadDetails = () => {
         } finally {
             setSaving(false);
         }
+    };
+
+    const handleGenerateAI = async () => {
+        if (!lead) return;
+
+        setAiLoading(true);
+        setAiMessage("");
+
+        try {
+            const token = localStorage.getItem('token');
+
+            const res = await fetch(`${API_URL}/api/ai/generate-followup`, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    Authorization: `Bearer ${token}`,
+                },
+                body: JSON.stringify({
+                    lead,
+                    tone: selectedTone
+                })
+            });
+
+            const data = await res.json();
+
+            if (data.success) {
+                setAiMessage(data.message);
+            } else {
+                setAiMessage(data.error || "Failed to generate message.");
+            }
+        } catch (error) {
+            console.error("AI Generation Error:", error);
+            alert("Failed to connect to AI service");
+        } finally {
+            setAiLoading(false);
+        }
+    };
+
+    const copyToClipboard = () => {
+        if (!aiMessage) return;
+        navigator.clipboard.writeText(aiMessage);
+        setCopied(true);
+        setTimeout(() => setCopied(false), 2000);
     };
 
     const getStatusColor = (status) => {
@@ -171,33 +270,19 @@ const LeadDetails = () => {
         <div ref={pageRef} className="space-y-6">
             {/* Header */}
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-                <div>
-                    <button
-                        onClick={() => navigate(`${basePath}/leads`)}
-                        className="text-gray-500 hover:text-dark flex items-center gap-2 mb-2 transition-colors text-sm"
-                    >
-                        <ArrowLeft size={16} /> Back to Leads
-                    </button>
-                    {isEditing ? (
-                        <input
-                            type="text"
-                            value={editFormData.name}
-                            onChange={(e) => setEditFormData({ ...editFormData, name: e.target.value })}
-                            className="text-3xl font-heading font-bold text-dark border-b-2 border-primary/50 focus:border-primary outline-none bg-transparent w-full md:w-auto"
-                            placeholder="Lead Name"
-                        />
-                    ) : (
-                        <h1 className="text-3xl font-heading font-bold text-dark flex items-center gap-3">
-                            {lead.name}
-                            <button
-                                onClick={() => setIsEditing(true)}
-                                className="text-gray-400 hover:text-primary transition-colors"
-                            >
-                                <Pencil size={18} />
-                            </button>
-                        </h1>
+                <div className="flex items-center gap-3">
+                    <h1 className="text-3xl font-heading font-bold text-dark">
+                        {lead.name}
+                    </h1>
+
+                    {!isEditing && (
+                        <button
+                            onClick={() => setIsEditing(true)}
+                            className="p-2 rounded-lg hover:bg-gray-100 text-gray-500 hover:text-primary transition-all"
+                        >
+                            <Pencil size={18} />
+                        </button>
                     )}
-                    <p className="text-gray-400 text-sm mt-1 font-mono">ID: {lead._id}</p>
                 </div>
 
                 {/* Edit Controls */}
@@ -372,13 +457,91 @@ const LeadDetails = () => {
                 </div>
 
                 {/* Activity Timeline */}
-                <div className="lg:col-span-2">
+                <div className="lg:col-span-2 space-y-6">
+                    {/* AI Follow-Up Generator */}
+                    <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
+                        <div className="flex items-center justify-between mb-4">
+                            <div className="flex items-center gap-2">
+                                <Sparkles size={20} className="text-violet-600" />
+                                <h3 className="font-bold text-dark text-lg">AI Follow-Up Generator</h3>
+                            </div>
+                            <span className="text-[10px] font-bold uppercase bg-gradient-to-r from-violet-600 to-indigo-600 text-white px-2 py-0.5 rounded-full">
+                                AI Powered
+                            </span>
+                        </div>
+
+                        <div className="bg-gray-50/50 rounded-xl p-4 border border-gray-100">
+                            <div className="flex flex-wrap items-end gap-4 mb-4">
+                                <div className="flex-1 min-w-[200px]">
+                                    <label className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2 block">
+                                        Select Tone
+                                    </label>
+                                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                                        {['Professional', 'Friendly', 'Assertive', 'Urgent'].map((tone) => (
+                                            <button
+                                                key={tone}
+                                                onClick={() => setSelectedTone(tone)}
+                                                className={`px-3 py-2 rounded-lg text-sm font-medium transition-all ${selectedTone === tone
+                                                    ? 'bg-white text-primary border border-primary shadow-sm ring-1 ring-primary/20'
+                                                    : 'bg-white text-gray-500 border border-gray-200 hover:border-gray-300'
+                                                    }`}
+                                            >
+                                                {tone}
+                                            </button>
+                                        ))}
+                                    </div>
+                                </div>
+                                <button
+                                    onClick={handleGenerateAI}
+                                    disabled={aiLoading}
+                                    className="flex items-center gap-2 bg-gradient-to-r from-violet-600 to-indigo-600 text-white px-6 py-2.5 rounded-xl hover:shadow-lg hover:shadow-violet-500/20 transition-all font-medium disabled:opacity-70 disabled:cursor-not-allowed"
+                                >
+                                    {aiLoading ? (
+                                        <>
+                                            <Loader2 size={18} className="animate-spin" />
+                                            Generating...
+                                        </>
+                                    ) : (
+                                        <>
+                                            <Sparkles size={18} />
+                                            Generate Follow-Up
+                                        </>
+                                    )}
+                                </button>
+                            </div>
+
+                            {aiMessage && (
+                                <div className="relative group">
+                                    <div className="bg-white border border-gray-200 rounded-xl p-4 text-gray-700 text-sm leading-relaxed whitespace-pre-wrap shadow-sm">
+                                        {aiMessage}
+                                    </div>
+                                    <div className="absolute top-2 right-2 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                                        <button
+                                            onClick={copyToClipboard}
+                                            className="p-1.5 bg-white text-gray-500 hover:text-primary border border-gray-200 rounded-lg shadow-sm transition-colors"
+                                            title="Copy to clipboard"
+                                        >
+                                            {copied ? <Check size={14} /> : <Copy size={14} />}
+                                        </button>
+                                        <button
+                                            onClick={() => setAiMessage('')}
+                                            className="p-1.5 bg-white text-gray-500 hover:text-red-500 border border-gray-200 rounded-lg shadow-sm transition-colors"
+                                            title="Clear message"
+                                        >
+                                            <X size={14} />
+                                        </button>
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+                    </div>
+
                     <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
                         <div className="flex items-center gap-2 mb-6">
                             <MessageSquare size={20} className="text-primary" />
                             <h3 className="font-bold text-dark text-lg">Activity Timeline</h3>
                             <span className="text-xs bg-gray-100 text-gray-500 px-2 py-0.5 rounded-full font-medium">
-                                {lead.notes?.length || 0} entries
+                                {lead.activities?.length || 0} entries
                             </span>
                         </div>
 
@@ -406,43 +569,97 @@ const LeadDetails = () => {
 
                         {/* Timeline */}
                         <div className="space-y-0">
-                            {lead.notes && lead.notes.length > 0 ? (
-                                [...lead.notes].reverse().map((note, index) => {
-                                    const isSystem = note.createdBy?.name === 'System' || note.isSystem;
+                            {lead.activities && lead.activities.length > 0 ? (
+                                lead.activities.map((activity, index) => {
+                                    const isNote = activity.type === 'Note Added';
+                                    const noteId = activity.noteId;
+                                    const isEditingNote = editingNoteId === noteId;
+                                    const canModify = isNote && noteId && (activity.createdBy?._id === user?._id);
+
                                     return (
-                                        <div key={note._id || index} className="relative flex gap-4 pb-6 last:pb-0">
+                                        <div key={activity._id || index} className="relative flex gap-4 pb-6 last:pb-0">
                                             {/* Timeline line */}
-                                            {index < lead.notes.length - 1 && (
+                                            {index < lead.activities.length - 1 && (
                                                 <div className="absolute left-[17px] top-10 bottom-0 w-px bg-gray-200" />
                                             )}
                                             {/* Timeline dot */}
-                                            <div className={`shrink-0 w-[35px] h-[35px] rounded-full flex items-center justify-center mt-0.5 ${isSystem ? 'bg-gray-100' : 'bg-primary/10'
+                                            <div className={`shrink-0 w-[35px] h-[35px] rounded-full flex items-center justify-center mt-0.5 ${!isNote ? 'bg-gray-100' : 'bg-primary/10'
                                                 }`}>
-                                                {isSystem ? (
+                                                {!isNote ? (
                                                     <Clock size={14} className="text-gray-500" />
                                                 ) : (
                                                     <MessageSquare size={14} className="text-primary" />
                                                 )}
                                             </div>
                                             {/* Content */}
-                                            <div className={`flex-1 rounded-xl p-4 ${isSystem ? 'bg-gray-50 border border-gray-100' : 'bg-blue-50/50 border border-blue-100/50'
+                                            <div className={`flex-1 rounded-xl p-4 ${!isNote ? 'bg-gray-50 border border-gray-100' : 'bg-blue-50/50 border border-blue-100/50'
                                                 }`}>
                                                 <div className="flex items-center justify-between mb-1">
                                                     <div className="flex items-center gap-2">
                                                         <span className="text-sm font-semibold text-dark">
-                                                            {note.createdBy?.name || 'Unknown'}
+                                                            {activity.createdBy?.name || 'Unknown'}
                                                         </span>
-                                                        {isSystem && (
-                                                            <span className="text-[10px] font-bold uppercase bg-gray-200 text-gray-500 px-1.5 py-0.5 rounded">
-                                                                System
-                                                            </span>
+                                                        <span className={`text-[10px] font-bold uppercase px-1.5 py-0.5 rounded ${!isNote ? 'bg-gray-200 text-gray-500' : 'bg-primary/20 text-primary'}`}>
+                                                            {activity.type}
+                                                        </span>
+                                                    </div>
+                                                    <div className="flex items-center gap-2">
+                                                        <span className="text-xs text-gray-400">
+                                                            {activity.createdAt ? new Date(activity.createdAt).toLocaleString() : ''}
+                                                        </span>
+                                                        {canModify && !isEditingNote && (
+                                                            <div className="flex items-center gap-1">
+                                                                <button
+                                                                    onClick={() => {
+                                                                        setEditingNoteId(noteId);
+                                                                        setEditNoteContent(activity.description);
+                                                                    }}
+                                                                    className="p-1 text-gray-400 hover:text-primary transition-colors"
+                                                                    title="Edit note"
+                                                                >
+                                                                    <Pencil size={12} />
+                                                                </button>
+                                                                <button
+                                                                    onClick={() => handleDeleteNote(noteId)}
+                                                                    className="p-1 text-gray-400 hover:text-red-500 transition-colors"
+                                                                    title="Delete note"
+                                                                >
+                                                                    <Trash2 size={12} />
+                                                                </button>
+                                                            </div>
                                                         )}
                                                     </div>
-                                                    <span className="text-xs text-gray-400">
-                                                        {note.createdAt ? new Date(note.createdAt).toLocaleString() : ''}
-                                                    </span>
                                                 </div>
-                                                <p className="text-sm text-gray-700 leading-relaxed">{note.content}</p>
+
+                                                {isEditingNote && noteId ? (
+                                                    <form onSubmit={(e) => handleEditNote(e, noteId)} className="mt-2">
+                                                        <textarea
+                                                            value={editNoteContent}
+                                                            onChange={(e) => setEditNoteContent(e.target.value)}
+                                                            className="w-full text-sm px-3 py-2 border border-blue-200 rounded-lg focus:border-primary focus:ring-1 focus:ring-primary outline-none bg-white resize-none"
+                                                            rows="2"
+                                                            autoFocus
+                                                        />
+                                                        <div className="flex justify-end gap-2 mt-2">
+                                                            <button
+                                                                type="button"
+                                                                onClick={() => setEditingNoteId(null)}
+                                                                className="px-3 py-1 text-xs font-medium text-gray-600 hover:bg-gray-100 rounded-md transition-colors"
+                                                            >
+                                                                Cancel
+                                                            </button>
+                                                            <button
+                                                                type="submit"
+                                                                disabled={updatingNote || !editNoteContent.trim()}
+                                                                className="px-3 py-1 text-xs font-medium text-white bg-primary hover:bg-violet-700 rounded-md transition-colors disabled:opacity-50"
+                                                            >
+                                                                {updatingNote ? 'Saving...' : 'Save'}
+                                                            </button>
+                                                        </div>
+                                                    </form>
+                                                ) : (
+                                                    <p className="text-sm text-gray-700 leading-relaxed">{activity.description}</p>
+                                                )}
                                             </div>
                                         </div>
                                     );

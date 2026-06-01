@@ -3,6 +3,10 @@ import { Link, useLocation } from 'react-router-dom';
 import { LayoutDashboard, Users, PlusCircle, X, UserCheck, LogOut } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import clsx from 'clsx';
+import logoImg from '../assets/favicon.png';
+
+// Get API URL from environment variables
+const API_URL = import.meta.env.VITE_API_URL || '';
 
 const Sidebar = ({ isOpen, onClose, isCollapsed }) => {
   const location = useLocation();
@@ -14,7 +18,7 @@ const Sidebar = ({ isOpen, onClose, isCollapsed }) => {
     const fetchProfilePic = async () => {
       try {
         const token = localStorage.getItem('token');
-        const response = await fetch('/api/users/me', {
+        const response = await fetch(`${API_URL}/api/users/me`, {
           headers: {
             'Content-Type': 'application/json',
             Authorization: `Bearer ${token}`,
@@ -78,15 +82,11 @@ const Sidebar = ({ isOpen, onClose, isCollapsed }) => {
         "flex items-center shrink-0 h-16 border-b border-white/10",
         isCollapsed ? "md:justify-center md:px-2 px-6" : "justify-between px-6"
       )}>
-        <Link to="/" onClick={onClose} className="inline-block">
-          {isCollapsed ? (
-            <h1 className="hidden md:block text-xl font-bold tracking-tighter text-secondary">
-              L<span className="text-primary">F</span>
-            </h1>
-          ) : null}
+        <Link to="/" onClick={onClose} className="flex items-center gap-2">
+          <img src={logoImg} alt="Logo" className="w-8 h-8 rounded-lg shrink-0" />
           <h1 className={clsx(
-            "text-2xl font-bold tracking-tighter text-secondary",
-            isCollapsed ? "md:hidden" : ""
+            "text-2xl font-bold tracking-tighter text-secondary truncate",
+            isCollapsed ? "hidden" : "block"
           )}>
             Lead<span className="text-primary">Flow</span>
           </h1>

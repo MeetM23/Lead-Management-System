@@ -4,6 +4,9 @@ import { useNavigate } from 'react-router-dom';
 import { Search } from 'lucide-react';
 import { SkeletonTable } from '../components/common/Skeleton';
 
+// Get API URL from environment variables
+const API_URL = import.meta.env.VITE_API_URL || '';
+
 const Users = () => {
     const [users, setUsers] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -19,7 +22,7 @@ const Users = () => {
     const fetchUsers = async () => {
         try {
             const token = localStorage.getItem('token');
-            const response = await fetch('/api/users/sales', {
+            const response = await fetch(`${API_URL}/api/users/sales`, {
                 headers: {
                     'Content-Type': 'application/json',
                     Authorization: `Bearer ${token}`,
@@ -129,7 +132,7 @@ const Users = () => {
                                     <td className='px-6 py-4'>
                                         <div className='flex gap-3' >
                                             {u._id && (
-                                                <button onClick={() => navigate(`/admin/dashboard/users/${u._id}`)} className='px-2 text-sm rounded-md bg-blue-100 text-blue-500 hover:bg-blue-200 transition ' >View Profile</button>
+                                                <button onClick={() => navigate(`/admin/dashboard/users/${u.employeeId}`)} className='px-2 text-sm rounded-md bg-blue-100 text-blue-500 hover:bg-blue-200 transition ' >View Profile</button>
                                             )}
                                         </div>
                                     </td>

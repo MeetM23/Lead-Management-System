@@ -23,139 +23,150 @@ const getRandomDate = () => {
     return d;
 };
 
-// Generate realistic dummy data
+// Pad number to 4 digits
+const padId = (num) => String(num).padStart(4, '0');
+
 const seedDummyData = async () => {
-    // Only run in development
     if (process.env.NODE_ENV === 'production') {
+        console.log('🚫 Production mode - skipping seed');
         return;
     }
 
     try {
-        console.log("🌱 Checking if we need to seed data...");
+        console.log('🌱 Starting dummy data seeding...');
 
-        const leadCount = await Lead.countDocuments();
-        if (leadCount > 5) {
-            console.log("✅ Database already has leads (" + leadCount + "). Skipping seed.");
-            return;
-        }
-
-        console.log("🚀 Seeding dummy data...");
-
-        // 1. Ensure we have sales users
-        const salesUsersCount = await User.countDocuments({ role: "sales" });
-        let salesUsers = await User.find({ role: "sales" });
-        let adminUser = await User.findOne({ role: "admin" });
-
-        // If no admin, find ANY user to be the 'creator', or create one
+        // 1. Create/Verify Admin (USR-0000)
+        let adminUser = await User.findOne({ role: 'admin' });
         if (!adminUser) {
-            const hashedPassword = await bcrypt.hash("password123", 10);
+            const hashedPassword = await bcrypt.hash('password123', 10);
             adminUser = await User.create({
-                name: "Admin User",
-                email: "admin@demo.com",
+                name: 'Admin User',
+                email: 'admin@demo.com',
                 password: hashedPassword,
-                role: "admin",
+                role: 'admin',
+                employeeId: 'USR-0000',
                 isActive: true
             });
-            console.log("➕ Created Dummy Admin: admin@demo.com");
+            console.log('➕ Created Admin: USR-0000', adminUser.email);
         }
 
-        if (salesUsersCount < 5) {
-            console.log("➕ Creating dummy sales users...");
-            const hashedPassword = await bcrypt.hash("password123", 10);
+        // 2. Create Sales Users if needed (USR-0001+)
+        const existingSalesCount = await User.countDocuments({ role: 'sales' });
+        const targetSalesCount = 10;
+        
+        if (existingSalesCount < targetSalesCount) {
+            console.log(`➕ Need ${targetSalesCount - existingSalesCount} sales users...`);
+            const hashedPassword = await bcrypt.hash('password123', 10);
             const newUsers = [];
 
-            for (let i = 0; i < 10; i++) {
+            for (let i = 0; i < targetSalesCount - existingSalesCount; i++) {
+                const nextIdNum = existingSalesCount + i + 1;
                 const name = `${getRandomElement(firstNames)} ${getRandomElement(lastNames)}`;
-                newUsers.push({
-                    name,
-                    email: `sales${salesUsersCount + i + 1}@demo.com`,
-                    password: hashedPassword,
-                    role: "sales",
-                    isActive: true,
-                    phone: `+91 98${getRandomInt(10000000, 99999999)}`
-                });
+                const email = `sales${nextIdNum}@demo.com`;
+                
+                // Check if email already exists (idempotent)
+                const existingUser = await User.findOne({ email });
+                if (!existingUser) {
+                    newUsers.push({
+                        name,
+                        email,
+                        password: hashedPassword,
+                        role: 'sales',
+                        employeeId: `USR-${padId(nextIdNum)}`,
+                        isActive: true,
+                        phone: `+91 98${getRandomInt(10000000, 99999999)}`
+                    });
+                } else {
+                    console.log(`⏭️ Skipping existing: ${email}`);
+                }
             }
 
-            const createdUsers = await User.insertMany(newUsers);
-            salesUsers = [...salesUsers, ...createdUsers];
-            console.log(`✅ Added ${createdUsers.length} sales users.`);
+            if (newUsers.length > 0) {
+                const createdUsers = await User.insertMany(newUsers);
+                console.log(`✅ Created ${createdUsers.length} sales users`);
+                createdUsers.forEach(user => {
+                    console.log(`  📋 USR-${padId(user.employeeId.split('-')[1])}: ${user.email}`);
+                });
+            }
         }
 
-        // 2. Refresh lists
-        salesUsers = await User.find({ role: "sales" });
+        // 3. Get all sales users for lead assignment
+        const salesUsers = await User.find({ role: 'sales' });
         if (salesUsers.length === 0) {
-            console.log("❌ Error: No sales users available to assign leads.");
+            console.log('❌ No sales users - cannot create leads');
             return;
         }
 
-        // 3. Generate Leads
-        const leads = [];
-        const numLeads = 300; // Updated to 300 as requested
+        // 4. Check if leads exist
+        const leadCount = await Lead.countDocuments();
+        if (leadCount > 50) {
+            console.log(`✅ Enough leads exist (${leadCount}) - skipping`);
+            return;
+        }
 
-        // Distributions intended:
-        // 30% New, 50% Converted, 20% Lost
+        // 5. Generate Leads
+        console.log('➕ Creating dummy leads...');
+        const leads = [];
+        const numLeads = 300;
 
         for (let i = 0; i < numLeads; i++) {
             const rand = Math.random();
-            let status;
-            // Distribution: 30% New, 50% Converted, 20% Lost
-            if (rand < 0.3) status = "New";
-            else if (rand < 0.8) status = "Converted";
-            else status = "Lost";
+            let status = rand < 0.3 ? 'New' : rand < 0.8 ? 'Converted' : 'Lost';
 
             const name = `${getRandomElement(firstNames)} ${getRandomElement(lastNames)}`;
             const assignedUser = getRandomElement(salesUsers);
-            const createdAt = getRandomDate(); // Random date in last 30 days
+            const createdAt = getRandomDate();
 
-            // Fix createdAt for the status flow if needed? 
-            // Actually random date is fine, just ensures charts look populated.
-
-            // Construct notes
             const notes = [];
             if (Math.random() > 0.5) {
                 notes.push({
-                    content: "Initial contact made via LinkedIn.",
+                    content: 'Initial contact made via LinkedIn.',
                     createdBy: assignedUser._id,
                     createdAt: createdAt
                 });
             }
             if (status === 'Converted') {
                 notes.push({
-                    content: "Deal closed successfully!",
+                    content: 'Deal closed successfully!',
                     createdBy: assignedUser._id,
                     createdAt: new Date()
                 });
             } else if (status === 'Lost') {
                 notes.push({
-                    content: "Client budget constraints.",
+                    content: 'Client budget constraints.',
                     createdBy: assignedUser._id,
                     createdAt: new Date()
                 });
             }
 
             leads.push({
-                leadId: `LEAD-${1000 + i}`,
-                name: name,
-                email: name.toLowerCase().replace(" ", ".") + "@example.com",
+                leadId: `LD-${padId(i + 1)}`,
+                name,
+                email: name.toLowerCase().replace(/ /g, '.') + '@example.com',
                 phone: `+91 9${getRandomInt(100000000, 999999999)}`,
                 source: getRandomElement(sources),
-                priority: "Medium", // Default to Medium per request
-                status: status,
+                priority: 'Medium',
+                status,
                 createdBy: adminUser._id,
                 assignedTo: assignedUser._id,
-                notes: notes,
-                createdAt: createdAt,
+                notes,
+                createdAt,
                 updatedAt: createdAt
             });
         }
 
         await Lead.insertMany(leads);
-        console.log(`✨ Successfully seeded ${leads.length} dummy leads!`);
-        console.log("✅ Seeding Complete.");
+        console.log(`✨ Seeded ${leads.length} leads successfully!`);
+        console.log('🎉 All dummy data seeded!');
 
     } catch (error) {
-        console.error("❌ Seeding failed:", error);
+        console.error('❌ Seed failed:', error.message);
+        if (error.name === 'ValidationError') {
+            console.error('Validation issues:', Object.keys(error.errors));
+        }
+        throw error; // Re-throw for connectDB caller
     }
 };
 
 export default seedDummyData;
+

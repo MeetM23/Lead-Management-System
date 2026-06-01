@@ -1,6 +1,10 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
+import { apiFetch } from '../utils/api.js';
+import axios from 'axios';
 
 const AuthContext = createContext();
+
+const API_URL = import.meta.env.VITE_API_URL;
 
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
@@ -13,7 +17,7 @@ export const AuthProvider = ({ children }) => {
       const token = localStorage.getItem('token');
       if (token) {
         try {
-          const res = await fetch('/api/users/me', {
+          const res = await apiFetch('/api/users/me', {
             headers: {
               'Authorization': `Bearer ${token}`
             }
@@ -44,19 +48,8 @@ export const AuthProvider = ({ children }) => {
     try {
       setError('');
 
-      const res = await fetch('/api/auth/login', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ email, password }),
-      });
-
-      const data = await res.json();
-
-      if (!res.ok) {
-        throw new Error(data.message || 'Login failed');
-      }
+      const res = await axios.post(`${API_URL}/api/auth/login`, { email, password });
+      const data = res.data;
 
       // Store JWT
       localStorage.setItem('token', data.token);
@@ -64,7 +57,7 @@ export const AuthProvider = ({ children }) => {
       setUser(data.user);
       return { success: true, user: data.user };
     } catch (err) {
-      setError(err.message);
+      setError(err.response?.data?.message || err.message || 'Login failed');
       return { success: false };
     }
   };
@@ -74,23 +67,11 @@ export const AuthProvider = ({ children }) => {
     try {
       setError('');
 
-      const res = await fetch('/api/auth/register', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(userData),
-      });
-
-      const data = await res.json();
-
-      if (!res.ok) {
-        throw new Error(data.message || 'Registration failed');
-      }
+      const res = await axios.post(`${API_URL}/api/auth/register`, userData);
 
       return { success: true };
     } catch (err) {
-      setError(err.message);
+      setError(err.response?.data?.message || err.message || 'Registration failed');
       return { success: false };
     }
   };

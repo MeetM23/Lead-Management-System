@@ -1,20 +1,20 @@
-import User from "../models/User.js";
-import Lead from "../models/Lead.js";
-import bcrypt from "bcryptjs";
+import {
+    getAllUsersService,
+    getUserProfileService,
+    updateUserProfileService,
+    getSalesUsersService,
+    uploadAvatarService,
+    getUserByIdService,
+    terminateUserService
+} from "../services/userService.js";
+import User from "../models/User.js"; // Kept for email existence check only, or could move that to service too
 
 /* =========================
    GET ALL USERS (ADMIN ONLY)
 ========================= */
 const getUsers = async (req, res) => {
     try {
-        // Admin only - used for lead assignment dropdown
-        if (req.user.role !== 'admin') {
-            return res.status(403).json({ success: false, message: "Forbidden: Only admin can access this route" });
-        }
-
-        const users = await User.find()
-            .select("-password")
-            .sort({ createdAt: -1 });
+        const users = await getAllUsersService();
 
         res.json({
             success: true,
@@ -33,27 +33,25 @@ const getUsers = async (req, res) => {
 ========================= */
 const getMyProfile = async (req, res) => {
     try {
-        const user = await User.findById(req.user._id).select("-password");
+        const userProfile = await getUserProfileService(req.user._id);
 
-        if (!user) {
+        if (!userProfile) {
             return res.status(404).json({ success: false, message: "User not found" });
         }
-
-        // Count leads created by this user
-        const leadsCreatedCount = await Lead.countDocuments({ createdBy: req.user._id });
 
         res.json({
             success: true,
             data: {
-                name: user.name,
-                email: user.email,
-                phone: user.phone || '',
-                employeeId: user.employeeId || '',
-                role: user.role,
-                profilePic: user.profilePic || '',
-                profileImage: user.profilePic || '',
-                leadsCreatedCount,
-                totalLeads: leadsCreatedCount,
+                _id: userProfile._id,
+                name: userProfile.name,
+                email: userProfile.email,
+                phone: userProfile.phone || '',
+                employeeId: userProfile.employeeId || '',
+                role: userProfile.role,
+                profilePic: userProfile.profilePic || '',
+                profileImage: userProfile.profilePic || '',
+                leadsCreatedCount: userProfile.leadsCreatedCount,
+                totalLeads: userProfile.totalLeads,
             },
         });
     } catch (error) {
@@ -68,72 +66,56 @@ const updateMyProfile = async (req, res) => {
     try {
         const { name, phone, profilePic, email, password } = req.body;
 
-        const user = await User.findById(req.user._id);
-
-        if (!user) {
-            return res.status(404).json({ success: false, message: "User not found" });
-        }
-
-        // Only allow updating name, phone, profilePic, email, password
+        // Validation logic
         if (name !== undefined) {
             if (typeof name !== 'string' || name.trim().length === 0) {
                 return res.status(400).json({ success: false, message: "Name cannot be empty" });
             }
-            user.name = name.trim();
         }
-        if (phone !== undefined) {
-            user.phone = phone ? phone.trim() : '';
-        }
+
         if (profilePic !== undefined) {
-            // Validate base64 image if provided
             if (profilePic && profilePic.length > 0) {
-                // Check if it's a valid base64 data URL
                 if (!profilePic.startsWith('data:image/')) {
                     return res.status(400).json({ success: false, message: "Invalid image format" });
                 }
-                // Limit base64 size to 600KB (compressed images should be ~500KB)
                 if (profilePic.length > 600 * 1024) {
                     return res.status(400).json({ success: false, message: "Image too large. Please use a smaller image (max 500KB after compression)" });
                 }
             }
-            user.profilePic = profilePic || '';
         }
 
-        // Update Email
         if (email !== undefined) {
             const emailTrimmed = email.trim().toLowerCase();
-            if (emailTrimmed !== user.email) {
+            const existingUser = await getUserProfileService(req.user._id);
+            if (existingUser && emailTrimmed !== existingUser.email) {
                 const emailExists = await User.findOne({ email: emailTrimmed });
                 if (emailExists) {
                     return res.status(400).json({ success: false, message: "Email already in use" });
                 }
-                user.email = emailTrimmed;
             }
         }
 
-        // Update Password
-        if (password !== undefined && password.length > 0) {
-            const salt = await bcrypt.genSalt(10);
-            user.password = await bcrypt.hash(password, salt);
+        const updatedProfile = await updateUserProfileService(req.user._id, {
+            name, phone, profilePic, email, password
+        });
+
+        if (!updatedProfile) {
+            return res.status(404).json({ success: false, message: "User not found" });
         }
-
-        await user.save();
-
-        // Return updated profile with lead count
-        const leadsCreatedCount = await Lead.countDocuments({ createdBy: req.user._id });
 
         res.json({
             success: true,
             data: {
-                name: user.name,
-                email: user.email,
-                phone: user.phone || '',
-                employeeId: user.employeeId || '',
-                role: user.role,
-                profilePic: user.profilePic || '',
-                profileImage: user.profilePic || '',
-                leadsCreatedCount,
-                totalLeads: leadsCreatedCount,
+                _id: updatedProfile._id,
+                name: updatedProfile.name,
+                email: updatedProfile.email,
+                phone: updatedProfile.phone || '',
+                employeeId: updatedProfile.employeeId || '',
+                role: updatedProfile.role,
+                profilePic: updatedProfile.profilePic || '',
+                profileImage: updatedProfile.profilePic || '',
+                leadsCreatedCount: updatedProfile.leadsCreatedCount,
+                totalLeads: updatedProfile.totalLeads,
             },
         });
     } catch (error) {
@@ -146,34 +128,10 @@ const updateMyProfile = async (req, res) => {
 ========================= */
 const getSalesUsers = async (req, res) => {
     try {
-        if (req.user.role !== 'admin') {
-            return res.status(403).json({ success: false, message: "Forbidden: Only admin can access this route" });
-        }
-
-        const salesUsers = await User.find({ role: 'sales' }).select("-password").sort({ createdAt: -1 });
-
-        // For each sales user, count their leads
-        const salesWithCounts = await Promise.all(
-            salesUsers.map(async (user) => {
-                const leadsCreatedCount = await Lead.countDocuments({ createdBy: user._id });
-                const leadsAssignedCount = await Lead.countDocuments({ assignedTo: user._id });
-
-                return {
-                    _id: user._id,
-                    name: user.name,
-                    email: user.email,
-                    phone: user.phone || '',
-                    employeeId: user.employeeId || '',
-                    profilePic: user.profilePic || '',
-                    leadsCreatedCount,
-                    leadsAssignedCount,
-                };
-            })
-        );
-
+        const salesUsers = await getSalesUsersService();
         res.json({
             success: true,
-            data: salesWithCounts,
+            data: salesUsers,
         });
     } catch (error) {
         res.status(500).json({ success: false, message: error.message });
@@ -189,25 +147,18 @@ const uploadAvatar = async (req, res) => {
             return res.status(400).json({ success: false, message: "Please upload a file" });
         }
 
-        const user = await User.findById(req.user._id);
+        const updatedUser = await uploadAvatarService(req.user._id, req.file.filename);
 
-        if (!user) {
+        if (!updatedUser) {
             return res.status(404).json({ success: false, message: "User not found" });
         }
-
-        // Save relative path to DB (e.g., /uploads/filename.jpg)
-        // Normalize path separators to forward slashes
-        const profilePicPath = `/uploads/${req.file.filename}`;
-
-        user.profilePic = profilePicPath;
-        await user.save();
 
         res.json({
             success: true,
             message: "Avatar uploaded successfully",
             data: {
-                profilePic: user.profilePic,
-                profileImage: user.profilePic
+                profilePic: updatedUser.profilePic,
+                profileImage: updatedUser.profilePic
             }
         });
     } catch (error) {
@@ -217,25 +168,15 @@ const uploadAvatar = async (req, res) => {
 
 const getUserById = async (req, res) => {
     try {
-        // Only admin can access this route
-        if (req.user.role !== 'admin') {
-            return res.status(403).json({ success: false, message: "Forbidden: Only admin can access this route" });
-        }
-
-        const user = await User.findById(req.params.id).select("-password");
+        const user = await getUserByIdService(req.params.employeeId);
 
         if (!user) {
             return res.status(404).json({ success: false, message: "User not found" });
         }
 
-        // Only allow viewing sales users
         if (user.role !== 'sales') {
             return res.status(403).json({ success: false, message: "Forbidden: Can only view sales user profiles" });
         }
-
-        // Count leads for this sales user
-        const leadsCreatedCount = await Lead.countDocuments({ createdBy: user._id });
-        const leadsAssignedCount = await Lead.countDocuments({ assignedTo: user._id });
 
         res.json({
             success: true,
@@ -249,8 +190,8 @@ const getUserById = async (req, res) => {
                 role: user.role,
                 isActive: user.isActive,
                 createdAt: user.createdAt,
-                leadsCreatedCount,
-                leadsAssignedCount,
+                leadsCreatedCount: user.leadsCreatedCount,
+                leadsAssignedCount: user.leadsAssignedCount,
             },
         });
     } catch (error) {
@@ -263,32 +204,16 @@ const getUserById = async (req, res) => {
 ========================= */
 const terminateUser = async (req, res) => {
     try {
-        if (req.user.role !== 'admin') {
-            return res.status(403).json({ success: false, message: "Forbidden: Only admin can delete users" });
+        const result = await terminateUserService(req.params.employeeId, req.user._id);
+
+        if (!result.success) {
+            return res.status(result.message === "User not found" ? 404 : 403)
+                .json({ success: false, message: result.message });
         }
-
-        const user = await User.findById(req.params.id);
-
-        if (!user) {
-            return res.status(404).json({ success: false, message: "User not found" });
-        }
-
-        if (user.role === 'admin') {
-            return res.status(403).json({ success: false, message: "Cannot delete an admin" });
-        }
-
-        // 1. Reassign leads assigned to this user to the Admin (req.user)
-        const leadsUpdateResult = await Lead.updateMany(
-            { assignedTo: user._id },
-            { assignedTo: req.user._id }
-        );
-
-        // 2. Delete the user
-        await User.findByIdAndDelete(req.params.id);
 
         res.json({
             success: true,
-            message: `User ${user.name} has been deleted. ${leadsUpdateResult.modifiedCount} leads were reassigned to you.`,
+            message: `User ${result.user.name} has been deleted. ${result.reassignedCount} leads were reassigned to you.`,
             data: { isActive: false, deleted: true }
         });
     } catch (error) {

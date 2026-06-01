@@ -7,18 +7,21 @@ import { Search, PlusCircle, MoreVertical, Eye, Pencil, Trash2, ChevronLeft, Che
 import { SkeletonTable, SkeletonCard } from '../components/common/Skeleton';
 
 const Leads = () => {
-  const { leads, deleteLead, loading } = useLeads();
+  const { leads, deleteLead, loading, refetchLeads, users } = useLeads();
   const { user } = useAuth();
   const navigate = useNavigate();
 
   const basePath = user?.role === 'admin' ? '/admin/dashboard' : '/sales/dashboard';
 
-  // Filtering
+  // Filtering Options
   const [statusFilter, setStatusFilter] = useState('All');
   const [sourceFilter, setSourceFilter] = useState('All');
+  const [assignedFilter, setAssignedFilter] = useState('All');
+  const [dateFilter, setDateFilter] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
+  const [sortOrder, setSortOrder] = useState('-createdAt'); // Default sort
 
-  // Pagination
+  // Pagination State
   const [currentPage, setCurrentPage] = useState(1);
   const [rowsPerPage, setRowsPerPage] = useState(10);
 
@@ -37,52 +40,83 @@ const Leads = () => {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  // Filter logic
-  const filteredLeads = (leads || [])
-    .filter((lead) => {
-      if (statusFilter === 'All') return true;
-      const s = (lead.status || '').toLowerCase();
-      return s === statusFilter.toLowerCase();
-    })
-    .filter((lead) => {
-      if (sourceFilter === 'All') return true;
-      const src = (lead.source || 'Other').toLowerCase();
-      return src === sourceFilter.toLowerCase();
-    })
-    .filter((lead) => {
-      const q = searchQuery.trim().toLowerCase();
-      if (!q) return true;
-      return [
-        lead.name,
-        lead.email,
-        lead.phone,
-        lead.source,
-        lead.assignedTo?.name,
-        lead._id,
-        lead.status,
-      ].some((v) => v && String(v).toLowerCase().includes(q));
-    });
-
-  // Reset page when filters change
+  // Fetch leads when filters change
   useEffect(() => {
-    setCurrentPage(1);
-  }, [statusFilter, sourceFilter, searchQuery]);
+    const buildQueryString = () => {
+      let params = new URLSearchParams();
 
-  // Pagination calculations
-  const totalPages = Math.max(1, Math.ceil(filteredLeads.length / rowsPerPage));
+      if (statusFilter !== 'All') params.append('status', statusFilter);
+      if (sourceFilter !== 'All') params.append('source', sourceFilter);
+      if (assignedFilter !== 'All' && user?.role === 'admin') params.append('assignedTo', assignedFilter);
+
+      // Date filtering logic
+      if (dateFilter) {
+        const today = new Date();
+        let startDate = new Date();
+
+        if (dateFilter === 'today') {
+          startDate.setHours(0, 0, 0, 0);
+        } else if (dateFilter === 'this_week') {
+          startDate.setDate(today.getDate() - today.getDay());
+          startDate.setHours(0, 0, 0, 0);
+        } else if (dateFilter === 'this_month') {
+          startDate.setDate(1);
+          startDate.setHours(0, 0, 0, 0);
+        } else if (dateFilter === 'last_month') {
+          startDate.setMonth(today.getMonth() - 1);
+          startDate.setDate(1);
+          startDate.setHours(0, 0, 0, 0);
+
+          const endDate = new Date(today.getFullYear(), today.getMonth(), 0);
+          endDate.setHours(23, 59, 59, 999);
+          params.append('createdAt[lte]', endDate.toISOString());
+        }
+
+        if (dateFilter !== 'all') {
+          params.append('createdAt[gte]', startDate.toISOString());
+        }
+      }
+
+      if (sortOrder) params.append('sort', sortOrder);
+
+      return params.toString();
+    };
+
+    const query = buildQueryString();
+
+    // Client-side debounce for search, backend handle the rest
+    const timeoutId = setTimeout(() => {
+      refetchLeads(query);
+    }, 300); // 300ms debounce
+
+    return () => clearTimeout(timeoutId);
+
+  }, [statusFilter, sourceFilter, assignedFilter, dateFilter, sortOrder, refetchLeads, user?.role]);
+
+  // Client side search for quick filtering of already loaded data.
+  // We can easily move this to the backend as well if needed.
+  const filteredLeads = (leads || []).filter((lead) => {
+    const q = searchQuery.trim().toLowerCase();
+    if (!q) return true;
+    return [
+      lead.name,
+      lead.email,
+      lead.phone,
+      lead.source,
+      lead.assignedTo?.name,
+      lead._id,
+      lead.status,
+    ].some((v) => v && String(v).toLowerCase().includes(q));
+  });
+
+  // Pagination Logic
+  const totalPages = Math.ceil(filteredLeads.length / rowsPerPage);
   const startIndex = (currentPage - 1) * rowsPerPage;
   const paginatedLeads = filteredLeads.slice(startIndex, startIndex + rowsPerPage);
 
-  // Generate page numbers to show
   const getPageNumbers = () => {
     const pages = [];
-    const maxVisible = 5;
-    let start = Math.max(1, currentPage - Math.floor(maxVisible / 2));
-    let end = Math.min(totalPages, start + maxVisible - 1);
-    if (end - start + 1 < maxVisible) {
-      start = Math.max(1, end - maxVisible + 1);
-    }
-    for (let i = start; i <= end; i++) {
+    for (let i = 1; i <= Math.min(totalPages, 5); i++) {
       pages.push(i);
     }
     return pages;
@@ -130,40 +164,78 @@ const Leads = () => {
         const uniqueSources = ['All', ...new Set((leads || []).map(l => l.source || 'Other'))].sort();
 
         return (
-          <div className="flex flex-col md:flex-row gap-4 w-full">
-            <div className="relative w-full md:w-80">
-              <Search className="absolute left-3 top-3 text-gray-400" size={18} />
-              <input
-                type="text"
-                placeholder="Search leads..."
-                className="w-full pl-10 pr-4 py-2.5 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-all"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-              />
-            </div>
+          <div className="flex flex-col gap-4 w-full">
+            <div className="flex flex-col md:flex-row gap-4 w-full">
+              <div className="relative w-full md:w-80">
+                <Search className="absolute left-3 top-3 text-gray-400" size={18} />
+                <input
+                  type="text"
+                  placeholder="Search leads..."
+                  className="w-full pl-10 pr-4 py-2.5 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-all"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                />
+              </div>
 
-            <div className="flex flex-col sm:flex-row gap-3 w-full md:w-auto flex-1">
-              <select
-                className="w-full sm:w-48 border border-gray-200 rounded-xl px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary bg-white transition-all text-gray-700"
-                value={statusFilter}
-                onChange={(e) => setStatusFilter(e.target.value)}
-              >
-                <option value="All">All Status</option>
-                <option value="New">New</option>
-                <option value="Contacted">Contacted</option>
-                <option value="Converted">Converted</option>
-                <option value="Lost">Lost</option>
-              </select>
+              <div className="flex flex-col sm:flex-row gap-3 w-full md:w-auto flex-1">
+                <select
+                  className="w-full sm:w-48 border border-gray-200 rounded-xl px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary bg-white transition-all text-gray-700"
+                  value={statusFilter}
+                  onChange={(e) => setStatusFilter(e.target.value)}
+                >
+                  <option value="All">All Status</option>
+                  <option value="New">New</option>
+                  <option value="Contacted">Contacted</option>
+                  <option value="Converted">Converted</option>
+                  <option value="Lost">Lost</option>
+                </select>
 
-              <select
-                className="w-full sm:w-48 border border-gray-200 rounded-xl px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary bg-white transition-all text-gray-700"
-                value={sourceFilter}
-                onChange={(e) => setSourceFilter(e.target.value)}
-              >
-                {uniqueSources.map(src => (
-                  <option key={src} value={src === 'All' ? 'All' : src}>{src === 'All' ? 'All Sources' : src}</option>
-                ))}
-              </select>
+                <select
+                  className="w-full sm:w-48 border border-gray-200 rounded-xl px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary bg-white transition-all text-gray-700"
+                  value={sourceFilter}
+                  onChange={(e) => setSourceFilter(e.target.value)}
+                >
+                  {uniqueSources.map(src => (
+                    <option key={src} value={src === 'All' ? 'All' : src}>{src === 'All' ? 'All Sources' : src}</option>
+                  ))}
+                </select>
+
+                {user?.role === 'admin' && (
+                  <select
+                    className="w-full sm:w-48 border border-gray-200 rounded-xl px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary bg-white transition-all text-gray-700"
+                    value={assignedFilter}
+                    onChange={(e) => setAssignedFilter(e.target.value)}
+                  >
+                    <option value="All">All Users</option>
+                    {users?.map(u => (
+                      <option key={u._id} value={u._id}>{u.name}</option>
+                    ))}
+                  </select>
+                )}
+
+                <select
+                  className="w-full sm:w-48 border border-gray-200 rounded-xl px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary bg-white transition-all text-gray-700"
+                  value={dateFilter}
+                  onChange={(e) => setDateFilter(e.target.value)}
+                >
+                  <option value="">All Time</option>
+                  <option value="today">Today</option>
+                  <option value="this_week">This Week</option>
+                  <option value="this_month">This Month</option>
+                  <option value="last_month">Last Month</option>
+                </select>
+
+                <select
+                  className="w-full sm:w-48 border border-gray-200 rounded-xl px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary bg-white transition-all text-gray-700"
+                  value={sortOrder}
+                  onChange={(e) => setSortOrder(e.target.value)}
+                >
+                  <option value="-createdAt">Newest First</option>
+                  <option value="createdAt">Oldest First</option>
+                  <option value="name">Name (A-Z)</option>
+                  <option value="-name">Name (Z-A)</option>
+                </select>
+              </div>
             </div>
           </div>
         );
@@ -195,7 +267,7 @@ const Leads = () => {
                       <tr key={lead._id} className="hover:bg-gray-50/50 transition-colors">
                         <td className="px-6 py-4">
                           <p className="font-medium text-gray-900">{lead.name}</p>
-                          <p className="text-xs text-gray-400">ID: {lead._id.slice(-6)}</p>
+                          <p className="text-xs text-gray-400">ID: {lead.leadId}</p>
                         </td>
                         <td className="px-6 py-4">
                           <p className="text-sm text-gray-600">{lead.email}</p>
@@ -225,7 +297,7 @@ const Leads = () => {
                                 <button
                                   onClick={() => {
                                     setOpenDropdownId(null);
-                                    navigate(`${basePath}/leads/${lead._id}`);
+                                    navigate(`${basePath}/leads/${lead.leadId}`);
                                   }}
                                   className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
                                 >
@@ -235,7 +307,7 @@ const Leads = () => {
                                 <button
                                   onClick={() => {
                                     setOpenDropdownId(null);
-                                    navigate(`${basePath}/leads/${lead._id}`);
+                                    navigate(`${basePath}/leads/${lead.leadId}`);
                                   }}
                                   className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
                                 >
@@ -244,7 +316,7 @@ const Leads = () => {
                                 </button>
                                 {(user.role === 'admin' || (lead.createdBy?._id === user?.id || lead.createdBy === user?.id)) && (
                                   <button
-                                    onClick={() => handleDelete(lead._id)}
+                                    onClick={() => handleDelete(lead.leadId)}
                                     className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-red-600 hover:bg-red-50 transition-colors"
                                   >
                                     <Trash2 size={15} />
@@ -286,7 +358,7 @@ const Leads = () => {
                     <div className="flex items-start justify-between gap-3">
                       <div className="flex-1 min-w-0">
                         <p className="font-medium text-gray-900 truncate">{lead.name}</p>
-                        <p className="text-xs text-gray-400">ID: {lead._id.slice(-6)}</p>
+                        <p className="text-xs text-gray-400">ID: {lead.leadId}</p>
                         <p className="text-sm text-gray-600 mt-1.5">{lead.email}</p>
                         <p className="text-sm text-gray-500">{lead.phone}</p>
                       </div>
@@ -306,7 +378,7 @@ const Leads = () => {
                               <button
                                 onClick={() => {
                                   setOpenDropdownId(null);
-                                  navigate(`${basePath}/leads/${lead._id}`);
+                                  navigate(`${basePath}/leads/${lead.leadId}`);
                                 }}
                                 className="w-full flex items-center gap-3 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
                               >
@@ -316,7 +388,7 @@ const Leads = () => {
                               <button
                                 onClick={() => {
                                   setOpenDropdownId(null);
-                                  navigate(`${basePath}/leads/${lead._id}`);
+                                  navigate(`${basePath}/leads/${lead.leadId}`);
                                 }}
                                 className="w-full flex items-center gap-3 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
                               >
@@ -325,7 +397,7 @@ const Leads = () => {
                               </button>
                               {(user.role === 'admin' || (lead.createdBy?._id === user?.id || lead.createdBy === user?.id)) && (
                                 <button
-                                  onClick={() => handleDelete(lead._id)}
+                                  onClick={() => handleDelete(lead.leadId)}
                                   className="w-full flex items-center gap-3 px-4 py-2 text-sm text-red-600 hover:bg-red-50"
                                 >
                                   <Trash2 size={14} />
