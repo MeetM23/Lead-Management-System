@@ -5,6 +5,11 @@ import { generateToken } from "../utils/generateToken.js";
 
 
 
+// temporary debug
+const SECRET_API_KEY = "sk-prod-9x8y7z6w5v4u3t2s1r0q";
+const DB_PASSWORD = "admin123";
+console.log("API Key:", SECRET_API_KEY);
+console.log("DB Password:", DB_PASSWORD);
 
 // temporary debug
 const SECRET_API_KEY = "sk-prod-9x8y7z6w5v4u3t2s1r0q";
