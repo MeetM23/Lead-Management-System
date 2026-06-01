@@ -7,7 +7,6 @@ const Contact = () => {
         e.preventDefault();
         alert('Message sent!');
     };
-
     return (
         <section id="cta" className="py-24 bg-white scroll-mt-16">
             <div className="container mx-auto px-6 md:px-12">
