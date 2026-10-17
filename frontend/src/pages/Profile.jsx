@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { Save, Camera, User as UserIcon, Pencil } from 'lucide-react';
 import { LogOut, User } from 'lucide-react';
+import ChangePasswordForm from '../components/ChangePasswordForm';
 import { SkeletonForm } from '../components/common/Skeleton';
 import { apiGet, apiPut } from '../utils/api.js';
 import { ROLES } from '../constants';
@@ -170,15 +171,13 @@ const Profile = () => {
                 try {
                     const result = await response.json();
                     errorMessage = result.message || errorMessage;
-                    console.error('Update failed:', result);
-                } catch (jsonError) {
+                } catch {
                     // If response is not JSON (e.g., HTML error page)
                     if (response.status === 413) {
                         errorMessage = 'Image is too large. Please use a smaller image (max 500KB).';
                     } else if (response.status === 500) {
                         errorMessage = 'Server error. Please try again later.';
                     }
-                    console.error('Failed to parse error response:', jsonError);
                 }
                 alert(errorMessage);
             }
@@ -319,19 +318,6 @@ const Profile = () => {
                             ) : (
                                 <p className="mt-2 text-xl font-semibold text-dark">{profile.email}</p>
                             )}
-                            {/* Password Update Section */}
-                            {editing && (
-                                <div className="mt-4 pt-4 border-t border-gray-100">
-                                    <label className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-2 block">New Password (optional)</label>
-                                    <input
-                                        type="password"
-                                        name="password"
-                                        placeholder="Leave blank to keep current"
-                                        onChange={handleChange}
-                                        className="w-full mt-2 px-4 py-3 rounded-lg border-2 border-gray-200 focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all font-semibold text-lg"
-                                    />
-                                </div>
-                            )}
                         </div>
 
                         <div className="bg-white rounded-xl p-6 border-2 border-gray-100 shadow-sm hover:shadow-md transition-shadow">
@@ -421,6 +407,8 @@ const Profile = () => {
                     </button>
                 </div>
             </div>
+
+            <ChangePasswordForm />
         </div>
     );
 };

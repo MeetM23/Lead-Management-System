@@ -25,11 +25,11 @@ const csvFile = (text) => ({ originalname: "leads.csv", buffer: Buffer.from(text
 
 describe("search and scope", () => {
   test("search looks in name, phone, email and lead ID, and cannot widen a sales user's scope", () => {
-    const filter = Lead.buildListFilter(sales(5), { search: " asha ", assignedTo: "9", priority: "High" });
+    const filter = Lead.buildListFilter(sales(5), { search: " asha ", assignedTo: "9" });
     assert.deepEqual(filter.OR.map((clause) => Object.keys(clause)[0]), ["name", "phone", "email", "leadId"]);
     assert.deepEqual(filter.OR[0], { name: { contains: "asha" } });
     assert.equal(filter.assignedToId, 5); // the scope, not the requested assignedTo
-    assert.equal(filter.priority, "High");
+    assert.equal(filter.assignedToId, 5);
   });
 
   test("search ignores empty and non-string values, and caps its length", () => {
@@ -251,17 +251,18 @@ describe("import with the lead-ad spreadsheet headers", () => {
 describe("custom fields on the lead page", () => {
   test("every saved field is listed with its saved name, in order, whatever the columns are", () => {
     const fields = describeCustomFields({
+      ad_name: "Zed Certification",
       "which_zed_certification_level_are_you_interested_in?": "Silver",
       "Loan Requirement": "5,00,000",
       "a brand new column": "x",
     });
-    assert.deepEqual(fields.map((field) => field.label), ["which_zed_certification_level_are_you_interested_in?", "Loan Requirement", "a brand new column"]);
-    assert.deepEqual(fields.map((field) => field.text), ["Silver", "5,00,000", "x"]);
+    assert.deepEqual(fields.map((field) => field.label), ["ad_name", "which_zed_certification_level_are_you_interested_in?", "Loan Requirement", "a brand new column"]);
+    assert.deepEqual(fields.map((field) => field.text), ["Zed Certification", "Silver", "5,00,000", "x"]);
   });
 
-  test("ad_name is saved but not shown on the lead page", () => {
+  test("ad_name is shown like every other saved field", () => {
     const fields = describeCustomFields({ ad_name: "Zed Certification 29-09-2026", loan_requirement: "90lakh" });
-    assert.deepEqual(fields.map((field) => field.label), ["loan_requirement"]);
+    assert.deepEqual(fields.map((field) => [field.label, field.text]), [["ad_name", "Zed Certification 29-09-2026"], ["loan_requirement", "90lakh"]]);
   });
 
   test("empty, missing, long, multiline and non-text values are handled", () => {
@@ -337,7 +338,7 @@ describe("import API without branches", () => {
     const preview = await send("/import/preview", {});
     assert.deepEqual(preview.body.data.suggestedMapping, { 4: "name", 5: "phone", 6: "email", 7: "state" });
     assert.equal(preview.body.data.fields.some((field) => field.key === "branch"), false);
-    assert.deepEqual(preview.body.data.fields.map((field) => field.key), ["name", "phone", "email", "state", "source", "priority"]);
+    assert.deepEqual(preview.body.data.fields.map((field) => field.key), ["name", "phone", "email", "state", "source"]);
 
     const report = await send("/import/validate", { mapping: MAPPING });
     assert.equal(report.body.data.validRows, 2);

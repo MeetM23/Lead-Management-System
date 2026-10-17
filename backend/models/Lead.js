@@ -4,14 +4,13 @@ import AppError from "../utils/AppError.js";
 import { parseListOptions } from "../utils/listOptions.js";
 import { toId, toApiId, isUniqueViolation } from "../utils/ids.js";
 import { normalizePhone, cleanPhone } from "../utils/normalize.js";
-import { ROLES, LEAD_PRIORITIES } from "../constants/index.js";
+import { ROLES } from "../constants/index.js";
 
 // All lead queries live here (leads and their notes). Callers get plain objects shaped like the API
 // responses: the internal integer ID is exposed as the string `_id`, and `leadId` (LD-0001) is the public ID.
 
 const LEAD_ID_COUNTER = "leadId";
 const MAX_LEAD_ID_ATTEMPTS = 5;
-const NO_MATCH = -1; // an ID that never exists: used so an unknown filter value matches nothing
 
 /* =========================
    SHAPES SENT TO THE API
@@ -55,7 +54,6 @@ const toLead = (row, view) => ({
   email: row.email,
   phone: cleanPhone(row.phone), // old imports stored "p:+91..."; the stored value is left as it was
   source: row.source,
-  priority: row.priority,
   state: row.state ?? null,
   // Can be long, so it is left out of the list; every other view (detail, create, update, assign, notes) includes it
   ...(view !== "list" && { finalRemark: row.finalRemark ?? null }),
@@ -101,12 +99,6 @@ const optionalText = (value, label, { trim = true } = {}) => {
   if (value === undefined || value === null) return undefined;
   if (typeof value !== "string") throw new AppError(`Invalid ${label}`, 400);
   return trim ? value.trim() : value;
-};
-
-const choice = (value, allowed, label) => {
-  if (value === undefined || value === null || value === "") return undefined;
-  if (!allowed.includes(value)) throw new AppError(`Invalid ${label}`, 400);
-  return value;
 };
 
 // A state typed by a user is stored exactly as written (only surrounding spaces are removed).
@@ -168,7 +160,6 @@ const withLeadIdRetry = async (work, options) => {
 
 // Fields clients may filter on. Anything else in the query string is ignored.
 const FILTER_TEXT_FIELDS = ["leadId", "name", "email", "phone", "source"];
-const FILTER_CHOICE_FIELDS = { priority: LEAD_PRIORITIES };
 const SEARCH_FIELDS = ["name", "phone", "email", "leadId"]; // `search` looks in all of these
 const MAX_SEARCH_LENGTH = 100;
 const FILTER_OWNER_FIELDS = { assignedTo: "assignedToId", createdBy: "createdById" }; // admin only
@@ -184,13 +175,6 @@ const buildListFilter = (user, queryString = {}) => {
   for (const field of FILTER_TEXT_FIELDS) {
     const value = queryString[field];
     if (typeof value === "string" && value !== "") filter[field] = value;
-  }
-
-  for (const [field, allowed] of Object.entries(FILTER_CHOICE_FIELDS)) {
-    const value = queryString[field];
-    if (typeof value !== "string" || value === "") continue;
-    if (allowed.includes(value)) filter[field] = value;
-    else filter.id = NO_MATCH; // not a real value, so nothing can match
   }
 
   if (user.role === ROLES.ADMIN) {
@@ -219,17 +203,8 @@ const buildListFilter = (user, queryString = {}) => {
   return { ...filter, ...scope };
 };
 
-// List leads visible to the user (admin: all, sales: assigned to them), with filter/sort/pagination
-const findForUser = async (user, queryString = {}) => {
-  const rows = await prisma.lead.findMany({
-    where: buildListFilter(user, queryString),
-    ...parseListOptions(queryString),
-    include: includeFor("list"),
-  });
-  return rows.map((row) => toLead(row, "list"));
-};
-
-// One page of the list plus the total number of matching leads (for page numbers)
+// One page of the leads visible to the user (admin: all, sales: assigned to them), with filter/sort/pagination,
+// plus the total number of matching leads (for page numbers)
 const findPageForUser = async (user, queryString = {}) => {
   const where = buildListFilter(user, queryString);
   const options = parseListOptions(queryString);
@@ -266,7 +241,6 @@ const createForUser = async (data, user) => {
     email: optionalText(data.email, "email"),
     phone: cleanPhone(optionalText(data.phone, "phone")),
     source: optionalText(data.source, "source", { trim: false }),
-    priority: choice(data.priority, LEAD_PRIORITIES, "priority"),
     state: stateText(data.state),
   };
 
@@ -315,7 +289,7 @@ const findImportMatches = async ({ emails, phones }, user) => {
 };
 
 // Creates all the given leads, or none: one transaction, one block of consecutive lead IDs, assigned to and
-// created by the importing user. Each row: { fields: { name, email?, phone?, source?, priority? }, customFields }.
+// created by the importing user. Each row: { fields: { name, email?, phone?, source? }, customFields }.
 const createManyForUser = async (rows, user) => {
   if (user.role !== ROLES.ADMIN) throw new AppError("Only an admin can import leads", 403);
   if (rows.length === 0) return { count: 0 };
@@ -359,7 +333,6 @@ const updateForUser = async (leadId, data, user) => {
       email: optionalText(data.email, "email"),
       phone: cleanPhone(optionalText(data.phone, "phone")),
       source: optionalText(data.source, "source", { trim: false }),
-      priority: choice(data.priority, LEAD_PRIORITIES, "priority"),
       state: stateText(data.state),
     };
     for (const [field, value] of Object.entries(next)) {
@@ -517,7 +490,7 @@ const getStats = async (user) => {
 const countAll = async () => prisma.lead.count();
 
 // Creates demo leads one by one, each with a fresh ID from the same generator as real leads.
-// Each row: { name, email, phone, source, priority, createdBy, assignedTo (user _id strings),
+// Each row: { name, email, phone, source, createdBy, assignedTo (user _id strings),
 //             createdAt, updatedAt, notes: [{ content, createdBy, createdAt }] }
 const createDemoLeads = async (rows) => {
   for (const row of rows) {
@@ -529,7 +502,6 @@ const createDemoLeads = async (rows) => {
           email: row.email,
           phone: row.phone,
           source: row.source,
-          priority: row.priority,
           createdById: toId(row.createdBy),
           assignedToId: toId(row.assignedTo),
           createdAt: row.createdAt,
@@ -546,7 +518,6 @@ const createDemoLeads = async (rows) => {
 
 const Lead = {
   buildListFilter,
-  findForUser,
   findPageForUser,
   findDetail,
   createForUser,

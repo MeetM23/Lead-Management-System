@@ -99,7 +99,7 @@ describe("import limits", () => {
 
 describe("column mapping", () => {
   test("suggests fields for common header spellings, each field once", () => {
-    assert.deepEqual(suggestMapping(["Full Name", "Mobile No.", "E-mail", "Lead Source", "Stage", "Priority"]), { 0: "name", 1: "phone", 2: "email", 3: "source", 5: "priority" });
+    assert.deepEqual(suggestMapping(["Full Name", "Mobile No.", "E-mail", "Lead Source", "Stage", "Priority"]), { 0: "name", 1: "phone", 2: "email", 3: "source" });
     assert.deepEqual(suggestMapping(["form_name", "loan_requirement", "full_name", "phone", "email", "address"]), { 0: "source", 2: "name", 3: "phone", 4: "email" });
     assert.deepEqual(suggestMapping(["name", "Name "]), { 0: "name" }); // a second "name" is not suggested again
     assert.deepEqual(suggestMapping(["foo", "bar"]), {});
@@ -162,23 +162,22 @@ describe("row checks", () => {
     assert.deepEqual(item.customFields, {});
   });
 
-  test("priority matches regardless of letter case; blank means default; a status column is just custom data", async () => {
-    const [a, b] = await rowsFor("name,priority,status\nA,HIGH,Converted\nB,,", { 0: "name", 1: "priority" });
-    assert.deepEqual(a.fields, { name: "A", priority: "High" });
-    assert.deepEqual(a.customFields, { status: "Converted" });
+  test("priority and status columns are just custom data", async () => {
+    const [a, b] = await rowsFor("name,priority,status\nA,HIGH,Converted\nB,,", { 0: "name" });
+    assert.deepEqual(a.fields, { name: "A" });
+    assert.deepEqual(a.customFields, { priority: "HIGH", status: "Converted" });
     assert.deepEqual(b.fields, { name: "B" });
   });
 
   test("row problems are reported per row", async () => {
     const long = "x".repeat(256);
-    const items = await rowsFor(`name,email,phone,priority,source\n,a@b.com,1,Low,Web\nBad Email,nope,1,Low,Web\nBad Prio,a@b.com,1,Urgent,Web\n${long},a@b.com,1,Low,Web\nPhone,a@b.com,${"9".repeat(51)},Low,Web\nOK,ok@b.com,12345,Low,Web`, { 0: "name", 1: "email", 2: "phone", 3: "priority", 4: "source" });
+    const items = await rowsFor(`name,email,phone,source\n,a@b.com,1,Web\nBad Email,nope,1,Web\n${long},a@b.com,1,Web\nPhone,a@b.com,${"9".repeat(51)},Web\nOK,ok@b.com,12345,Web`, { 0: "name", 1: "email", 2: "phone", 3: "source" });
     const messages = items.map((item) => item.errors.join("; "));
     assert.match(messages[0], /Name is required/);
     assert.match(messages[1], /Invalid email/);
-    assert.match(messages[2], /Invalid priority "Urgent"/);
-    assert.match(messages[3], /Name is longer than 255/);
-    assert.match(messages[4], /Phone is longer than 50/);
-    assert.equal(messages[5], "");
+    assert.match(messages[2], /Name is longer than 255/);
+    assert.match(messages[3], /Phone is longer than 50/);
+    assert.equal(messages[4], "");
   });
 
   test("a custom value that is too long is an error, never silently cut", async () => {

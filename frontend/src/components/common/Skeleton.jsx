@@ -41,8 +41,8 @@ export const SkeletonChart = () => (
             <div className="h-8 bg-gray-200 rounded w-24"></div>
         </div>
         <div className="flex items-end gap-4 h-full pb-4">
-            {[...Array(7)].map((_, i) => (
-                <div key={i} className="bg-gray-200 rounded-t w-full" style={{ height: `${Math.random() * 60 + 20}%` }}></div>
+            {[45, 70, 35, 80, 55, 65, 40].map((height, i) => (
+                <div key={i} className="bg-gray-200 rounded-t w-full" style={{ height: `${height}%` }}></div>
             ))}
         </div>
     </div>

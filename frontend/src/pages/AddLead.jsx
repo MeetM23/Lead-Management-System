@@ -2,7 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useLeads } from '../context/LeadsContext';
 import { useAuth } from '../context/AuthContext';
-import { ROLES, LEAD_SOURCES, LEAD_PRIORITIES, getBasePath } from '../constants';
+import { ROLES, LEAD_SOURCES, getBasePath } from '../constants';
 import { Save, X } from 'lucide-react';
 import gsap from 'gsap';
 
@@ -17,7 +17,6 @@ const AddLead = () => {
     email: '',
     phone: '',
     source: 'Website',
-    priority: 'Medium',
     state: '', // optional
     assignedTo: '', // Admin must assign to sales user
   });
@@ -48,14 +47,9 @@ const AddLead = () => {
       return;
     }
 
-    // For sales, don't send assignedTo (backend will auto-assign to themselves)
-    const { state, ...fields } = formData;
-    const leadData = user?.role === ROLES.ADMIN
-      ? fields
-      : { name: formData.name, email: formData.email, phone: formData.phone, source: formData.source, priority: formData.priority };
+    const { state, ...leadData } = formData;
     if (state) leadData.state = state;
 
-    console.log("Lead payload:", leadData);
     const result = await addLead(leadData);
 
     if (result?.success) {
@@ -132,20 +126,6 @@ const AddLead = () => {
             >
               {LEAD_SOURCES.map((source) => (
                 <option key={source} value={source}>{source}</option>
-              ))}
-            </select>
-          </div>
-
-          <div className="space-y-2">
-            <label className="text-sm font-semibold text-gray-700">Priority</label>
-            <select
-              name="priority"
-              value={formData.priority}
-              onChange={handleChange}
-              className="w-full px-4 py-3 rounded-lg border border-gray-200 focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all bg-white"
-            >
-              {LEAD_PRIORITIES.map((priority) => (
-                <option key={priority} value={priority}>{priority}</option>
               ))}
             </select>
           </div>

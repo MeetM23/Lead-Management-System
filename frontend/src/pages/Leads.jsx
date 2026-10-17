@@ -110,8 +110,10 @@ const Leads = () => {
   const isAdmin = user?.role === ROLES.ADMIN;
 
   // The row menu. (Editing happens on the lead page, so "Edit" opens it too.)
+  const openLead = (lead) => navigate(`${basePath}/leads/${lead.leadId}`);
+
   const rowActions = (lead) => {
-    const open = () => navigate(`${basePath}/leads/${lead.leadId}`);
+    const open = () => openLead(lead);
     return [
       { key: 'view', label: 'View Lead', icon: Eye, onSelect: open },
       { key: 'edit', label: 'Edit Lead', icon: Pencil, onSelect: open },
@@ -227,7 +229,14 @@ const Leads = () => {
                     return (
                       <tr key={lead._id} className="hover:bg-gray-50/50 transition-colors align-top">
                         <td className="px-4 py-3 max-w-[14rem]">
-                          <p className="font-medium text-gray-900 truncate" title={lead.name}>{lead.name}</p>
+                          <button
+                            type="button"
+                            onClick={() => openLead(lead)}
+                            title={lead.name}
+                            className="block max-w-full text-left font-medium text-gray-900 truncate hover:text-primary hover:underline focus:outline-none focus-visible:text-primary focus-visible:underline"
+                          >
+                            {lead.name}
+                          </button>
                         </td>
                         <td className="px-4 py-3 text-sm text-gray-600 whitespace-nowrap">{lead.phone || '—'}</td>
                         <td className="px-4 py-3 text-sm text-gray-600 max-w-[14rem] truncate" title={lead.email || undefined}>{lead.email || '—'}</td>
@@ -268,7 +277,13 @@ const Leads = () => {
                   <div key={lead._id} className="bg-white border border-gray-100 rounded-xl shadow-sm p-4">
                     <div className="flex items-start justify-between gap-3">
                       <div className="flex-1 min-w-0">
-                        <p className="font-medium text-gray-900 truncate">{lead.name}</p>
+                        <button
+                          type="button"
+                          onClick={() => openLead(lead)}
+                          className="block max-w-full text-left font-medium text-gray-900 truncate hover:text-primary hover:underline focus:outline-none focus-visible:text-primary focus-visible:underline"
+                        >
+                          {lead.name}
+                        </button>
                         <p className="text-sm text-gray-600 mt-1.5">{lead.phone || '—'}</p>
                         <p className="text-sm text-gray-500 break-all">{lead.email || '—'}</p>
                       </div>

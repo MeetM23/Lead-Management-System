@@ -11,7 +11,7 @@ import protect from "../middleware/authMiddleware.js";
 import authorize from "../middleware/roleMiddleware.js";
 import { sendError, errorHandler } from "../middleware/errorMiddleware.js";
 import AppError from "../utils/AppError.js";
-import { ROLES, LEAD_PRIORITIES } from "../constants/index.js";
+import { ROLES } from "../constants/index.js";
 import { installFakePrisma, noQueriesMade, userRow } from "./helpers/fakePrisma.js";
 
 // No database is used: the Prisma client is replaced by a stand-in.
@@ -72,7 +72,7 @@ describe("layering rules", () => {
       schema.match(new RegExp(`enum ${name} \\{([^}]*)\\}`))[1].split("\n").map((line) => line.trim()).filter(Boolean);
 
     assert.equal(/LeadStatus|\bstatus\b/.test(schema.split("model Lead {")[1].split("}")[0]), false); // leads have no status
-    assert.deepEqual(enumValues("LeadPriority"), [...LEAD_PRIORITIES]);
+    assert.equal(/LeadPriority|priority/i.test(schema), false); // leads have no priority
     assert.deepEqual(enumValues("Role"), Object.values(ROLES));
   });
 });
@@ -214,7 +214,7 @@ describe("input validation", () => {
   });
 
   test("profile update answers 400, not 500, for wrongly typed fields", async () => {
-    for (const body of [{ email: 5 }, { phone: { a: 1 } }, { password: ["x"] }, { name: 7 }, { profilePic: 9 }]) {
+    for (const body of [{ email: 5 }, { phone: { a: 1 } }, { name: 7 }, { profilePic: 9 }]) {
       const res = makeRes();
       await updateMyProfile({ user: { _id: "4" }, body }, res);
       assert.equal(res.statusCode, 400, JSON.stringify(body));
@@ -265,5 +265,46 @@ describe("user management through the model", () => {
       _id: "3", name: "Sam", email: "user@example.com", phone: "", employeeId: "USR-000001", profilePic: "", isActive: true,
       leadsCreatedCount: 2, leadsAssignedCount: 5,
     }]);
+  });
+});
+
+describe("unexpected errors", () => {
+  test("a plain Error gives a generic 500 and never leaks its text; known errors keep their message", () => {
+    mock.method(console, "error", () => {});
+    const unexpected = makeRes();
+    sendError(unexpected, new Error("SELECT * FROM users WHERE password = 'x' failed at C:\secret\path"));
+    assert.equal(unexpected.statusCode, 500);
+    assert.deepEqual(unexpected.body, { success: false, message: "Server error" });
+
+    const known = makeRes();
+    sendError(known, new AppError("Lead not found", 404));
+    assert.deepEqual([known.statusCode, known.body.message], [404, "Lead not found"]);
+
+    const upload = makeRes();
+    sendError(upload, Object.assign(new Error("File too large"), { name: "MulterError" }));
+    assert.deepEqual([upload.statusCode, upload.body.message], [400, "File too large"]);
+  });
+
+  test("the log line for an unexpected error holds only its type", () => {
+    const lines = [];
+    mock.method(console, "error", (...args) => lines.push(args.join(" ")));
+    sendError(makeRes(), new Error("secret internal detail"));
+    assert.equal(lines.join("\n").includes("secret internal detail"), false);
+  });
+});
+
+describe("avatar upload", () => {
+  const upload = fs.readFileSync(path.join(backendDir, "middleware/uploadMiddleware.js"), "utf8");
+
+  test("accepts only real image extensions and image types, with a 400 for anything else", () => {
+    assert.ok(upload.includes(String.raw`const IMAGE_EXTENSIONS = /^\.(jpe?g|png|gif)$/;`));
+    assert.ok(upload.includes(String.raw`const IMAGE_TYPES = /^image\/(jpeg|png|gif)$/;`));
+    assert.ok(upload.includes("new AppError('Only JPG, PNG or GIF images are allowed', 400)"));
+    assert.equal(upload.includes("new Error('Images Only!')"), false);
+  });
+
+  test("creates its folder on first use and does not depend on the working directory", () => {
+    assert.match(upload, /fs\.mkdirSync\(UPLOADS_DIR, \{ recursive: true \}\)/);
+    assert.equal(/cb\(null, 'uploads\/'\)/.test(upload), false);
   });
 });

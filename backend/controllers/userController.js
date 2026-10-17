@@ -64,13 +64,13 @@ const getMyProfile = async (req, res) => {
 ========================= */
 const updateMyProfile = async (req, res) => {
     try {
-        const { name, phone, profilePic, email, password } = req.body;
+        const { name, phone, profilePic, email } = req.body;
 
         if (name !== undefined && (typeof name !== 'string' || name.trim().length === 0)) {
             throw new AppError("Name cannot be empty", 400);
         }
 
-        for (const [field, value] of Object.entries({ phone, email, password })) {
+        for (const [field, value] of Object.entries({ phone, email })) {
             if (value !== undefined && typeof value !== 'string') {
                 throw new AppError(`Invalid ${field}`, 400);
             }
@@ -94,12 +94,35 @@ const updateMyProfile = async (req, res) => {
         }
 
         const updatedProfile = await User.updateProfile(req.user._id, {
-            name, phone, profilePic, email, password
+            name, phone, profilePic, email
         });
 
         if (!updatedProfile) throw new AppError("User not found", 404);
 
         res.json({ success: true, data: toProfileResponse(updatedProfile) });
+    } catch (error) {
+        sendError(res, error);
+    }
+};
+
+/* =========================
+   CHANGE MY PASSWORD (Admin & Sales)
+   Always the logged-in user's own account: nothing in the request says whose password it is.
+========================= */
+const changeMyPassword = async (req, res) => {
+    try {
+        const { newPassword, confirmPassword } = req.body;
+
+        if (![newPassword, confirmPassword].every((value) => typeof value === 'string' && value !== '')) {
+            throw new AppError("Please fill in all password fields", 400);
+        }
+        if (newPassword !== confirmPassword) {
+            throw new AppError("New password and confirmation do not match", 400);
+        }
+
+        await User.changePassword(req.user._id, newPassword);
+
+        res.json({ success: true, message: "Password changed" });
     } catch (error) {
         sendError(res, error);
     }
@@ -223,4 +246,4 @@ const terminateUser = async (req, res) => {
     }
 };
 
-export { createEmployee, setUserStatus, getUsers, getUserById, getMyProfile, updateMyProfile, getSalesUsers, getAssignableUsers, uploadAvatar, terminateUser };
+export { createEmployee, setUserStatus, getUsers, getUserById, getMyProfile, updateMyProfile, changeMyPassword, getSalesUsers, getAssignableUsers, uploadAvatar, terminateUser };

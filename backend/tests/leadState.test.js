@@ -98,7 +98,7 @@ describe("state is data, not a filter", () => {
   test("a lead's state is still returned unchanged", async () => {
     const db = installFakePrisma();
     db.lead.findMany = mock.fn(async () => SOURCE_STATES.map((state, index) => leadRow({ id: index + 1, state })));
-    const leads = await Lead.findForUser(admin(), {});
+    const { leads } = await Lead.findPageForUser(admin(), {});
     assert.deepEqual(leads.map((lead) => lead.state), SOURCE_STATES);
   });
 });
@@ -261,6 +261,20 @@ describe("migrations", () => {
     assert.match(sql, /ALTER TABLE `leads` ADD COLUMN `state` VARCHAR\(100\) NULL/);
     assert.match(sql, /CREATE INDEX `leads_state_idx`/);
     assert.equal(/\bDROP\s+(TABLE|COLUMN|DATABASE)|\bTRUNCATE\b|\bDELETE\s+FROM\b/i.test(sql.replace(/DROP TEMPORARY TABLE `_state_names`/, "")), false);
+  });
+
+  test("the remove_lead_priority migration drops only priority, and only when it exists; no code mentions priority", () => {
+    const sql = read("_remove_lead_priority");
+    assert.equal((sql.match(/DROP COLUMN/g) ?? []).length, 1);
+    assert.match(sql, /DROP COLUMN `priority`/);
+    assert.match(sql, /column_name = 'priority'/);
+    assert.equal(/DROP\s+TABLE|DROP\s+DATABASE|TRUNCATE|DELETE\s+FROM|DROP COLUMN `(?!priority`)/i.test(sql), false);
+    for (const file of ["models/Lead.js", "utils/leadImport.js", "utils/listOptions.js", "constants/index.js", "utils/seedDummyData.js", "prisma/schema.prisma"]) {
+      assert.equal(/priorit/i.test(fs.readFileSync(path.join(backendDir, file), "utf8")), false, file);
+    }
+    for (const file of ["pages/AddLead.jsx", "constants/index.js", "pages/LeadDetails.jsx"]) {
+      assert.equal(/priorit/i.test(fs.readFileSync(path.join(backendDir, "..", "frontend", "src", file), "utf8")), false, file);
+    }
   });
 
   test("the remove_lead_status migration drops only status, its indexes, and only when they exist", () => {

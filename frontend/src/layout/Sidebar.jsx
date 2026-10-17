@@ -23,8 +23,8 @@ const Sidebar = ({ isOpen, onClose, isCollapsed }) => {
             setProfilePic(result.data.profilePic);
           }
         }
-      } catch (error) {
-        console.error(error);
+      } catch {
+        // the avatar is optional: the initials are shown instead
       }
     };
     fetchProfilePic();

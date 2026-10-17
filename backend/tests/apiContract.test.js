@@ -87,10 +87,10 @@ describe("lead response shapes", () => {
 
   test("list: people as { _id, name, email }; notes are plain with the author's id", async () => {
     db.lead.findMany = mock.fn(async () => [fullRow()]);
-    const [lead] = await Lead.findForUser(admin(), {});
+    const { leads: [lead] } = await Lead.findPageForUser(admin(), {});
 
     assert.deepEqual(Object.keys(lead).sort(), [
-      "_id", "assignedTo", "createdAt", "createdBy", "customFields", "email", "leadId", "name", "notes", "phone", "priority", "source", "state", "updatedAt",
+      "_id", "assignedTo", "createdAt", "createdBy", "customFields", "email", "leadId", "name", "notes", "phone", "source", "state", "updatedAt",
     ]);
     assert.equal(lead.notes[0].createdBy, "2");
     assert.equal(lead.notes[1].createdBy, null);
@@ -109,7 +109,7 @@ describe("lead response shapes", () => {
 
   test("the request for a view only asks the database for what that view shows", async () => {
     db.lead.findMany = mock.fn(async () => []);
-    await Lead.findForUser(admin(), {});
+    await Lead.findPageForUser(admin(), {});
     const list = db.lead.findMany.mock.calls[0].arguments[0].include;
     assert.equal(list.notes.include, undefined); // list notes are not joined to authors
     assert.deepEqual(list.assignedTo.select, { id: true, name: true, email: true });

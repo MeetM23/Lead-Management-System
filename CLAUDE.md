@@ -29,14 +29,14 @@ controllers/      HTTP only: read request, call model, send response
 models/           ALL database queries (Prisma), validation, API response shapes
 prisma/           schema.prisma (tables, indexes, relations) and migrations
 middleware/       auth, role check, upload, error handler
-constants/        roles, priorities, sources (shared values)
+constants/        roles, sources (shared values)
 utils/            small, genuinely reusable helpers only
 ```
 
 - **No service layer.** Do not create `services/`. Existing services are being removed during refactoring.
 - **Routes**: one file per resource. Declare path, auth middleware, role middleware, controller. No logic.
 - **Controllers**: extract input, call model methods, return the response. Business rules that are not database operations (for example "only an admin can edit a lead") live here.
-- **Models**: a model is a module in `models/` that exports plain functions (`Lead.findForUser`, `User.authenticate`, …). Every Prisma call (`prisma.lead.findMany`, `$transaction`, `$queryRaw`, …) lives there; controllers and other files never touch the Prisma client or `@prisma/client`. Models return plain objects shaped like the API response (the internal integer ID is exposed as the string `_id`; `leadId` and `employeeId` are the public IDs) and never return password hashes.
+- **Models**: a model is a module in `models/` that exports plain functions (`Lead.findPageForUser`, `User.authenticate`, …). Every Prisma call (`prisma.lead.findMany`, `$transaction`, `$queryRaw`, …) lives there; controllers and other files never touch the Prisma client or `@prisma/client`. Models return plain objects shaped like the API response (the internal integer ID is exposed as the string `_id`; `leadId` and `employeeId` are the public IDs) and never return password hashes.
 - A model method that directly concerns the database may hold the logic (for example creating a lead with its ID). Do not move unrelated business logic into models.
 
 ### Frontend (`frontend/src/`)
@@ -47,7 +47,7 @@ components/   reusable UI pieces
 context/      shared state (auth, leads)
 layout/       app shell (sidebar, navbar)
 utils/        api client and small helpers
-constants/    values shared with the backend contract (roles, priorities)
+constants/    values shared with the backend contract (roles)
 ```
 
 - **One API client** in `utils/api.js`. It adds the base URL (`VITE_API_URL`) and the auth token, and handles 401 (clear session, redirect to login).
@@ -69,7 +69,7 @@ constants/    values shared with the backend contract (roles, priorities)
 - Use one error pattern: throw an error with an HTTP status (for example an `AppError`), handled by the single error middleware. Do not decide status codes by matching `error.message` strings.
 - Status codes: 400 invalid input, 401 not authenticated, 403 not allowed, 404 not found, 409 conflict, 500 unexpected.
 - Never return stack traces or raw internal error text for 500s.
-- **Do not change existing endpoints, request bodies, or response fields during refactoring** unless the change is explicitly approved. Frontend-read fields (`leadId`, `name`, `email`, `phone`, `source`, `priority`, `createdBy`, `assignedTo`, `createdAt`, `updatedAt`) must be kept.
+- **Do not change existing endpoints, request bodies, or response fields during refactoring** unless the change is explicitly approved. Frontend-read fields (`leadId`, `name`, `email`, `phone`, `source`, `createdBy`, `assignedTo`, `createdAt`, `updatedAt`) must be kept.
 
 ## Validation
 

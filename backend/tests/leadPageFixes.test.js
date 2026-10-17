@@ -98,14 +98,12 @@ describe("HTTP", () => {
       });
     });
 
-    test("the lead page shows what the API returned: loan requirement, MSME, ZED answer, but not the ad name", async () => {
+    test("the lead page shows what the API returned: loan requirement, MSME, ZED answer and ad name", async () => {
       const { body } = await call("GET", "/api/leads/LD-0100", BOSS);
       const html = renderComponent("components/leads/CustomFieldsCard.jsx", { customFields: body.data.customFields });
-      for (const text of ["loan_requirement", "90lakh", "is_your_business_registered_as_an_msme?", ">yes<", "which_zed_certification_level_are_you_interested_in?", "not_sure_/_need_guidance"]) {
+      for (const text of ["loan_requirement", "90lakh", "is_your_business_registered_as_an_msme?", ">yes<", "which_zed_certification_level_are_you_interested_in?", "not_sure_/_need_guidance", "ad_name", "Zed Certification"]) {
         assert.ok(html.includes(text), text);
       }
-      assert.equal(html.includes("ad_name"), false);
-      assert.equal(html.includes("Zed Certification"), false);
     });
 
     test("a different spreadsheet's columns are shown the same way, nothing is hardcoded", () => {
@@ -256,6 +254,15 @@ describe("phone cleaning", () => {
     installStore();
     db.lead.findUnique = mock.fn(async () => leads[0]);
     assert.equal((await Lead.findDetail("LD-0100", admin())).phone, "+919042435900");
+  });
+});
+
+describe("the lead page", () => {
+  test("shows no Priority badge to anyone, and the controls bar exists only for the admin's Assigned To", () => {
+    const page = read("pages/LeadDetails.jsx");
+    assert.equal(/riority/.test(page), false);
+    assert.equal(/Controls Bar/.test(page), false);
+    assert.match(page, /\{user\?\.role === ROLES\.ADMIN && \(\s*<div className="bg-white[^"]*">\s*<div className="flex items-center gap-3">\s*<label[^>]*>Assigned To/);
   });
 });
 

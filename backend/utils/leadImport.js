@@ -4,7 +4,7 @@ import { parse as parseCsv } from "csv-parse/sync";
 import { readSheet } from "read-excel-file/node";
 import AppError from "./AppError.js";
 import { normalizeEmail, normalizePhone, cleanPhone } from "./normalize.js";
-import { LEAD_PRIORITIES, EMAIL_PATTERN } from "../constants/index.js";
+import { EMAIL_PATTERN } from "../constants/index.js";
 
 const MAX_COLUMNS = 100;
 const MAX_HEADER_LENGTH = 100;
@@ -13,17 +13,16 @@ const SAMPLE_ROWS = 5;
 const MAX_REPORTED = 200; // row errors / duplicates listed in a response; the counts are always complete
 
 // Lead fields a column can be mapped to. Anything else (IDs, creator, assignee, role, dates) can never be imported.
-export const IMPORT_FIELDS = Object.freeze([
+const IMPORT_FIELDS = Object.freeze([
   { key: "name", label: "Name", required: true },
   { key: "phone", label: "Phone", required: false },
   { key: "email", label: "Email", required: false },
   { key: "state", label: "State", required: false },
   { key: "source", label: "Source", required: false },
-  { key: "priority", label: "Priority", required: false },
 ]);
 const FIELD_KEYS = IMPORT_FIELDS.map((field) => field.key);
-export const CUSTOM_FIELD = "customField"; // keep the column's values in the lead's customFields
-export const IGNORE = "ignore"; // drop the column
+const CUSTOM_FIELD = "customField"; // keep the column's values in the lead's customFields
+const IGNORE = "ignore"; // drop the column
 const TARGETS = [...FIELD_KEYS, CUSTOM_FIELD, IGNORE];
 
 /* =========================
@@ -131,7 +130,6 @@ const SYNONYMS = {
   email: ["email", "emailaddress", "emailid", "mail", "mailid", "workemail"],
   state: ["state", "statename", "province"],
   source: ["source", "leadsource", "channel", "origin", "formname", "campaign", "platform"],
-  priority: ["priority", "leadpriority", "urgency"],
 };
 
 // { columnIndex: field } for columns whose header looks like a lead field. Each field is suggested once.
@@ -184,8 +182,6 @@ export const parseMapping = (raw, columnCount) => {
    ROW CHECKS
 ========================= */
 
-const matchChoice = (value, allowed) => allowed.find((option) => option.toLowerCase() === value.toLowerCase());
-
 // Builds the lead fields, the customFields and the problems for one row.
 // Only the whitelisted fields are copied; a column named "leadId" or "assignedTo" is just custom data.
 const checkRow = ({ rowNumber, cells }, targets, headers) => {
@@ -212,13 +208,6 @@ const checkRow = ({ rowNumber, cells }, targets, headers) => {
   if (fields.phone && fields.phone.length > 50) errors.push("Phone is longer than 50 characters");
   if (fields.state && fields.state.length > 100) errors.push("State is longer than 100 characters");
   if (fields.source && fields.source.length > 100) errors.push("Source is longer than 100 characters");
-
-  for (const [field, allowed] of [["priority", LEAD_PRIORITIES]]) {
-    if (!fields[field]) continue;
-    const match = matchChoice(fields[field], allowed);
-    if (match) fields[field] = match;
-    else errors.push(`Invalid ${field} "${fields[field].slice(0, 30)}" (use ${allowed.join(", ")})`);
-  }
 
   return { rowNumber, fields, customFields, errors, duplicateReasons: [] };
 };

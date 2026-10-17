@@ -31,10 +31,7 @@ const loginUser = async (req, res) => {
       },
     });
   } catch (error) {
-    // Expected failures (bad credentials, validation) carry a status and are not logged.
-    // Unexpected errors log only the message: never the request body or credentials.
-    if (!error.statusCode) console.error("Login error:", error.message);
-    sendError(res, error);
+    sendError(res, error); // logs only the type of an unexpected error, never the request body or credentials
   }
 };
 

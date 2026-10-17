@@ -62,7 +62,6 @@ export const leadRow = (overrides = {}) => ({
   email: "lead@example.com",
   phone: null,
   source: "Website",
-  priority: "Medium",
   customFields: null,
   createdById: 1,
   assignedToId: 1,

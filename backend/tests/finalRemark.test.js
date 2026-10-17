@@ -112,7 +112,7 @@ describe("final remark over HTTP", () => {
     await save("LD-0001", SAM, "Outcome recorded.");
     const data = db.lead.update.mock.calls[0].arguments[0].data;
     assert.deepEqual(Object.keys(data), ["finalRemark"]);
-    for (const field of ["name", "phone", "email", "state", "source", "priority", "customFields", "assignedToId", "createdById", "leadId"]) {
+    for (const field of ["name", "phone", "email", "state", "source", "customFields", "assignedToId", "createdById", "leadId"]) {
       assert.deepEqual(rows[0][field], before[field], field);
     }
     assert.equal(db.lead.updateMany.mock.calls.length, 0);

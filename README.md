@@ -79,7 +79,7 @@ temporary password); they sign in the same way. Admins can deactivate an employe
 ### Importing leads from Excel or CSV
 
 Only an admin can add or import leads (employees work on the leads assigned to them). On the Leads page choose **Import Leads**: upload a `.xlsx` or `.csv` file (first row = column names), match the columns to
-Name / Phone / Email / State / Source / Priority, review the errors and possible duplicates, then confirm. Columns you do not
+Name / Phone / Email / State / Source, review the errors and possible duplicates, then confirm. Columns you do not
 map are kept on each lead under their original header (`customFields`). Imported leads are assigned to the person importing.
 Limits (in `backend/.env`, optional): `IMPORT_MAX_FILE_MB` (default 5) and `IMPORT_MAX_ROWS` (default 5000). Old `.xls` files must be
 saved as `.xlsx` or `.csv` first.

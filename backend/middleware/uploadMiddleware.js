@@ -1,42 +1,37 @@
+import fs from 'fs';
 import multer from 'multer';
 import path from 'path';
+import { fileURLToPath } from 'url';
+import AppError from '../utils/AppError.js';
 import { getImportLimits } from '../config/env.js';
 
-// Set storage engine
+// Profile pictures are saved in backend/uploads (served at /uploads). The folder is created on first use,
+// because it is not part of the repository.
+const UPLOADS_DIR = path.join(path.dirname(fileURLToPath(import.meta.url)), '..', 'uploads');
+const IMAGE_EXTENSIONS = /^\.(jpe?g|png|gif)$/;
+const IMAGE_TYPES = /^image\/(jpeg|png|gif)$/;
+
 const storage = multer.diskStorage({
     destination: function (req, file, cb) {
-        cb(null, 'uploads/');
+        fs.mkdirSync(UPLOADS_DIR, { recursive: true });
+        cb(null, UPLOADS_DIR);
     },
     filename: function (req, file, cb) {
-        // Generate unique filename: user-id-timestamp.ext
-        const ext = path.extname(file.originalname);
+        // Generate unique filename: user-id-timestamp.ext (the extension was checked by the file filter)
+        const ext = path.extname(file.originalname).toLowerCase();
         const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
         cb(null, `profile-${req.user._id}-${uniqueSuffix}${ext}`);
     }
 });
-
-// Check file type
-function checkFileType(file, cb) {
-    // Allowed ext
-    const filetypes = /jpeg|jpg|png|gif/;
-    // Check ext
-    const extname = filetypes.test(path.extname(file.originalname).toLowerCase());
-    // Check mime
-    const mimetype = filetypes.test(file.mimetype);
-
-    if (mimetype && extname) {
-        return cb(null, true);
-    } else {
-        cb(new Error('Images Only!'));
-    }
-}
 
 // Init upload
 const upload = multer({
     storage: storage,
     limits: { fileSize: 5000000 }, // 5MB limit
     fileFilter: function (req, file, cb) {
-        checkFileType(file, cb);
+        const validExtension = IMAGE_EXTENSIONS.test(path.extname(file.originalname).toLowerCase());
+        if (validExtension && IMAGE_TYPES.test(file.mimetype)) return cb(null, true);
+        cb(new AppError('Only JPG, PNG or GIF images are allowed', 400));
     }
 });
 

@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 
-export const MAX_FINAL_REMARK_LENGTH = 5000; // keep in sync with the backend
+const MAX_FINAL_REMARK_LENGTH = 5000; // keep in sync with the backend
 
 // The outcome of the lead, written by the assigned employee (or an admin). It is its own field: not a note, not custom data.
 //   remark: the saved text (or null)    onSave(text) -> Promise<{ success, message }>

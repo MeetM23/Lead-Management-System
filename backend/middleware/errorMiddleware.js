@@ -13,11 +13,17 @@ const describeDatabaseError = (error) => {
   return null;
 };
 
+// Errors that carry a status on purpose (AppError, body-parser, upload errors) show their own message.
+// Anything else is unexpected: the client gets a generic message and only the error's type is logged,
+// because its text can contain internal details or data.
 export const sendError = (res, error) => {
   const database = describeDatabaseError(error);
+  const expected = database || error.statusCode || error.status || error.name === "MulterError";
+
+  if (!expected) console.error("Unexpected error:", error.name);
+
   const statusCode = database?.statusCode || error.statusCode || error.status || (error.name === "MulterError" ? 400 : 500);
-  const message = database?.message || error.message || "Server Error";
-  res.status(statusCode).json({ success: false, message });
+  res.status(statusCode).json({ success: false, message: database?.message || (expected ? error.message : "Server error") });
 };
 
 // Express error middleware for errors that reach next(err)

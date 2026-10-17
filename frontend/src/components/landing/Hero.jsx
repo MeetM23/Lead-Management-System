@@ -1,5 +1,5 @@
 import React from 'react';
-import { motion } from 'framer-motion';
+import { motion as Motion } from 'framer-motion';
 import { ArrowRight, BarChart3, Shield, Zap } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
@@ -72,29 +72,29 @@ const Hero = () => {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-12 lg:gap-20 items-center">
 
                     {/* Left Column: Content */}
-                    <motion.div
+                    <Motion.div
                         variants={containerVariants}
                         initial="hidden"
                         animate="visible"
                         className="flex flex-col items-start text-left max-w-2xl"
                     >
-                        <motion.div variants={itemVariants} className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-50 border border-blue-100 text-blue-700 text-xs font-semibold mb-6">
+                        <Motion.div variants={itemVariants} className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-50 border border-blue-100 text-blue-700 text-xs font-semibold mb-6">
                             <span className="w-1.5 h-1.5 rounded-full bg-blue-600 animate-pulse" />
                             Modern Lead Management for Fast-Moving Teams
-                        </motion.div>
+                        </Motion.div>
 
-                        <motion.h1 variants={itemVariants} className="text-5xl md:text-6xl lg:text-7xl font-bold tracking-tight text-gray-900 leading-[1.1] mb-6">
+                        <Motion.h1 variants={itemVariants} className="text-5xl md:text-6xl lg:text-7xl font-bold tracking-tight text-gray-900 leading-[1.1] mb-6">
                             Stop Losing Leads. <br className="hidden lg:block" />
                             <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-indigo-600">
                                 Start Closing Them.
                             </span>
-                        </motion.h1>
+                        </Motion.h1>
 
-                        <motion.p variants={itemVariants} className="text-lg md:text-xl text-gray-500 mb-8 leading-relaxed max-w-lg">
+                        <Motion.p variants={itemVariants} className="text-lg md:text-xl text-gray-500 mb-8 leading-relaxed max-w-lg">
                             LeadFlow gives your team structured tracking, smart assignment, and full visibility — without the complexity of traditional CRMs.
-                        </motion.p>
+                        </Motion.p>
 
-                        <motion.div variants={itemVariants} className="flex flex-col sm:flex-row items-center gap-4 w-full sm:w-auto">
+                        <Motion.div variants={itemVariants} className="flex flex-col sm:flex-row items-center gap-4 w-full sm:w-auto">
                             <button
                                 onClick={() => navigate('/login')}
                                 className="w-full sm:w-auto px-8 py-4 bg-white text-gray-700 border border-gray-200 rounded-full font-semibold text-base hover:bg-gray-50 hover:border-gray-300 transition-all duration-200 group flex items-center justify-center gap-2"
@@ -102,9 +102,9 @@ const Hero = () => {
                                 Sign In
                                 <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
                             </button>
-                        </motion.div>
+                        </Motion.div>
 
-                        <motion.div variants={itemVariants} className="mt-10 flex items-center gap-6 text-sm text-gray-400 font-medium">
+                        <Motion.div variants={itemVariants} className="mt-10 flex items-center gap-6 text-sm text-gray-400 font-medium">
                             <div className="flex items-center gap-2">
                                 <Shield className="w-4 h-4" />
                                 <span>GDPR Compliant</span>
@@ -113,18 +113,18 @@ const Hero = () => {
                                 <Zap className="w-4 h-4" />
                                 <span>Instant Setup</span>
                             </div>
-                        </motion.div>
-                    </motion.div>
+                        </Motion.div>
+                    </Motion.div>
 
                     {/* Right Column: Visuals */}
-                    <motion.div
+                    <Motion.div
                         variants={imageVariants}
                         initial="hidden"
                         animate="visible"
                         className="relative hidden md:block"
                     >
                         {/* Main Product Preview Card */}
-                        <motion.div
+                        <Motion.div
                             animate={floatAnimation}
                             className="relative z-10 bg-white rounded-2xl shadow-2xl border border-gray-100 overflow-hidden"
                         >
@@ -179,10 +179,10 @@ const Hero = () => {
                                     </div>
                                 </div>
                             </div>
-                        </motion.div>
+                        </Motion.div>
 
                         {/* Floating Analytics Card */}
-                        <motion.div
+                        <Motion.div
                             animate={floatAnimationDelayed}
                             className="absolute -right-6 bottom-16 z-20 bg-white p-4 rounded-xl shadow-xl border border-gray-100 w-48"
                         >
@@ -198,8 +198,8 @@ const Hero = () => {
                             <div className="w-full bg-gray-100 h-1.5 rounded-full overflow-hidden">
                                 <div className="bg-blue-600 h-full w-[70%]" />
                             </div>
-                        </motion.div>
-                    </motion.div>
+                        </Motion.div>
+                    </Motion.div>
                 </div>
             </div>
         </section>

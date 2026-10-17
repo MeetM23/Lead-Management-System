@@ -156,17 +156,17 @@ describe("MySQL integration", { skip }, () => {
     });
 
     test("a sales user sees only their own leads, even when asking for someone else's", async () => {
-      const own = await Lead.findForUser(asUser(seller), { assignedTo: String(other.id) });
-      assert.deepEqual(own.map((lead) => lead.leadId).sort(), ["LD-0001", "LD-0002"]);
-      assert.equal((await Lead.findForUser(asUser(admin), {})).length, 3);
+      const own = await Lead.findPageForUser(asUser(seller), { assignedTo: String(other.id) });
+      assert.deepEqual(own.leads.map((lead) => lead.leadId).sort(), ["LD-0001", "LD-0002"]);
+      assert.equal((await Lead.findPageForUser(asUser(admin), {})).leads.length, 3);
     });
 
     test("filters, sorting and pagination work", async () => {
-      assert.equal((await Lead.findForUser(asUser(admin), { source: "Website" })).length, 2);
-      assert.equal((await Lead.findForUser(asUser(admin), { priority: "Bogus" })).length, 0);
-      assert.deepEqual((await Lead.findForUser(asUser(admin), { sort: "leadId", limit: "2" })).map((l) => l.leadId), ["LD-0001", "LD-0002"]);
-      assert.deepEqual((await Lead.findForUser(asUser(admin), { sort: "leadId", limit: "2", page: "2" })).map((l) => l.leadId), ["LD-0003"]);
-      assert.equal((await Lead.findForUser(asUser(admin), { createdAt: { gte: "2999-01-01" } })).length, 0);
+      assert.equal((await Lead.findPageForUser(asUser(admin), { source: "Website" })).leads.length, 2);
+      assert.equal((await Lead.findPageForUser(asUser(admin), { source: "Nowhere" })).leads.length, 0);
+      assert.deepEqual((await Lead.findPageForUser(asUser(admin), { sort: "leadId", limit: "2" })).leads.map((l) => l.leadId), ["LD-0001", "LD-0002"]);
+      assert.deepEqual((await Lead.findPageForUser(asUser(admin), { sort: "leadId", limit: "2", page: "2" })).leads.map((l) => l.leadId), ["LD-0003"]);
+      assert.equal((await Lead.findPageForUser(asUser(admin), { createdAt: { gte: "2999-01-01" } })).leads.length, 0);
     });
 
     test("statistics are scoped and have the dashboard's shape", async () => {

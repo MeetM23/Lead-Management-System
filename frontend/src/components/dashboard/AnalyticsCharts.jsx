@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { motion } from 'framer-motion';
+import { motion as Motion } from 'framer-motion';
 import { groupLeadsByDay, groupLeadsBySource } from '../../utils/analyticsUtils';
 
 const AnalyticsCharts = ({ stats, leads = [] }) => {
@@ -95,7 +95,7 @@ const AnalyticsCharts = ({ stats, leads = [] }) => {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
 
             {/* 1. Leads Over Time Chart */}
-            <motion.div
+            <Motion.div
                 initial={{ opacity: 0, scale: 0.95 }}
                 animate={{ opacity: 1, scale: 1 }}
                 transition={{ duration: 0.5, delay: 0.2 }}
@@ -193,10 +193,10 @@ const AnalyticsCharts = ({ stats, leads = [] }) => {
                         <span key={i}>{d.date}</span>
                     ))}
                 </div>
-            </motion.div>
+            </Motion.div>
 
             {/* 2. Source Distribution Donut (Dynamic) */}
-            <motion.div
+            <Motion.div
                 initial={{ opacity: 0, scale: 0.95 }}
                 animate={{ opacity: 1, scale: 1 }}
                 transition={{ duration: 0.5, delay: 0.3 }}
@@ -274,7 +274,7 @@ const AnalyticsCharts = ({ stats, leads = [] }) => {
                         <p>No source data available yet.</p>
                     </div>
                 )}
-            </motion.div>
+            </Motion.div>
 
         </div>
     );

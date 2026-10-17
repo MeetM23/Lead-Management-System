@@ -169,15 +169,6 @@ const LeadDetails = () => {
         }
     };
 
-    const getPriorityColor = (priority) => {
-        switch (priority) {
-            case 'High': return 'bg-red-100 text-red-700';
-            case 'Medium': return 'bg-yellow-100 text-yellow-700';
-            case 'Low': return 'bg-gray-100 text-gray-600';
-            default: return 'bg-gray-100 text-gray-700';
-        }
-    };
-
     if (loading) {
         return <SkeletonLeadDetails />;
     }
@@ -247,35 +238,24 @@ const LeadDetails = () => {
                 )}
             </div>
 
-            {/* Controls Bar */}
-            <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-5">
-                <div className="flex flex-wrap items-center gap-6">
-                    {/* Assign Control — Admin only */}
-                    {user?.role === ROLES.ADMIN && (
-                        <div className="flex items-center gap-3">
-                            <label className="text-xs font-bold text-gray-500 uppercase tracking-wider">Assigned To</label>
-                            <select
-                                value={users.some((u) => u._id === lead.assignedTo?._id) ? lead.assignedTo._id : ''}
-                                onChange={handleAssignChange}
-                                className="text-sm border border-gray-200 rounded-lg px-3 py-2 bg-white focus:ring-2 focus:ring-primary/30 focus:outline-none transition-all"
-                            >
-                                <option value="" disabled>Select employee</option>
-                                {users.map(u => (
-                                    <option key={u._id} value={u._id}>{u.name}</option>
-                                ))}
-                            </select>
-                        </div>
-                    )}
-
-                    {/* Priority Badge */}
+            {/* Assign Control — Admin only */}
+            {user?.role === ROLES.ADMIN && (
+                <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-5">
                     <div className="flex items-center gap-3">
-                        <label className="text-xs font-bold text-gray-500 uppercase tracking-wider">Priority</label>
-                        <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-bold ${getPriorityColor(lead.priority || 'Medium')}`}>
-                            {lead.priority || 'Medium'}
-                        </span>
+                        <label className="text-xs font-bold text-gray-500 uppercase tracking-wider">Assigned To</label>
+                        <select
+                            value={users.some((u) => u._id === lead.assignedTo?._id) ? lead.assignedTo._id : ''}
+                            onChange={handleAssignChange}
+                            className="text-sm border border-gray-200 rounded-lg px-3 py-2 bg-white focus:ring-2 focus:ring-primary/30 focus:outline-none transition-all"
+                        >
+                            <option value="" disabled>Select employee</option>
+                            {users.map(u => (
+                                <option key={u._id} value={u._id}>{u.name}</option>
+                            ))}
+                        </select>
                     </div>
                 </div>
-            </div>
+            )}
 
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                 {/* Lead Information */}

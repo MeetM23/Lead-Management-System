@@ -105,7 +105,7 @@ describe("self profile update", () => {
 
   test("role fields in the request are never passed to the model", async () => {
     const { passedToModel } = await update({ name: "N", role: "admin", isAdmin: true, isActive: true, employeeId: "USR-0000" });
-    assert.deepEqual(Object.keys(passedToModel).sort(), ["email", "name", "password", "phone", "profilePic"]);
+    assert.deepEqual(Object.keys(passedToModel).sort(), ["email", "name", "phone", "profilePic"]);
   });
 
   test("the model update never writes role, even if it receives one", async () => {

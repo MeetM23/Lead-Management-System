@@ -56,12 +56,13 @@ describe("buildListFilter", () => {
   });
 
   test("allowed filters are kept next to the scope", () => {
-    const filter = Lead.buildListFilter(sales(7), { source: "Website", priority: "High", name: "Sam" });
-    assert.deepEqual(filter, { source: "Website", priority: "High", name: "Sam", assignedToId: 7 });
+    const filter = Lead.buildListFilter(sales(7), { source: "Website", name: "Sam" });
+    assert.deepEqual(filter, { source: "Website", name: "Sam", assignedToId: 7 });
   });
 
-  test("a priority that does not exist matches nothing instead of being ignored", () => {
-    assert.equal(Lead.buildListFilter(admin(), { priority: "Urgent" }).id, -1);
+  test("there is no priority filter any more: a priority in the query is ignored", () => {
+    assert.deepEqual(Lead.buildListFilter(admin(), { priority: "Urgent" }), {});
+    assert.deepEqual(Lead.buildListFilter(sales(7), { priority: "High" }), { assignedToId: 7 });
   });
 
   test("there is no status filter any more: a status in the query is ignored", () => {
@@ -94,9 +95,9 @@ describe("buildListFilter", () => {
   });
 });
 
-describe("findForUser", () => {
+describe("listing leads", () => {
   test("query sent to the database is scoped to the sales user even with malicious params", async () => {
-    await Lead.findForUser(sales(7), { assignedTo: "8", "assignedTo[not]": "7", sort: "password", limit: "999999" });
+    await Lead.findPageForUser(sales(7), { assignedTo: "8", "assignedTo[not]": "7", sort: "password", limit: "999999" });
 
     const { where, take, orderBy } = db.lead.findMany.mock.calls[0].arguments[0];
     assert.equal(where.assignedToId, 7);
@@ -131,7 +132,7 @@ describe("updateForUser", () => {
 
   test("sales cannot update another user's lead", async () => {
     withLead(leadRow({ assignedToId: 2 }));
-    assert.equal(await statusOf(Lead.updateForUser("LD-0001", { priority: "High" }, sales(1))), 403);
+    assert.equal(await statusOf(Lead.updateForUser("LD-0001", { source: "Web" }, sales(1))), 403);
     assert.equal(db.lead.update.mock.calls.length, 0);
   });
 
@@ -145,15 +146,16 @@ describe("updateForUser", () => {
 
   test("sales cannot edit any field of their own lead: only an admin can", async () => {
     withLead(leadRow({ assignedToId: 1 }));
-    for (const body of [{ name: "Hacked" }, { priority: "High" }, { state: "Goa" }, { status: "Contacted" }, {}]) {
+    for (const body of [{ name: "Hacked" }, { source: "Web" }, { state: "Goa" }, { status: "Contacted" }, {}]) {
       assert.equal(await statusOf(Lead.updateForUser("LD-0001", body, sales(1))), 403, JSON.stringify(body));
     }
     assert.equal(db.lead.update.mock.calls.length, 0);
   });
 
-  test("an invalid priority is a 400", async () => {
+  test("a priority in an admin update is ignored: leads have no priority", async () => {
     withLead(leadRow({ assignedToId: 1 }));
-    assert.equal(await statusOf(Lead.updateForUser("LD-0001", { priority: "Bogus" }, admin())), 400);
+    await Lead.updateForUser("LD-0001", { priority: "High" }, admin());
+    assert.equal(db.lead.update.mock.calls.length, 0);
   });
 
   test("admin cannot reassign through update", async () => {

@@ -19,25 +19,11 @@ const Dashboard = () => {
 
   // --- KPI CALCULATION ---
   const dashboardStats = useMemo(() => {
-    // We cannot use 'leads' array to calculate overall totals or trends because 'leads' is paginated 
+    // We cannot use 'leads' array to calculate overall totals because 'leads' is paginated 
     // and only contains a subset (e.g. 10 items) of the data. We must use the 'stats' object returned 
     // from the backend /api/leads/stats endpoint for accurate dashboard metrics.
 
-    const total = stats?.totalLeads || 0;
-    // For trends, ideally the backend should provide this. For UI purposes here, we will mock realistic trends
-    // based on the current volumes, or default to nice positive numbers if no data.
-    const mockTrend = (current) => {
-      if (current === 0) return { value: "+0.0%", isPositive: true };
-      return { value: `+${(Math.random() * 15 + 5).toFixed(1)}%`, isPositive: true };
-    };
-
-    return {
-      total,
-      trends: {
-        total: mockTrend(total),
-      }
-    };
-
+    return { total: stats?.totalLeads || 0 };
   }, [stats]); // Recalculate only when backend stats change
 
   return (
@@ -85,8 +71,6 @@ const Dashboard = () => {
               value={dashboardStats.total}
               icon={Users}
               color="text-blue-600 bg-blue-50"
-              trend={dashboardStats.trends.total.value}
-              trendUp={dashboardStats.trends.total.isPositive}
               delay={0.1}
               onClick={() => navigate(`${getBasePath(user?.role)}/leads`)}
             />

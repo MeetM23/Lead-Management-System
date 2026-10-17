@@ -10,7 +10,7 @@ export const setUnauthorizedHandler = (handler) => {
   onUnauthorized = handler;
 };
 
-export const apiFetch = async (endpoint, options = {}) => {
+const apiFetch = async (endpoint, options = {}) => {
   const token = localStorage.getItem('token');
 
   const response = await fetch(`${API_URL}${endpoint}`, {

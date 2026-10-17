@@ -15,12 +15,6 @@ enum Role {
   sales
 }
 
-enum LeadPriority {
-  High
-  Medium
-  Low
-}
-
 model User {
   id         Int      @id @default(autoincrement())
   name       String   @db.VarChar(255)
@@ -48,7 +42,6 @@ model Lead {
   email        String?      @db.VarChar(255)
   phone        String?      @db.VarChar(50)
   source       String       @default("Manual") @db.VarChar(100)
-  priority     LeadPriority @default(Medium)
   state        String?      @db.VarChar(100) // the lead's geographic state
   finalRemark  String?      @map("final_remark") @db.Text // the outcome, written by the employee (not a note, not custom data)
   customFields Json?        @map("custom_fields") // variable fields (e.g. extra columns from an Excel import)

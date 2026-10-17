@@ -1,7 +1,7 @@
 // Sorting and pagination for list endpoints, read from the query string.
 // Only whitelisted columns can be sorted on; everything else is ignored.
 
-const SORTABLE_FIELDS = ["createdAt", "updatedAt", "name", "leadId", "priority", "source"];
+const SORTABLE_FIELDS = ["createdAt", "updatedAt", "name", "leadId", "source"];
 const DEFAULT_LIMIT = 100;
 const MAX_LIMIT = 500;
 

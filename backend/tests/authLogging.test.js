@@ -92,11 +92,11 @@ describe("login", () => {
     assertNothingSensitiveLogged(output);
   });
 
-  test("a server error is reported as before and logs no credentials", async () => {
+  test("an unexpected server error gives a generic message, with no internal text, and logs no credentials", async () => {
     const { res, output } = await attempt({ findUnique: async () => { throw new Error("db down"); } });
     assert.equal(res.statusCode, 500);
-    assert.deepEqual(res.body, { success: false, message: "db down" });
-    assert.match(output, /db down/);
+    assert.deepEqual(res.body, { success: false, message: "Server error" });
+    assert.equal(output.includes("db down"), false); // the error text is neither sent nor logged
     assertNothingSensitiveLogged(output);
   });
 

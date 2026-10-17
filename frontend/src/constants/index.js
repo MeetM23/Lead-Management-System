@@ -5,7 +5,6 @@ export const ROLES = Object.freeze({
   SALES: 'sales',
 });
 
-export const LEAD_PRIORITIES = Object.freeze(['High', 'Medium', 'Low']);
 
 // Choices offered in the Add Lead form (the backend accepts any text for a lead source)
 export const LEAD_SOURCES = Object.freeze(['Website', 'Referral', 'LinkedIn', 'Cold Call', 'Advertisement']);

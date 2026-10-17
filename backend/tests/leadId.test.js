@@ -203,7 +203,7 @@ describe("creating a lead", () => {
 
   test("invalid input is rejected before any ID is taken", async () => {
     const { db } = installCounter({ max: 7 });
-    for (const data of [{}, { name: "" }, { name: 5 }, { name: "A", priority: "Urgent" }, { name: "A", email: { a: 1 } }]) {
+    for (const data of [{}, { name: "" }, { name: 5 }, { name: "A", email: { a: 1 } }]) {
       await assert.rejects(Lead.createForUser({ assignedTo: "5", ...data }, admin()), (error) => error.statusCode === 400, JSON.stringify(data));
     }
     assert.equal(db.counter.update.mock.calls.length, 0);

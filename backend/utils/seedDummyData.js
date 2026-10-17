@@ -144,7 +144,6 @@ const seedDummyData = async (env = process.env) => {
                 email: name.toLowerCase().replace(/ /g, '.') + '@example.com',
                 phone: `+91 9${getRandomInt(100000000, 999999999)}`,
                 source: getRandomElement(sources),
-                priority: 'Medium',
                 createdBy: adminUser._id,
                 assignedTo: assignedUser._id,
                 notes,

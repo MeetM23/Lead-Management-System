@@ -1,7 +1,7 @@
 import React from 'react';
 
 export const CUSTOM_FIELD = 'customField';
-export const IGNORE = 'ignore';
+const IGNORE = 'ignore';
 
 const selectClass = 'w-full bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 text-sm text-dark focus:outline-none focus:border-primary';
 

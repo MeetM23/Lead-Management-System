@@ -2,6 +2,7 @@ import bcrypt from "bcryptjs";
 import { prisma } from "../config/db.js";
 import AppError from "../utils/AppError.js";
 import { toId, toApiId, isUniqueViolation } from "../utils/ids.js";
+import { normalizeEmail } from "../utils/normalize.js";
 import { ROLES, EMAIL_PATTERN } from "../constants/index.js";
 
 // All user queries live here. Callers get plain objects with the API's `_id` (a string) and never the password hash.
@@ -10,10 +11,9 @@ import { ROLES, EMAIL_PATTERN } from "../constants/index.js";
    HELPERS
 ========================= */
 
-const normalizeEmail = (email) => email.trim().toLowerCase();
 
 // Database row -> API user (no password)
-export const toUser = (row) =>
+const toUser = (row) =>
   row && {
     _id: toApiId(row.id),
     name: row.name,
@@ -54,6 +54,12 @@ const MAX_PASSWORD_BYTES = 72; // bcrypt ignores everything after 72 bytes
 // A real hash to compare against when the account does not exist, so a miss takes as long as a wrong password
 const MISSING_ACCOUNT_HASH = bcrypt.hashSync("no-such-account", 10);
 
+// The password policy, used for new accounts and for password changes
+const checkPassword = (password) => {
+  if (password.length < MIN_PASSWORD_LENGTH) throw new AppError(`Password must be at least ${MIN_PASSWORD_LENGTH} characters`, 400);
+  if (Buffer.byteLength(password) > MAX_PASSWORD_BYTES) throw new AppError(`Password must be at most ${MAX_PASSWORD_BYTES} bytes`, 400);
+};
+
 // Validates and normalizes the fields of a new account. The role is never part of the input.
 const cleanNewAccount = ({ name, employeeId, email, password }) => {
   if (![name, employeeId, email, password].every((value) => typeof value === "string" && value.trim() !== "")) {
@@ -64,8 +70,7 @@ const cleanNewAccount = ({ name, employeeId, email, password }) => {
     throw new AppError("Employee ID must be 2-20 characters: letters, numbers, hyphen or underscore", 400);
   }
   if (email.trim().length > 255 || !EMAIL_PATTERN.test(email.trim())) throw new AppError("Enter a valid email address", 400);
-  if (password.length < MIN_PASSWORD_LENGTH) throw new AppError(`Password must be at least ${MIN_PASSWORD_LENGTH} characters`, 400);
-  if (Buffer.byteLength(password) > MAX_PASSWORD_BYTES) throw new AppError(`Password must be at most ${MAX_PASSWORD_BYTES} bytes`, 400);
+  checkPassword(password);
 
   return { name: name.trim(), employeeId: employeeId.trim(), email: normalizeEmail(email), password };
 };
@@ -129,7 +134,7 @@ const getProfile = async (userId) => {
   return { ...toUser(row), leadsCreatedCount, totalLeads: leadsCreatedCount };
 };
 
-// Only these fields can ever be changed here: never the role or other account fields
+// Only these fields can ever be changed here: never the role, other account fields or the password (see changePassword)
 const updateProfile = async (userId, data) => {
   const id = toId(userId);
   if (!id) return null;
@@ -139,9 +144,6 @@ const updateProfile = async (userId, data) => {
   if (data.phone !== undefined) changes.phone = data.phone ? data.phone.trim() : "";
   if (data.profilePic !== undefined) changes.profilePic = data.profilePic || "";
   if (data.email !== undefined) changes.email = normalizeEmail(data.email);
-  if (data.password !== undefined && data.password.length > 0) {
-    changes.password = await bcrypt.hash(data.password, 10);
-  }
 
   try {
     const row = await prisma.user.update({ where: { id }, data: changes, include: countSelect });
@@ -152,6 +154,21 @@ const updateProfile = async (userId, data) => {
     if (isUniqueViolation(error, "email")) throw new AppError("Email already in use", 400);
     throw error;
   }
+};
+
+// Self-service password change for the authenticated user's own account (the current password is not asked for).
+// Only the password column is written. Existing login tokens stay valid.
+const changePassword = async (userId, newPassword) => {
+  checkPassword(newPassword);
+
+  const id = toId(userId);
+  const row = id && (await prisma.user.findUnique({ where: { id } }));
+  if (!row) throw new AppError("User not found", 404);
+  if (row.isActive === false) throw new AppError("Account has been deactivated. Contact admin.", 403);
+
+  if (await bcrypt.compare(newPassword, row.password)) throw new AppError("New password must be different from the current password", 400);
+
+  await prisma.user.update({ where: { id: row.id }, data: { password: await bcrypt.hash(newPassword, 10) } });
 };
 
 const getSalesWithCounts = async () => {
@@ -245,6 +262,7 @@ const User = {
   isEmailTaken,
   getProfile,
   updateProfile,
+  changePassword,
   getSalesWithCounts,
   listAssignable,
   setAvatar,
