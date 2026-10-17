@@ -140,4 +140,16 @@ npm run build
   (if present) says `VITE_API_URL=http://localhost:5000`.
 - **Everyone is signed out after you change `JWT_SECRET`**: expected; log in again.
 
+## Deploying (Vercel frontend + Render backend)
+
+Render and Vercel cannot reach the MariaDB on this computer, so first create a hosted MySQL database
+(for example Aiven, TiDB Cloud or Railway) and note its `mysql://` URL (add `?ssl-mode=REQUIRED` or the provider's SSL option if it needs one).
+
+1. **Database**: from `backend/`, run `DATABASE_URL="<hosted url>" npx prisma migrate deploy` once, then `npm run create-admin` against it to make the first admin. Existing local leads are not copied (export/import them with the Import feature or `mysqldump`).
+2. **Render** (Web Service, root directory `backend`): Build command `npm install && npx prisma generate`; Start command `npm start`. Environment: `DATABASE_URL`, `JWT_SECRET` (32+ random chars), `NODE_ENV=production`, `CORS_ORIGINS=https://<your-app>.vercel.app`.
+3. **Vercel** (root directory `frontend`, framework Vite): Environment variable `VITE_API_URL=https://<your-service>.onrender.com` (no trailing slash). Redeploy after changing it.
+4. Open the Vercel address and log in.
+
+Notes: Render's free plan sleeps after inactivity (first request is slow) and its disk is temporary, so uploaded profile pictures are lost on redeploy.
+
 Project rules for contributors are in `CLAUDE.md`.

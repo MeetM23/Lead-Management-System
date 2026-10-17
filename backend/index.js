@@ -8,7 +8,7 @@ import helmet from 'helmet';
 import rateLimit from 'express-rate-limit';
 import morgan from 'morgan';
 import connectDB from "./config/db.js";
-import { assertRequiredConfig } from "./config/env.js";
+import { assertRequiredConfig, getAllowedOrigins } from "./config/env.js";
 import { errorHandler } from "./middleware/errorMiddleware.js";
 import authRoutes from "./routes/authRoutes.js";
 import leadRoutes from "./routes/leadRoutes.js";
@@ -29,9 +29,12 @@ const __dirname = path.dirname(__filename);
 
 const app = express();
 
-// Local development: only the Vite dev server may call the API
+// Behind Render's proxy the real client address is in X-Forwarded-For (needed for the rate limits)
+if (process.env.NODE_ENV === 'production') app.set("trust proxy", 1);
+
+// Only the frontend (the Vite dev server locally, CORS_ORIGINS when hosted) may call the API
 const corsOptions = {
-  origin: ["http://localhost:5173", "http://127.0.0.1:5173"],
+  origin: getAllowedOrigins(),
   credentials: true
 };
 

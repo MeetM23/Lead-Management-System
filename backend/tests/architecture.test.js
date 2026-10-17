@@ -13,6 +13,7 @@ import { sendError, errorHandler } from "../middleware/errorMiddleware.js";
 import AppError from "../utils/AppError.js";
 import { ROLES } from "../constants/index.js";
 import { installFakePrisma, noQueriesMade, userRow } from "./helpers/fakePrisma.js";
+import { getAllowedOrigins, getCorsOriginsProblem } from "../config/env.js";
 
 // No database is used: the Prisma client is replaced by a stand-in.
 
@@ -78,21 +79,24 @@ describe("layering rules", () => {
 });
 
 describe("local development setup", () => {
-  test("the API only allows the local Vite dev server and does not trust proxy headers", () => {
+  test("CORS origins come from CORS_ORIGINS (local Vite server by default), never a hardcoded host", () => {
     const source = read("index.js");
-    assert.match(source, /localhost:5173/);
-    assert.doesNotMatch(source, /vercel|onrender|trust proxy/i);
+    assert.match(source, /getAllowedOrigins\(\)/);
+    assert.doesNotMatch(source, /vercel\.app|onrender\.com/i);
+    assert.deepEqual(getAllowedOrigins({}), ["http://localhost:5173", "http://127.0.0.1:5173"]);
+    assert.deepEqual(getAllowedOrigins({ CORS_ORIGINS: "https://a.vercel.app/, https://b.com" }), ["https://a.vercel.app", "https://b.com"]);
+    assert.equal(getCorsOriginsProblem({ CORS_ORIGINS: "https://a.vercel.app" }), null);
+    assert.match(getCorsOriginsProblem({ CORS_ORIGINS: "a.vercel.app/path" }), /CORS_ORIGINS/);
   });
 
-  test("no hosting configuration files remain", () => {
-    for (const file of ["../frontend/vercel.json", "../render.yaml", "../frontend/netlify.toml", "../Procfile"]) {
-      assert.equal(fs.existsSync(path.join(backendDir, file)), false, file);
-    }
+  test("the frontend rewrites every path to index.html so page refreshes work on Vercel", () => {
+    const config = JSON.parse(fs.readFileSync(path.join(backendDir, "../frontend/vercel.json"), "utf8"));
+    assert.deepEqual(config.rewrites, [{ source: "/(.*)", destination: "/index.html" }]);
   });
 
   test(".env.example is a template: placeholders only, every setting the app reads, no real secrets", () => {
     const template = read(".env.example");
-    for (const name of ["DATABASE_URL", "TEST_DATABASE_URL", "JWT_SECRET", "PORT", "NODE_ENV", "ENABLE_SEEDING", "SEED_DEMO_PASSWORD"]) {
+    for (const name of ["DATABASE_URL", "TEST_DATABASE_URL", "JWT_SECRET", "PORT", "NODE_ENV", "ENABLE_SEEDING", "SEED_DEMO_PASSWORD", "CORS_ORIGINS"]) {
       assert.match(template, new RegExp(`^${name}=`, "m"), name);
     }
     assert.match(template, /^JWT_SECRET=$/m);

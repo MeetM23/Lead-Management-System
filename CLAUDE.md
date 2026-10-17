@@ -8,7 +8,7 @@ These rules are binding for every change. If a rule needs to change, update this
 - Frontend: React 19, Vite, Tailwind CSS 3, react-router-dom 7, framer-motion, gsap, lucide-react. All API calls go through `src/utils/api.js` (plain `fetch`; no axios).
 - Backend: Node.js (ES modules), Express 4, MySQL 8 with Prisma ORM, JWT (`jsonwebtoken`), `bcryptjs`, helmet, cors, express-rate-limit, morgan, multer, read-excel-file (.xlsx) and csv-parse (.csv) for lead import.
 - Roles: `admin` and `sales` only.
-- Scope: local development only (XAMPP/MariaDB on this computer). Hosting and deployment are out of scope for now; do not add deployment configuration.
+- Scope: developed locally (XAMPP/MariaDB). Hosted setup: frontend on Vercel (`frontend/vercel.json`), backend on Render, a hosted MySQL database. The only deployment configuration in the repo is `vercel.json` and the `CORS_ORIGINS` setting; platform settings live in the Vercel/Render dashboards.
 
 ## Commands
 

@@ -60,9 +60,22 @@ export const getImportLimits = (env = process.env) => {
   return { maxFileBytes: fileMb * 1024 * 1024, maxRows: rows };
 };
 
+// Websites allowed to call the API. Locally that is the Vite dev server; when hosted, set CORS_ORIGINS to the frontend address(es), comma-separated.
+const LOCAL_ORIGINS = ['http://localhost:5173', 'http://127.0.0.1:5173'];
+
+export const getAllowedOrigins = (env = process.env) => {
+  const listed = (env.CORS_ORIGINS ?? '').split(',').map((origin) => origin.trim().replace(/\/+$/, '')).filter(Boolean);
+  return listed.length > 0 ? listed : LOCAL_ORIGINS;
+};
+
+export const getCorsOriginsProblem = (env = process.env) => {
+  const bad = getAllowedOrigins(env).find((origin) => !/^https?:\/\/[^/\s]+$/.test(origin));
+  return bad ? 'CORS_ORIGINS must be a comma-separated list of origins like https://your-app.vercel.app (no path)' : null;
+};
+
 // Throws if required configuration is missing or unsafe. Call once at startup, before connecting to anything.
 export const assertRequiredConfig = (env = process.env) => {
-  const problems = [getDatabaseUrlProblem(env.DATABASE_URL), getJwtSecretProblem(env.JWT_SECRET), getImportLimitsProblem(env)].filter(Boolean);
+  const problems = [getDatabaseUrlProblem(env.DATABASE_URL), getJwtSecretProblem(env.JWT_SECRET), getImportLimitsProblem(env), getCorsOriginsProblem(env)].filter(Boolean);
   if (problems.length > 0) {
     throw new Error(problems.join('; '));
   }
