@@ -1,12 +1,13 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { useNavigate, Link, useLocation } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { getBasePath } from '../constants';
 import gsap from 'gsap';
 import { Home } from 'lucide-react';
 import logoImg from '../assets/favicon.png';
 
 const Login = () => {
-  const [email, setEmail] = useState('');
+  const [identifier, setIdentifier] = useState('');
   const [password, setPassword] = useState('');
   const [localError, setLocalError] = useState('');
   const [loading, setLoading] = useState(false);
@@ -33,7 +34,7 @@ const Login = () => {
 
   useEffect(() => {
     if (!user) return;
-    const dashboardPath = user.role === 'admin' ? '/admin/dashboard' : '/sales/dashboard';
+    const dashboardPath = getBasePath(user.role);
     navigate(dashboardPath, { replace: true });
   }, [user, navigate]);
 
@@ -41,13 +42,13 @@ const Login = () => {
     e.preventDefault();
     setLocalError('');
 
-    if (!email || !password) {
+    if (!identifier.trim() || !password) {
       setLocalError('Please enter all fields');
       return;
     }
 
     setLoading(true);
-    await login(email, password);
+    await login(identifier.trim(), password);
     setLoading(false);
   };
 
@@ -88,20 +89,24 @@ const Login = () => {
 
         <form onSubmit={handleSubmit} className="space-y-5">
           <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-2">Email Address</label>
+            <label htmlFor="identifier" className="block text-sm font-semibold text-gray-700 mb-2">Email or Employee ID</label>
             <input
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
+              id="identifier"
+              type="text"
+              autoComplete="username"
+              value={identifier}
+              onChange={(e) => setIdentifier(e.target.value)}
               className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-dark placeholder-gray-400 focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 focus:bg-white transition-all"
-              placeholder="admin@leadflow.com"
+              placeholder="you@company.com or EMP-001"
             />
           </div>
 
           <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-2">Password</label>
+            <label htmlFor="password" className="block text-sm font-semibold text-gray-700 mb-2">Password</label>
             <input
+              id="password"
               type="password"
+              autoComplete="current-password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-dark placeholder-gray-400 focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 focus:bg-white transition-all"
@@ -118,17 +123,8 @@ const Login = () => {
           </button>
         </form>
 
-        <div className="mt-6 text-center">
-          <p className="text-gray-500">
-            Don't have an account?{' '}
-            <Link to="/register" className="text-primary hover:text-violet-700 font-semibold transition-colors">
-              Sign Up
-            </Link>
-          </p>
-        </div>
-
         <div className="mt-6 pt-5 border-t border-gray-100 text-xs text-center text-gray-400">
-          <p>Tip: Use "admin" in email for Admin role</p>
+          <p>Accounts are created by your administrator.</p>
         </div>
       </div>
     </div>

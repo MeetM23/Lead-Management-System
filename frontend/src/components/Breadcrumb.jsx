@@ -37,8 +37,8 @@ const Breadcrumb = () => {
             return;
         }
 
-        // Check if this is a dynamic :id segment (MongoDB ObjectId or similar)
-        const isDynamicId = /^[a-f0-9]{24}$/i.test(segment) || segment.length > 16;
+        // Long segments are dynamic :id values (named by their parent route below)
+        const isDynamicId = segment.length > 16;
 
         if (isDynamicId) {
             // Determine label based on parent segment

@@ -1,32 +1,22 @@
-import {
-  getLeadsService,
-  getLeadByIdService,
-  createLeadService,
-  updateLeadService,
-  deleteLeadService,
-  addNoteService,
-  updateNoteService,
-  deleteNoteService,
-  getStatsService,
-  assignLeadService
-} from "../services/leadService.js";
+import Lead from "../models/Lead.js";
+import { sendError } from "../middleware/errorMiddleware.js";
 
 /* =========================
    GET LEADS
 ========================= */
 const getLeads = async (req, res) => {
   try {
-    const leads = await getLeadsService(req.user, req.query);
+    const { leads, total, page, limit } = await Lead.findPageForUser(req.user, req.query);
     res.json({
       success: true,
       count: leads.length,
+      total,
+      page,
+      limit,
       data: leads,
     });
   } catch (error) {
-    if (error.message === 'Unauthorized role') {
-      return res.status(403).json({ success: false, message: error.message });
-    }
-    res.status(500).json({ success: false, message: error.message });
+    sendError(res, error);
   }
 };
 
@@ -35,7 +25,7 @@ const getLeads = async (req, res) => {
 ========================= */
 const getLeadById = async (req, res) => {
   try {
-    const lead = await getLeadByIdService(req.params.leadId, req.user);
+    const lead = await Lead.findDetail(req.params.leadId, req.user);
 
     if (!lead) {
       return res.status(404).json({ success: false, message: "Lead not found" });
@@ -43,10 +33,7 @@ const getLeadById = async (req, res) => {
 
     res.json({ success: true, data: lead });
   } catch (error) {
-    if (error.message === 'Not authorized to view this lead') {
-      return res.status(403).json({ success: false, message: error.message });
-    }
-    res.status(500).json({ success: false, message: error.message });
+    sendError(res, error);
   }
 };
 
@@ -60,16 +47,10 @@ const createLead = async (req, res) => {
       return res.status(400).json({ success: false, message: "Name is required" });
     }
 
-    const lead = await createLeadService(req.body, req.user);
+    const lead = await Lead.createForUser(req.body, req.user);
     res.status(201).json({ success: true, data: lead });
   } catch (error) {
-    if (['Admin must assign lead to a sales user', 'Assigned user must be a sales user'].includes(error.message)) {
-      return res.status(400).json({ success: false, message: error.message });
-    }
-    if (error.message === 'Unauthorized role') {
-      return res.status(403).json({ success: false, message: error.message });
-    }
-    res.status(500).json({ success: false, message: error.message });
+    sendError(res, error);
   }
 };
 
@@ -78,19 +59,28 @@ const createLead = async (req, res) => {
 ========================= */
 const updateLead = async (req, res) => {
   try {
-    const lead = await updateLeadService(req.params.leadId, req.body, req.user);
+    const lead = await Lead.updateForUser(req.params.leadId, req.body, req.user);
 
     if (!lead) return res.status(404).json({ success: false, message: "Lead not found" });
 
     res.json({ success: true, data: lead });
   } catch (error) {
-    if (['Not authorized to update this lead', 'Sales cannot update assignment or creator', 'Unauthorized role'].includes(error.message)) {
-      return res.status(403).json({ success: false, message: error.message });
-    }
-    if (error.message === "Use PATCH /leads/:id/assign to reassign leads") {
-      return res.status(400).json({ success: false, message: error.message });
-    }
-    res.status(500).json({ success: false, message: error.message });
+    sendError(res, error);
+  }
+};
+
+/* =========================
+   FINAL REMARK
+========================= */
+const saveFinalRemark = async (req, res) => {
+  try {
+    const lead = await Lead.setFinalRemark(req.params.leadId, req.body.finalRemark, req.user);
+
+    if (!lead) return res.status(404).json({ success: false, message: "Lead not found" });
+
+    res.json({ success: true, message: "Final remark saved", data: lead });
+  } catch (error) {
+    sendError(res, error);
   }
 };
 
@@ -99,57 +89,52 @@ const updateLead = async (req, res) => {
 ========================= */
 const deleteLead = async (req, res) => {
   try {
-    const lead = await deleteLeadService(req.params.leadId);
+    const lead = await Lead.deleteByLeadId(req.params.leadId);
     if (!lead) {
       return res.status(404).json({ success: false, message: "Lead not found" });
     }
     res.json({ success: true, message: "Lead deleted" });
   } catch (error) {
-    res.status(500).json({ success: false, message: error.message });
+    sendError(res, error);
   }
 };
 
 /* =========================
-   ADD NOTE
+   NOTES
 ========================= */
 const addNote = async (req, res) => {
   try {
-    const { content } = req.body;
-    const notes = await addNoteService(req.params.leadId, content, req.user);
+    const lead = await Lead.addNote(req.params.leadId, req.body.content, req.user);
 
-    if (!notes) return res.status(404).json({ success: false, message: "Lead not found" });
+    if (!lead) return res.status(404).json({ success: false, message: "Lead not found" });
 
-    res.json({ success: true, data: notes });
+    res.json({ success: true, data: lead });
   } catch (error) {
-    if (error.message === 'Not authorized to add notes to this lead') {
-      return res.status(403).json({ success: false, message: error.message });
-    }
-    res.status(500).json({ success: false, message: error.message });
+    sendError(res, error);
   }
 };
 
 const updateNote = async (req, res) => {
   try {
-    const { content } = req.body;
-    const lead = await updateNoteService(req.params.leadId, req.params.noteId, content, req.user);
+    const lead = await Lead.updateNote(req.params.leadId, req.params.noteId, req.body.content, req.user);
+
     if (!lead) return res.status(404).json({ success: false, message: "Lead not found" });
 
     res.json({ success: true, data: lead });
   } catch (error) {
-    const statusCode = error.message === "Note not found" ? 404 : (error.message.includes("authorized") ? 403 : 500);
-    res.status(statusCode).json({ success: false, message: error.message });
+    sendError(res, error);
   }
 };
 
 const deleteNote = async (req, res) => {
   try {
-    const lead = await deleteNoteService(req.params.leadId, req.params.noteId, req.user);
+    const lead = await Lead.deleteNote(req.params.leadId, req.params.noteId, req.user);
+
     if (!lead) return res.status(404).json({ success: false, message: "Lead not found" });
 
     res.json({ success: true, data: lead });
   } catch (error) {
-    const statusCode = error.message === "Note not found" ? 404 : (error.message.includes("authorized") ? 403 : 500);
-    res.status(statusCode).json({ success: false, message: error.message });
+    sendError(res, error);
   }
 };
 
@@ -158,10 +143,10 @@ const deleteNote = async (req, res) => {
 ========================= */
 const getStats = async (req, res) => {
   try {
-    const stats = await getStatsService(req.user);
+    const stats = await Lead.getStats(req.user);
     res.json({ success: true, data: stats });
   } catch (error) {
-    res.status(500).json({ success: false, message: error.message });
+    sendError(res, error);
   }
 };
 
@@ -170,20 +155,13 @@ const getStats = async (req, res) => {
 ========================= */
 const assignLead = async (req, res) => {
   try {
-    const { assignedTo } = req.body;
-    const lead = await assignLeadService(req.params.leadId, assignedTo, req.user);
+    const lead = await Lead.assign(req.params.leadId, req.body.assignedTo, req.user);
 
     if (!lead) return res.status(404).json({ success: false, message: "Lead not found" });
 
     res.json({ success: true, data: lead });
   } catch (error) {
-    if (error.message === "Only admin can assign leads") {
-      return res.status(403).json({ success: false, message: error.message });
-    }
-    if (['assignedTo is required', 'Admin can only assign leads to sales users'].includes(error.message)) {
-      return res.status(400).json({ success: false, message: error.message });
-    }
-    res.status(500).json({ success: false, message: error.message });
+    sendError(res, error);
   }
 };
 
@@ -197,5 +175,6 @@ export {
   updateNote,
   deleteNote,
   getStats,
-  assignLead
+  assignLead,
+  saveFinalRemark
 };

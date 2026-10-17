@@ -2,7 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useLeads } from '../context/LeadsContext';
 import { useAuth } from '../context/AuthContext';
-import { useNotifications } from '../context/NotificationContext';
+import { ROLES, LEAD_SOURCES, LEAD_PRIORITIES, getBasePath } from '../constants';
 import { Save, X } from 'lucide-react';
 import gsap from 'gsap';
 
@@ -10,7 +10,6 @@ const AddLead = () => {
   const navigate = useNavigate();
   const { addLead, users } = useLeads();
   const { user } = useAuth();
-  const { refetchNotifications } = useNotifications();
   const formRef = useRef(null);
 
   const [formData, setFormData] = useState({
@@ -19,6 +18,7 @@ const AddLead = () => {
     phone: '',
     source: 'Website',
     priority: 'Medium',
+    state: '', // optional
     assignedTo: '', // Admin must assign to sales user
   });
 
@@ -43,21 +43,22 @@ const AddLead = () => {
     }
 
     // Admin must assign to a sales user
-    if (user?.role === 'admin' && !formData.assignedTo) {
+    if (user?.role === ROLES.ADMIN && !formData.assignedTo) {
       alert("Please assign this lead to a sales user");
       return;
     }
 
     // For sales, don't send assignedTo (backend will auto-assign to themselves)
-    const leadData = user?.role === 'admin'
-      ? formData
+    const { state, ...fields } = formData;
+    const leadData = user?.role === ROLES.ADMIN
+      ? fields
       : { name: formData.name, email: formData.email, phone: formData.phone, source: formData.source, priority: formData.priority };
+    if (state) leadData.state = state;
 
     console.log("Lead payload:", leadData);
     const result = await addLead(leadData);
 
     if (result?.success) {
-      refetchNotifications(); // Refresh notifications in case any were generated for this user
       setFormData({
         name: '',
         email: '',
@@ -65,12 +66,7 @@ const AddLead = () => {
         source: 'Website',
         assignedTo: '',
       });
-      // Navigate based on role
-      if (user?.role === 'admin') {
-        navigate('/admin/dashboard/leads');
-      } else {
-        navigate('/sales/dashboard/leads');
-      }
+      navigate(`${getBasePath(user?.role)}/leads`);
     }
   };
 
@@ -134,11 +130,9 @@ const AddLead = () => {
               onChange={handleChange}
               className="w-full px-4 py-3 rounded-lg border border-gray-200 focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all bg-white"
             >
-              <option value="Website">Website</option>
-              <option value="Referral">Referral</option>
-              <option value="LinkedIn">LinkedIn</option>
-              <option value="Cold Call">Cold Call</option>
-              <option value="Advertisement">Advertisement</option>
+              {LEAD_SOURCES.map((source) => (
+                <option key={source} value={source}>{source}</option>
+              ))}
             </select>
           </div>
 
@@ -150,13 +144,26 @@ const AddLead = () => {
               onChange={handleChange}
               className="w-full px-4 py-3 rounded-lg border border-gray-200 focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all bg-white"
             >
-              <option value="High">High</option>
-              <option value="Medium">Medium</option>
-              <option value="Low" >Low</option>
+              {LEAD_PRIORITIES.map((priority) => (
+                <option key={priority} value={priority}>{priority}</option>
+              ))}
             </select>
           </div>
 
-          {user?.role === 'admin' && (
+          <div className="space-y-2">
+            <label className="text-sm font-semibold text-gray-700">State</label>
+            <input
+              type="text"
+              name="state"
+              value={formData.state}
+              onChange={handleChange}
+              maxLength={100}
+              placeholder="Optional"
+              className="w-full px-4 py-3 rounded-lg border border-gray-200 focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all bg-white"
+            />
+          </div>
+
+          {user?.role === ROLES.ADMIN && (
             <div className="space-y-2">
               <label className="text-sm font-semibold text-gray-700">Assign To Sales User *</label>
               <select
@@ -167,7 +174,7 @@ const AddLead = () => {
                 required
               >
                 <option value="">Select a sales user...</option>
-                {users.filter(u => u.role === 'sales').map((u) => (
+                {users.map((u) => (
                   <option key={u._id} value={u._id}>
                     {u.name} ({u.email})
                   </option>

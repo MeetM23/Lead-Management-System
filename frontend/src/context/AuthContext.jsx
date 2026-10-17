@@ -1,27 +1,25 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
-import { apiFetch } from '../utils/api.js';
-import axios from 'axios';
+import { apiGet, apiPost, setUnauthorizedHandler } from '../utils/api.js';
 
 const AuthContext = createContext();
-
-const API_URL = import.meta.env.VITE_API_URL;
 
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(true);
 
+  // End the session whenever the API reports that the token is no longer valid
+  useEffect(() => {
+    setUnauthorizedHandler(() => setUser(null));
+    return () => setUnauthorizedHandler(null);
+  }, []);
+
   // 🔹 Restore login on page refresh (JWT-based)
   useEffect(() => {
     const checkLoggedIn = async () => {
-      const token = localStorage.getItem('token');
-      if (token) {
+      if (localStorage.getItem('token')) {
         try {
-          const res = await apiFetch('/api/users/me', {
-            headers: {
-              'Authorization': `Bearer ${token}`
-            }
-          });
+          const res = await apiGet('/api/users/me');
 
           if (res.ok) {
             const data = await res.json();
@@ -44,12 +42,17 @@ export const AuthProvider = ({ children }) => {
   }, []);
 
   // 🔹 Login
-  const login = async (email, password) => {
+  const login = async (identifier, password) => {
     try {
       setError('');
 
-      const res = await axios.post(`${API_URL}/api/auth/login`, { email, password });
-      const data = res.data;
+      const res = await apiPost('/api/auth/login', { identifier, password });
+      const data = await res.json();
+
+      if (!res.ok) {
+        setError(data.message || 'Login failed');
+        return { success: false };
+      }
 
       // Store JWT
       localStorage.setItem('token', data.token);
@@ -57,21 +60,7 @@ export const AuthProvider = ({ children }) => {
       setUser(data.user);
       return { success: true, user: data.user };
     } catch (err) {
-      setError(err.response?.data?.message || err.message || 'Login failed');
-      return { success: false };
-    }
-  };
-
-  // 🔹 Register
-  const register = async (userData) => {
-    try {
-      setError('');
-
-      await axios.post(`${API_URL}/api/auth/register`, userData);
-
-      return { success: true };
-    } catch (err) {
-      setError(err.response?.data?.message || err.message || 'Registration failed');
+      setError(err.message || 'Login failed');
       return { success: false };
     }
   };
@@ -92,7 +81,6 @@ export const AuthProvider = ({ children }) => {
       value={{
         user,
         login,
-        register,
         logout,
         updateUser,
         error,

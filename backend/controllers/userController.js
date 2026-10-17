@@ -1,30 +1,45 @@
-import {
-    getAllUsersService,
-    getUserProfileService,
-    updateUserProfileService,
-    getSalesUsersService,
-    uploadAvatarService,
-    getUserByIdService,
-    terminateUserService
-} from "../services/userService.js";
-import User from "../models/User.js"; // Kept for email existence check only, or could move that to service too
+import User from "../models/User.js";
+import AppError from "../utils/AppError.js";
+import { ROLES } from "../constants/index.js";
+import { sendError } from "../middleware/errorMiddleware.js";
+
+// Own-profile response shape, shared by GET and PUT /api/users/me
+const toProfileResponse = (profile) => ({
+    _id: profile._id,
+    name: profile.name,
+    email: profile.email,
+    phone: profile.phone || '',
+    employeeId: profile.employeeId || '',
+    role: profile.role,
+    profilePic: profile.profilePic || '',
+    profileImage: profile.profilePic || '',
+    leadsCreatedCount: profile.leadsCreatedCount,
+    totalLeads: profile.totalLeads,
+});
+
+/* =========================
+   CREATE EMPLOYEE (ADMIN ONLY)
+   The role is decided by the model (always sales); anything else in the body is ignored.
+========================= */
+const createEmployee = async (req, res) => {
+    try {
+        const { name, employeeId, email, password } = req.body;
+        const user = await User.createEmployee({ name, employeeId, email, password });
+        res.status(201).json({ success: true, message: `Employee ${user.name} created`, data: user });
+    } catch (error) {
+        sendError(res, error);
+    }
+};
 
 /* =========================
    GET ALL USERS (ADMIN ONLY)
 ========================= */
 const getUsers = async (req, res) => {
     try {
-        const users = await getAllUsersService();
-
-        res.json({
-            success: true,
-            data: users,
-        });
+        const users = await User.getAllUsers();
+        res.json({ success: true, data: users });
     } catch (error) {
-        res.status(500).json({
-            success: false,
-            message: error.message,
-        });
+        sendError(res, error);
     }
 };
 
@@ -33,93 +48,60 @@ const getUsers = async (req, res) => {
 ========================= */
 const getMyProfile = async (req, res) => {
     try {
-        const userProfile = await getUserProfileService(req.user._id);
+        const profile = await User.getProfile(req.user._id);
 
-        if (!userProfile) {
-            return res.status(404).json({ success: false, message: "User not found" });
-        }
+        if (!profile) throw new AppError("User not found", 404);
 
-        res.json({
-            success: true,
-            data: {
-                _id: userProfile._id,
-                name: userProfile.name,
-                email: userProfile.email,
-                phone: userProfile.phone || '',
-                employeeId: userProfile.employeeId || '',
-                role: userProfile.role,
-                profilePic: userProfile.profilePic || '',
-                profileImage: userProfile.profilePic || '',
-                leadsCreatedCount: userProfile.leadsCreatedCount,
-                totalLeads: userProfile.totalLeads,
-            },
-        });
+        res.json({ success: true, data: toProfileResponse(profile) });
     } catch (error) {
-        res.status(500).json({ success: false, message: error.message });
+        sendError(res, error);
     }
 };
 
 /* =========================
    UPDATE SELF PROFILE (Admin & Sales)
+   Only these fields can be changed here; role and other account fields never can.
 ========================= */
 const updateMyProfile = async (req, res) => {
     try {
         const { name, phone, profilePic, email, password } = req.body;
 
-        // Validation logic
-        if (name !== undefined) {
-            if (typeof name !== 'string' || name.trim().length === 0) {
-                return res.status(400).json({ success: false, message: "Name cannot be empty" });
+        if (name !== undefined && (typeof name !== 'string' || name.trim().length === 0)) {
+            throw new AppError("Name cannot be empty", 400);
+        }
+
+        for (const [field, value] of Object.entries({ phone, email, password })) {
+            if (value !== undefined && typeof value !== 'string') {
+                throw new AppError(`Invalid ${field}`, 400);
             }
         }
 
-        if (profilePic !== undefined) {
-            if (profilePic && profilePic.length > 0) {
-                if (!profilePic.startsWith('data:image/')) {
-                    return res.status(400).json({ success: false, message: "Invalid image format" });
-                }
-                if (profilePic.length > 600 * 1024) {
-                    return res.status(400).json({ success: false, message: "Image too large. Please use a smaller image (max 500KB after compression)" });
-                }
+        if (profilePic !== undefined && profilePic) {
+            if (typeof profilePic !== 'string' || !profilePic.startsWith('data:image/')) {
+                throw new AppError("Invalid image format", 400);
+            }
+            if (profilePic.length > 600 * 1024) {
+                throw new AppError("Image too large. Please use a smaller image (max 500KB after compression)", 400);
             }
         }
 
         if (email !== undefined) {
             const emailTrimmed = email.trim().toLowerCase();
-            const existingUser = await getUserProfileService(req.user._id);
-            if (existingUser && emailTrimmed !== existingUser.email) {
-                const emailExists = await User.findOne({ email: emailTrimmed });
-                if (emailExists) {
-                    return res.status(400).json({ success: false, message: "Email already in use" });
-                }
+            const existingUser = await User.getProfile(req.user._id);
+            if (existingUser && emailTrimmed !== existingUser.email && await User.isEmailTaken(emailTrimmed)) {
+                throw new AppError("Email already in use", 400);
             }
         }
 
-        const updatedProfile = await updateUserProfileService(req.user._id, {
+        const updatedProfile = await User.updateProfile(req.user._id, {
             name, phone, profilePic, email, password
         });
 
-        if (!updatedProfile) {
-            return res.status(404).json({ success: false, message: "User not found" });
-        }
+        if (!updatedProfile) throw new AppError("User not found", 404);
 
-        res.json({
-            success: true,
-            data: {
-                _id: updatedProfile._id,
-                name: updatedProfile.name,
-                email: updatedProfile.email,
-                phone: updatedProfile.phone || '',
-                employeeId: updatedProfile.employeeId || '',
-                role: updatedProfile.role,
-                profilePic: updatedProfile.profilePic || '',
-                profileImage: updatedProfile.profilePic || '',
-                leadsCreatedCount: updatedProfile.leadsCreatedCount,
-                totalLeads: updatedProfile.totalLeads,
-            },
-        });
+        res.json({ success: true, data: toProfileResponse(updatedProfile) });
     } catch (error) {
-        res.status(500).json({ success: false, message: error.message });
+        sendError(res, error);
     }
 };
 
@@ -128,13 +110,21 @@ const updateMyProfile = async (req, res) => {
 ========================= */
 const getSalesUsers = async (req, res) => {
     try {
-        const salesUsers = await getSalesUsersService();
-        res.json({
-            success: true,
-            data: salesUsers,
-        });
+        const salesUsers = await User.getSalesWithCounts();
+        res.json({ success: true, data: salesUsers });
     } catch (error) {
-        res.status(500).json({ success: false, message: error.message });
+        sendError(res, error);
+    }
+};
+
+/* =========================
+   EMPLOYEES A LEAD CAN BE ASSIGNED TO (Admin Only)
+========================= */
+const getAssignableUsers = async (req, res) => {
+    try {
+        res.json({ success: true, data: await User.listAssignable() });
+    } catch (error) {
+        sendError(res, error);
     }
 };
 
@@ -143,15 +133,11 @@ const getSalesUsers = async (req, res) => {
 ========================= */
 const uploadAvatar = async (req, res) => {
     try {
-        if (!req.file) {
-            return res.status(400).json({ success: false, message: "Please upload a file" });
-        }
+        if (!req.file) throw new AppError("Please upload a file", 400);
 
-        const updatedUser = await uploadAvatarService(req.user._id, req.file.filename);
+        const updatedUser = await User.setAvatar(req.user._id, req.file.filename);
 
-        if (!updatedUser) {
-            return res.status(404).json({ success: false, message: "User not found" });
-        }
+        if (!updatedUser) throw new AppError("User not found", 404);
 
         res.json({
             success: true,
@@ -162,20 +148,21 @@ const uploadAvatar = async (req, res) => {
             }
         });
     } catch (error) {
-        res.status(500).json({ success: false, message: error.message });
+        sendError(res, error);
     }
 };
 
+/* =========================
+   GET A SALES USER BY EMPLOYEE ID (Admin Only)
+========================= */
 const getUserById = async (req, res) => {
     try {
-        const user = await getUserByIdService(req.params.employeeId);
+        const user = await User.getByEmployeeId(req.params.employeeId);
 
-        if (!user) {
-            return res.status(404).json({ success: false, message: "User not found" });
-        }
+        if (!user) throw new AppError("User not found", 404);
 
-        if (user.role !== 'sales') {
-            return res.status(403).json({ success: false, message: "Forbidden: Can only view sales user profiles" });
+        if (user.role !== ROLES.SALES) {
+            throw new AppError("Forbidden: Can only view sales user profiles", 403);
         }
 
         res.json({
@@ -195,7 +182,27 @@ const getUserById = async (req, res) => {
             },
         });
     } catch (error) {
-        res.status(500).json({ success: false, message: error.message });
+        sendError(res, error);
+    }
+};
+
+/* =========================
+   ACTIVATE / DEACTIVATE AN EMPLOYEE (Admin Only)
+========================= */
+const setUserStatus = async (req, res) => {
+    try {
+        const { isActive } = req.body;
+        if (typeof isActive !== 'boolean') throw new AppError("isActive must be true or false", 400);
+
+        const user = await User.setActiveByEmployeeId(req.params.employeeId, isActive);
+
+        res.json({
+            success: true,
+            message: `${user.name} has been ${isActive ? 'activated' : 'deactivated'}.`,
+            data: { isActive: user.isActive }
+        });
+    } catch (error) {
+        sendError(res, error);
     }
 };
 
@@ -204,12 +211,7 @@ const getUserById = async (req, res) => {
 ========================= */
 const terminateUser = async (req, res) => {
     try {
-        const result = await terminateUserService(req.params.employeeId, req.user._id);
-
-        if (!result.success) {
-            return res.status(result.message === "User not found" ? 404 : 403)
-                .json({ success: false, message: result.message });
-        }
+        const result = await User.terminateByEmployeeId(req.params.employeeId, req.user._id);
 
         res.json({
             success: true,
@@ -217,8 +219,8 @@ const terminateUser = async (req, res) => {
             data: { isActive: false, deleted: true }
         });
     } catch (error) {
-        res.status(500).json({ success: false, message: error.message });
+        sendError(res, error);
     }
 };
 
-export { getUsers, getUserById, getMyProfile, updateMyProfile, getSalesUsers, uploadAvatar, terminateUser };
+export { createEmployee, setUserStatus, getUsers, getUserById, getMyProfile, updateMyProfile, getSalesUsers, getAssignableUsers, uploadAvatar, terminateUser };

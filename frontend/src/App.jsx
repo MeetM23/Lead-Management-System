@@ -2,10 +2,8 @@ import React from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { LeadsProvider } from './context/LeadsContext';
-import { NotificationProvider } from './context/NotificationContext';
 import MainLayout from './layout/MainLayout';
 import Login from './pages/Login';
-import Register from './pages/Register';
 import LandingPage from './pages/LandingPage';
 import Dashboard from './pages/Dashboard';
 import Leads from './pages/Leads';
@@ -14,6 +12,8 @@ import Users from './pages/Users';
 import AdminUserProfile from './pages/AdminUserProfile';
 import Profile from './pages/Profile';
 import LeadDetails from './pages/LeadDetails';
+import ImportLeads from './pages/ImportLeads';
+import { getBasePath } from './constants';
 
 // Protected Route Component
 const ProtectedRoute = ({ children, allowedRoles }) => {
@@ -29,7 +29,7 @@ const ProtectedRoute = ({ children, allowedRoles }) => {
 
   if (allowedRoles && !allowedRoles.includes(user.role)) {
     // Redirect to appropriate dashboard
-    const redirectPath = user.role === 'admin' ? '/admin/dashboard' : '/sales/dashboard';
+    const redirectPath = getBasePath(user.role);
     return <Navigate to={redirectPath} replace />;
   }
 
@@ -40,46 +40,43 @@ function App() {
   return (
     <BrowserRouter>
       <AuthProvider>
-        <NotificationProvider>
-          <LeadsProvider>
-            <Routes>
-              {/* Public Routes */}
-              <Route path="/" element={<LandingPage />} />
-              <Route path="/login" element={<Login />} />
-              <Route path="/register" element={<Register />} />
+        <LeadsProvider>
+          <Routes>
+            {/* Public Routes */}
+            <Route path="/" element={<LandingPage />} />
+            <Route path="/login" element={<Login />} />
 
-              {/* Protected Routes */}
-              <Route path="/admin/dashboard" element={
-                <ProtectedRoute allowedRoles={['admin']}>
-                  <MainLayout />
-                </ProtectedRoute>
-              }>
-                <Route index element={<Dashboard />} />
-                <Route path="leads" element={<Leads />} />
-                <Route path="leads/:leadId" element={<LeadDetails />} />
-                <Route path="add-lead" element={<AddLead />} />
-                <Route path="users" element={<Users />} />
-                <Route path="users/:employeeId" element={<AdminUserProfile />} />
-                <Route path="profile" element={<Profile />} />
-              </Route>
+            {/* Protected Routes */}
+            <Route path="/admin/dashboard" element={
+              <ProtectedRoute allowedRoles={['admin']}>
+                <MainLayout />
+              </ProtectedRoute>
+            }>
+              <Route index element={<Dashboard />} />
+              <Route path="leads" element={<Leads />} />
+              <Route path="leads/:leadId" element={<LeadDetails />} />
+              <Route path="add-lead" element={<AddLead />} />
+              <Route path="import-leads" element={<ImportLeads />} />
+              <Route path="users" element={<Users />} />
+              <Route path="users/:employeeId" element={<AdminUserProfile />} />
+              <Route path="profile" element={<Profile />} />
+            </Route>
 
-              <Route path="/sales/dashboard" element={
-                <ProtectedRoute allowedRoles={['sales']}>
-                  <MainLayout />
-                </ProtectedRoute>
-              }>
-                <Route index element={<Dashboard />} />
-                <Route path="leads" element={<Leads />} />
-                <Route path="leads/:leadId" element={<LeadDetails />} />
-                <Route path="add-lead" element={<AddLead />} />
-                <Route path="profile" element={<Profile />} />
-              </Route>
+            <Route path="/sales/dashboard" element={
+              <ProtectedRoute allowedRoles={['sales']}>
+                <MainLayout />
+              </ProtectedRoute>
+            }>
+              <Route index element={<Dashboard />} />
+              <Route path="leads" element={<Leads />} />
+              <Route path="leads/:leadId" element={<LeadDetails />} />
+              <Route path="profile" element={<Profile />} />
+            </Route>
 
-              {/* Catch all - redirect to Landing Page instead of Dashboard */}
-              <Route path="*" element={<Navigate to="/" replace />} />
-            </Routes>
-          </LeadsProvider>
-        </NotificationProvider>
+            {/* Catch all - redirect to Landing Page instead of Dashboard */}
+            <Route path="*" element={<Navigate to="/" replace />} />
+          </Routes>
+        </LeadsProvider>
       </AuthProvider>
     </BrowserRouter>
   );

@@ -1,41 +1,36 @@
 import jwt from 'jsonwebtoken';
 import User from '../models/User.js';
+import AppError from '../utils/AppError.js';
+import { sendError } from './errorMiddleware.js';
 
+// Authenticates the request. The user (and therefore the role) always comes from the database record
+// behind the signed token, never from the token payload or the request.
 const protect = async (req, res, next) => {
-  let token;
+  const header = req.headers.authorization;
 
-  if (
-    req.headers.authorization &&
-    req.headers.authorization.startsWith('Bearer')
-  ) {
-    try {
-      // Get token from header
-      token = req.headers.authorization.split(' ')[1];
-
-      // Verify token
-      const decoded = jwt.verify(token, process.env.JWT_SECRET);
-
-      // Get user from the token
-      req.user = await User.findById(decoded.id).select('-password');
-
-      if (!req.user) {
-        return res.status(401).json({ message: 'Not authorized, user not found' });
-      }
-
-      if (req.user.isActive === false) {
-        return res.status(403).json({ message: 'Account is deactivated' });
-      }
-
-      next();
-    } catch (error) {
-      console.error(error);
-      res.status(401).json({ message: 'Not authorized, token failed' });
-    }
+  if (!header || !header.startsWith('Bearer')) {
+    return sendError(res, new AppError('Not authorized, no token', 401));
   }
 
-  if (!token) {
-    res.status(401).json({ message: 'Not authorized, no token' });
+  let user;
+  try {
+    const decoded = jwt.verify(header.split(' ')[1], process.env.JWT_SECRET);
+    user = await User.findForAuth(decoded.id);
+  } catch (error) {
+    console.error(error.message);
+    return sendError(res, new AppError('Not authorized, token failed', 401));
   }
+
+  if (!user) {
+    return sendError(res, new AppError('Not authorized, user not found', 401));
+  }
+
+  if (user.isActive === false) {
+    return sendError(res, new AppError('Account is deactivated', 403));
+  }
+
+  req.user = user;
+  next();
 };
 
 export default protect;

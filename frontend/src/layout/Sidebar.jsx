@@ -1,12 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { LayoutDashboard, Users, PlusCircle, X, UserCheck } from 'lucide-react';
+import { LayoutDashboard, Users, X, UserCheck } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import clsx from 'clsx';
 import logoImg from '../assets/favicon.png';
-
-// Get API URL from environment variables
-const API_URL = import.meta.env.VITE_API_URL || '';
+import { apiGet } from '../utils/api.js';
+import { ROLES, getBasePath } from '../constants';
 
 const Sidebar = ({ isOpen, onClose, isCollapsed }) => {
   const location = useLocation();
@@ -17,13 +16,7 @@ const Sidebar = ({ isOpen, onClose, isCollapsed }) => {
     if (user?.profilePic) return;
     const fetchProfilePic = async () => {
       try {
-        const token = localStorage.getItem('token');
-        const response = await fetch(`${API_URL}/api/users/me`, {
-          headers: {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${token}`,
-          },
-        });
+        const response = await apiGet('/api/users/me');
         if (response.ok) {
           const result = await response.json();
           if (result.data?.profilePic) {
@@ -42,20 +35,19 @@ const Sidebar = ({ isOpen, onClose, isCollapsed }) => {
   };
 
   // Determine base path based on user role
-  const basePath = user?.role === 'admin' ? '/admin/dashboard' : '/sales/dashboard';
-  const profilePath = user?.role === 'admin' ? '/admin/dashboard/profile' : '/sales/dashboard/profile';
+  const basePath = getBasePath(user?.role);
+  const profilePath = `${basePath}/profile`;
 
   const commonLinks = [
     { name: 'Dashboard', path: basePath, icon: LayoutDashboard },
     { name: 'Leads', path: `${basePath}/leads`, icon: Users },
-    { name: 'Add Lead', path: `${basePath}/add-lead`, icon: PlusCircle },
   ];
 
   const adminLinks = [
     { name: 'Users', path: `${basePath}/users`, icon: UserCheck },
   ];
 
-  const links = user?.role === 'admin' ? [...commonLinks, ...adminLinks] : commonLinks;
+  const links = user?.role === ROLES.ADMIN ? [...commonLinks, ...adminLinks] : commonLinks;
   return (
     <aside
 

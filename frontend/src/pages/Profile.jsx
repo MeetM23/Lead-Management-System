@@ -3,9 +3,8 @@ import { useAuth } from '../context/AuthContext';
 import { Save, Camera, User as UserIcon, Pencil } from 'lucide-react';
 import { LogOut, User } from 'lucide-react';
 import { SkeletonForm } from '../components/common/Skeleton';
-
-// Get API URL from environment variables
-const API_URL = import.meta.env.VITE_API_URL || '';
+import { apiGet, apiPut } from '../utils/api.js';
+import { ROLES } from '../constants';
 
 const Profile = () => {
     // const { user } = useAuth();
@@ -47,13 +46,7 @@ const Profile = () => {
 
     const fetchProfile = async () => {
         try {
-            const token = localStorage.getItem('token');
-            const response = await fetch(`${API_URL}/api/users/me`, {
-                headers: {
-                    'Content-Type': 'application/json',
-                    Authorization: `Bearer ${token}`,
-                },
-            });
+            const response = await apiGet('/api/users/me');
 
             if (response.ok) {
                 const result = await response.json();
@@ -160,15 +153,7 @@ const Profile = () => {
     const handleSave = async () => {
         setSaving(true);
         try {
-            const token = localStorage.getItem('token');
-            const response = await fetch(`${API_URL}/api/users/me`, {
-                method: 'PUT',
-                headers: {
-                    'Content-Type': 'application/json',
-                    Authorization: `Bearer ${token}`,
-                },
-                body: JSON.stringify(formData),
-            });
+            const response = await apiPut('/api/users/me', formData);
 
             if (response.ok) {
                 const result = await response.json();
@@ -177,8 +162,6 @@ const Profile = () => {
                 setPreviewImage(null);
                 // Update auth context user if needed
                 if (user) {
-                    const updatedUser = { ...user, name: result.data.name, profilePic: result.data.profilePic };
-                    localStorage.setItem('user', JSON.stringify(updatedUser));
                     updateUser({ name: result.data.name, profilePic: result.data.profilePic });
                 }
                 alert('Profile updated successfully!');
@@ -294,7 +277,7 @@ const Profile = () => {
                         <h2 className="text-3xl font-bold mb-2">{profile.name}</h2>
                         <div className="flex items-center gap-4">
                             <span className={`px-4 py-1.5 rounded-full text-sm font-bold uppercase tracking-wider
-                                ${profile.role === 'admin'
+                                ${profile.role === ROLES.ADMIN
                                     ? 'bg-purple-500/30 text-white border border-white/30'
                                     : 'bg-blue-500/30 text-white border border-white/30'}`}>
                                 {profile.role}

@@ -1,5 +1,6 @@
 import multer from 'multer';
 import path from 'path';
+import { getImportLimits } from '../config/env.js';
 
 // Set storage engine
 const storage = multer.diskStorage({
@@ -38,5 +39,18 @@ const upload = multer({
         checkFileType(file, cb);
     }
 });
+
+// Spreadsheet for the lead import: kept in memory (never written to disk), one file, size limit from IMPORT_MAX_FILE_MB.
+// The limits are read per request because .env is loaded after this module is imported.
+export const importUpload = (req, res, next) =>
+    multer({
+        storage: multer.memoryStorage(),
+        limits: { fileSize: getImportLimits().maxFileBytes, files: 1, fields: 5 },
+    }).single('file')(req, res, (error) => {
+        if (error?.code === 'LIMIT_FILE_SIZE') {
+            error.message = `The file is larger than ${getImportLimits().maxFileBytes / 1024 / 1024} MB`;
+        }
+        next(error);
+    });
 
 export default upload;

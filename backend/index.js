@@ -8,33 +8,30 @@ import helmet from 'helmet';
 import rateLimit from 'express-rate-limit';
 import morgan from 'morgan';
 import connectDB from "./config/db.js";
+import { assertRequiredConfig } from "./config/env.js";
 import { errorHandler } from "./middleware/errorMiddleware.js";
 import authRoutes from "./routes/authRoutes.js";
 import leadRoutes from "./routes/leadRoutes.js";
 import userRoutes from "./routes/userRoutes.js";
-import notificationRoutes from "./routes/notificationRoutes.js";
-import seedDummyData from "./utils/seedDummyData.js";
 
-connectDB().then(() => {
-  // Run seeder only in development
-  if (process.env.NODE_ENV !== 'production') {
-    seedDummyData();
-  }
-});
+// Refuse to start with missing or weak configuration (checked before any connection is made)
+try {
+  assertRequiredConfig();
+} catch (error) {
+  console.error(`Configuration error: ${error.message}`);
+  process.exit(1);
+}
+
+connectDB();
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 const app = express();
 
-app.set("trust proxy", 1);
-
+// Local development: only the Vite dev server may call the API
 const corsOptions = {
-  origin: [
-    "http://localhost:5173",
-    "https://leadflow-sigma-brown.vercel.app",
-    "https://leadflow-app.vercel.app"
-  ],
+  origin: ["http://localhost:5173", "http://127.0.0.1:5173"],
   credentials: true
 };
 
@@ -60,8 +57,6 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use("/api/auth", authRoutes);
 app.use("/api/leads", leadRoutes);
 app.use("/api/users", userRoutes);
-app.use("/api/notifications", notificationRoutes);
-app.use(errorHandler);
 
 // Make uploads folder static
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
@@ -69,6 +64,9 @@ app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 app.get("/", (req, res) => {
   res.send("API is running");
 });
+
+// Must be registered after all routes
+app.use(errorHandler);
 
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {

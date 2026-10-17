@@ -1,8 +1,9 @@
 import React, { useMemo } from 'react';
 import { useLeads } from '../context/LeadsContext';
 import { useAuth } from '../context/AuthContext';
+import { ROLES, getBasePath } from '../constants';
 import { useNavigate } from 'react-router-dom';
-import { Users, UserPlus, TrendingUp, AlertCircle, CheckCircle, Calendar } from 'lucide-react';
+import { Users, UserPlus, TrendingUp, AlertCircle, Calendar } from 'lucide-react';
 import StatCard from '../components/dashboard/StatCard';
 import AnalyticsCharts from '../components/dashboard/AnalyticsCharts';
 
@@ -23,10 +24,6 @@ const Dashboard = () => {
     // from the backend /api/leads/stats endpoint for accurate dashboard metrics.
 
     const total = stats?.totalLeads || 0;
-    const newLeads = stats?.leadsByStatus?.find(s => s._id === 'New')?.count || 0;
-    const converted = stats?.leadsByStatus?.find(s => s._id === 'Converted')?.count || 0;
-    const lost = stats?.leadsByStatus?.find(s => s._id === 'Lost')?.count || 0;
-
     // For trends, ideally the backend should provide this. For UI purposes here, we will mock realistic trends
     // based on the current volumes, or default to nice positive numbers if no data.
     const mockTrend = (current) => {
@@ -36,14 +33,8 @@ const Dashboard = () => {
 
     return {
       total,
-      new: newLeads,
-      converted,
-      lost,
       trends: {
         total: mockTrend(total),
-        new: mockTrend(newLeads),
-        converted: mockTrend(converted),
-        lost: { value: "-2.4%", isPositive: false } // Good to have lost down
       }
     };
 
@@ -63,13 +54,15 @@ const Dashboard = () => {
 
         <div className="flex items-center gap-3">
           {/* Quick Actions */}
+          {user?.role === ROLES.ADMIN && (
           <button
-            onClick={() => navigate(user?.role === 'admin' ? '/admin/dashboard/add-lead' : '/sales/dashboard/add-lead')}
+            onClick={() => navigate(`${getBasePath(user?.role)}/add-lead`)}
             className="flex items-center gap-2 bg-primary text-white px-4 py-2 rounded-xl hover:bg-violet-700 transition-colors font-medium shadow-sm"
           >
             <UserPlus size={16} />
             <span className="hidden sm:inline">Add Lead</span>
           </button>
+          )}
 
           {/* Date Filter (UI Only) */}
           <div className="flex items-center gap-2 bg-gray-50 border border-gray-200 rounded-xl px-4 py-2 shadow-sm hover:border-blue-300 transition-colors cursor-pointer group">
@@ -84,9 +77,6 @@ const Dashboard = () => {
         {loading ? (
           <>
             <SkeletonCard />
-            <SkeletonCard />
-            <SkeletonCard />
-            <SkeletonCard />
           </>
         ) : (
           <>
@@ -98,35 +88,7 @@ const Dashboard = () => {
               trend={dashboardStats.trends.total.value}
               trendUp={dashboardStats.trends.total.isPositive}
               delay={0.1}
-              onClick={() => navigate(user?.role === 'admin' ? '/admin/dashboard/leads' : '/sales/dashboard/leads')}
-            />
-            <StatCard
-              title="New Leads"
-              value={dashboardStats.new}
-              icon={UserPlus}
-              color="text-indigo-600 bg-indigo-50"
-              trend={dashboardStats.trends.new.value}
-              trendUp={dashboardStats.trends.new.isPositive}
-              delay={0.2}
-            />
-            <StatCard
-              title="Converted"
-              value={dashboardStats.converted}
-              icon={CheckCircle}
-              color="text-green-600 bg-green-50"
-              trend={dashboardStats.trends.converted.value}
-              trendUp={dashboardStats.trends.converted.isPositive}
-              delay={0.3}
-            />
-            <StatCard
-              title="Lost Leads"
-              value={dashboardStats.lost}
-              icon={AlertCircle}
-              color="text-red-600 bg-red-50"
-              trend={dashboardStats.trends.lost.value}
-              trendUp={dashboardStats.trends.lost.isPositive}
-              inverseTrend={true}
-              delay={0.4}
+              onClick={() => navigate(`${getBasePath(user?.role)}/leads`)}
             />
           </>
         )}
@@ -153,7 +115,7 @@ const Dashboard = () => {
               <p className="text-xs text-gray-500 mt-0.5">Your latest leads and updates</p>
             </div>
             <button
-              onClick={() => navigate(user?.role === 'admin' ? '/admin/dashboard/leads' : '/sales/dashboard/leads')}
+              onClick={() => navigate(`${getBasePath(user?.role)}/leads`)}
               className="text-primary hover:text-white hover:bg-primary px-4 py-2 rounded-xl text-sm font-semibold transition-colors border border-primary/20 hover:border-transparent"
             >
               View All
@@ -171,14 +133,13 @@ const Dashboard = () => {
                   <tr>
                     <th className="py-4 px-6 text-xs font-bold text-gray-400 uppercase tracking-wider bg-gray-50/50">Lead</th>
                     <th className="py-4 px-6 text-xs font-bold text-gray-400 uppercase tracking-wider bg-gray-50/50">Details</th>
-                    <th className="py-4 px-6 text-xs font-bold text-gray-400 uppercase tracking-wider bg-gray-50/50">Status</th>
-                  </tr>
+                                      </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-50">
                   {recentLeads.map((lead) => (
                     <tr
                       key={lead._id}
-                      onClick={() => navigate(user?.role === 'admin' ? `/admin/dashboard/leads/${lead.leadId}` : `/sales/dashboard/leads/${lead.leadId}`)}
+                      onClick={() => navigate(`${getBasePath(user?.role)}/leads/${lead.leadId}`)}
                       className="group hover:bg-gray-50/50 transition-colors cursor-pointer"
                     >
                       <td className="py-4 px-6">
@@ -203,25 +164,11 @@ const Dashboard = () => {
                           </div>
                         </div>
                       </td>
-                      <td className="py-4 px-6">
-                        <span className={`inline-flex items-center px-2.5 py-1 rounded-md text-xs font-bold border
-                        ${lead.status === 'New' ? 'bg-blue-50 text-blue-700 border-blue-100' :
-                            lead.status === 'Contacted' ? 'bg-amber-50 text-amber-700 border-amber-100' :
-                              lead.status === 'Converted' ? 'bg-green-50 text-green-700 border-green-100' :
-                                lead.status === 'Lost' ? 'bg-red-50 text-red-700 border-red-100' :
-                                  'bg-gray-50 text-gray-700 border-gray-100'}`}>
-                          {lead.status === 'New' && <span className="w-1.5 h-1.5 rounded-full bg-blue-600 mr-1.5"></span>}
-                          {lead.status === 'Contacted' && <span className="w-1.5 h-1.5 rounded-full bg-amber-500 mr-1.5"></span>}
-                          {lead.status === 'Converted' && <span className="w-1.5 h-1.5 rounded-full bg-green-500 mr-1.5"></span>}
-                          {lead.status === 'Lost' && <span className="w-1.5 h-1.5 rounded-full bg-red-500 mr-1.5"></span>}
-                          {lead.status}
-                        </span>
-                      </td>
                     </tr>
                   ))}
                   {recentLeads.length === 0 && (
                     <tr key="no-leads">
-                      <td colSpan="3" className="py-16 text-center text-gray-400">
+                      <td colSpan="2" className="py-16 text-center text-gray-400">
                         <div className="flex flex-col items-center gap-3">
                           <div className="w-16 h-16 bg-gray-50 rounded-full flex items-center justify-center text-gray-300">
                             <Users size={24} />
@@ -273,7 +220,7 @@ const Dashboard = () => {
                   You have <span className="font-bold text-orange-600 bg-orange-50 px-1.5 py-0.5 rounded-md">{dashboardStats.new} new leads</span> that haven't been contacted yet.
                 </p>
                 <button
-                  onClick={() => navigate(user?.role === 'admin' ? '/admin/dashboard/leads' : '/sales/dashboard/leads')}
+                  onClick={() => navigate(`${getBasePath(user?.role)}/leads`)}
                   className="text-xs font-bold text-orange-600 hover:text-white hover:bg-orange-500 px-3 py-1.5 rounded-lg border border-orange-200 hover:border-transparent transition-all w-full text-center"
                 >
                   Action Required

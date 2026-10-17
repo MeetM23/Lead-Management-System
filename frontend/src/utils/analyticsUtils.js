@@ -2,40 +2,6 @@
  * Analytics Utility Functions
  */
 
-export const getDateRange = (days) => {
-    const end = new Date();
-    const start = new Date();
-    start.setDate(end.getDate() - days);
-    return { start, end };
-};
-
-/**
- * Filter leads created between startDate (inclusive) and endDate (inclusive)
- */
-export const filterLeadsByDate = (leads, startDate, endDate) => {
-    return leads.filter(lead => {
-        if (!lead.createdAt) return false;
-        const d = new Date(lead.createdAt);
-        return d >= startDate && d <= endDate;
-    });
-};
-
-/**
- * Calculate percentage change safely.
- * returns { value: string, isPositive: boolean }
- * e.g. { value: "12%", isPositive: true }
- */
-export const calculateTrend = (currentCount, previousCount) => {
-    if (previousCount === 0) {
-        return currentCount > 0 ? { value: "100%", isPositive: true } : { value: "0%", isPositive: true };
-    }
-    const change = ((currentCount - previousCount) / previousCount) * 100;
-    return {
-        value: `${Math.abs(Math.round(change))}%`,
-        isPositive: change >= 0
-    };
-};
-
 /**
  * Group leads by date for charts
  * Returns array of { date: "Mon", count: 5, fullDate: "2023-10-27" }

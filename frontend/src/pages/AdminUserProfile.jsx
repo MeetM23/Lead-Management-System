@@ -1,6 +1,7 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { ROLES } from '../constants';
 import { apiGet, apiPut } from '../utils/api.js';
 import { ArrowLeft, Trash2, Calendar, Mail, Phone, Hash, Shield, User } from 'lucide-react';
 
@@ -30,7 +31,7 @@ const AdminUserProfile = () => {
   }, [employeeId]);
 
   useEffect(() => {
-    if (user?.role === 'admin') {
+    if (user?.role === ROLES.ADMIN) {
       fetchUser();
     }
   }, [user, fetchUser]);
@@ -53,6 +54,27 @@ const AdminUserProfile = () => {
       }
     } catch (error) {
       console.error('Error deleting user:', error);
+      alert('Network error');
+    }
+  };
+
+  const handleStatusChange = async () => {
+    const activate = profile.isActive === false;
+    if (!activate && !window.confirm(`Deactivate ${profile.name}? They will not be able to log in until you activate the account again.`)) {
+      return;
+    }
+
+    try {
+      const res = await apiPut(`/api/users/${employeeId}/status`, { isActive: activate });
+      const result = await res.json();
+
+      if (res.ok && result.success) {
+        setProfile((prev) => ({ ...prev, isActive: result.data.isActive }));
+      } else {
+        alert(result.message || 'Failed to update the account');
+      }
+    } catch (err) {
+      console.error('Error updating user status:', err);
       alert('Network error');
     }
   };
@@ -93,7 +115,13 @@ const AdminUserProfile = () => {
           <p className="text-gray-500">View and manage user account</p>
         </div>
 
-        {profile.isActive !== false && (
+        <div className="flex items-center gap-3">
+          <button
+            onClick={handleStatusChange}
+            className="flex items-center gap-2 bg-gray-50 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-100 transition-colors font-medium border border-gray-200"
+          >
+            <span>{profile.isActive === false ? 'Activate Account' : 'Deactivate Account'}</span>
+          </button>
           <button
             onClick={handleTerminate}
             className="flex items-center gap-2 bg-red-50 text-red-600 px-4 py-2 rounded-lg hover:bg-red-100 transition-colors font-medium border border-red-100"
@@ -101,12 +129,7 @@ const AdminUserProfile = () => {
             <Trash2 size={18} />
             <span>Delete User</span>
           </button>
-        )}
-        {profile.isActive === false && (
-          <div className="bg-red-100 text-red-800 px-4 py-2 rounded-lg font-bold border border-red-200">
-            TERMINATED
-          </div>
-        )}
+        </div>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -128,7 +151,7 @@ const AdminUserProfile = () => {
               ? 'bg-green-100 text-green-700'
               : 'bg-red-100 text-red-700'
               }`}>
-              {profile.isActive !== false ? 'Active' : 'Terminated'}
+              {profile.isActive !== false ? 'Active' : 'Inactive'}
             </div>
           </div>
 

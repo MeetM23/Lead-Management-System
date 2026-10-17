@@ -96,19 +96,10 @@ const Hero = () => {
 
                         <motion.div variants={itemVariants} className="flex flex-col sm:flex-row items-center gap-4 w-full sm:w-auto">
                             <button
-                                onClick={() => navigate('/register')}
-                                className="w-full sm:w-auto px-8 py-4 bg-gray-900 text-white rounded-full font-semibold text-base shadow-lg shadow-gray-200 hover:bg-gray-800 hover:-translate-y-0.5 transition-all duration-200"
-                            >
-                                Get Started Free
-                            </button>
-                            <button
-                                onClick={() => {
-                                    const el = document.getElementById('features');
-                                    if (el) el.scrollIntoView({ behavior: 'smooth' });
-                                }}
+                                onClick={() => navigate('/login')}
                                 className="w-full sm:w-auto px-8 py-4 bg-white text-gray-700 border border-gray-200 rounded-full font-semibold text-base hover:bg-gray-50 hover:border-gray-300 transition-all duration-200 group flex items-center justify-center gap-2"
                             >
-                                View Demo
+                                Sign In
                                 <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
                             </button>
                         </motion.div>

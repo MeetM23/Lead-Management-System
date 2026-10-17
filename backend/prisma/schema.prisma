@@ -1,0 +1,98 @@
+// LeadFlow database schema (MySQL 8, via Prisma).
+// Change the database only through Prisma migrations (`npm run db:migrate`), never by hand in phpMyAdmin.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  admin
+  sales
+}
+
+enum LeadPriority {
+  High
+  Medium
+  Low
+}
+
+model User {
+  id         Int      @id @default(autoincrement())
+  name       String   @db.VarChar(255)
+  email      String   @unique @db.VarChar(255)
+  password   String   @db.VarChar(255) // bcrypt hash
+  role       Role     @default(sales)
+  phone      String?  @db.VarChar(50)
+  employeeId String   @unique @map("employee_id") @db.VarChar(20) // public ID, e.g. USR-1a2b3c
+  profilePic String?  @map("profile_pic") @db.MediumText
+  isActive   Boolean  @default(true) @map("is_active")
+  createdAt  DateTime @default(now()) @map("created_at") @db.DateTime(3)
+  updatedAt  DateTime @updatedAt @map("updated_at") @db.DateTime(3)
+
+  leadsAssigned Lead[]     @relation("LeadAssignee")
+  leadsCreated  Lead[]     @relation("LeadCreator")
+  notes         LeadNote[]
+
+  @@map("users")
+}
+
+model Lead {
+  id           Int          @id @default(autoincrement())
+  leadId       String       @unique @map("lead_id") @db.VarChar(20) // public ID, e.g. LD-0001
+  name         String       @db.VarChar(255)
+  email        String?      @db.VarChar(255)
+  phone        String?      @db.VarChar(50)
+  source       String       @default("Manual") @db.VarChar(100)
+  priority     LeadPriority @default(Medium)
+  state        String?      @db.VarChar(100) // the lead's geographic state
+  finalRemark  String?      @map("final_remark") @db.Text // the outcome, written by the employee (not a note, not custom data)
+  customFields Json?        @map("custom_fields") // variable fields (e.g. extra columns from an Excel import)
+  createdById  Int?         @map("created_by_id")
+  assignedToId Int          @map("assigned_to_id")
+  createdAt    DateTime     @default(now()) @map("created_at") @db.DateTime(3)
+  updatedAt    DateTime     @updatedAt @map("updated_at") @db.DateTime(3)
+
+  // A user who still owns leads cannot be deleted: leads must be reassigned first
+  assignedTo User       @relation("LeadAssignee", fields: [assignedToId], references: [id], onDelete: Restrict)
+  // Deleting the creator keeps the lead; the creator shows as unknown
+  createdBy  User?      @relation("LeadCreator", fields: [createdById], references: [id], onDelete: SetNull)
+  notes      LeadNote[]
+
+  @@index([assignedToId, createdAt])
+  @@index([createdAt])
+  @@index([source])
+  @@index([state])
+  @@index([createdById])
+  @@map("leads")
+}
+
+model LeadNote {
+  id          Int      @id @default(autoincrement())
+  leadPk      Int      @map("lead_pk")
+  content     String   @db.Text
+  createdById Int?     @map("created_by_id")
+  createdAt   DateTime @default(now()) @map("created_at") @db.DateTime(3)
+  updatedAt   DateTime @updatedAt @map("updated_at") @db.DateTime(3)
+
+  // Notes are deleted together with their lead
+  lead      Lead  @relation(fields: [leadPk], references: [id], onDelete: Cascade)
+  // Deleting the author keeps the note; the author shows as unknown
+  createdBy User? @relation(fields: [createdById], references: [id], onDelete: SetNull)
+
+  @@index([leadPk, createdAt])
+  @@index([createdById])
+  @@map("lead_notes")
+}
+
+// Named sequences. The "leadId" row holds the last number handed out for LD-xxxx lead IDs.
+model Counter {
+  name String @id @db.VarChar(50)
+  seq  BigInt @default(0)
+
+  @@map("counters")
+}

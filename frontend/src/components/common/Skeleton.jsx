@@ -48,18 +48,6 @@ export const SkeletonChart = () => (
     </div>
 );
 
-export const SkeletonAvatar = ({ size = 'md' }) => {
-    const sizeClasses = {
-        sm: 'w-8 h-8',
-        md: 'w-12 h-12',
-        lg: 'w-20 h-20',
-        xl: 'w-32 h-32'
-    };
-    return (
-        <div className={`${sizeClasses[size]} bg-gray-200 rounded-full animate-pulse shrink-0`}></div>
-    );
-};
-
 export const SkeletonForm = () => (
     <div className="space-y-6 animate-pulse max-w-2xl">
         <div className="flex gap-6 items-center mb-8">

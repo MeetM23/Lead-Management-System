@@ -1,33 +1,29 @@
 import React, { useEffect, useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
-import { Search } from 'lucide-react';
+import { Search, UserPlus } from 'lucide-react';
 import { SkeletonTable } from '../components/common/Skeleton';
-
-// Get API URL from environment variables
-const API_URL = import.meta.env.VITE_API_URL || '';
+import AddEmployeeModal from '../components/AddEmployeeModal';
+import { apiGet } from '../utils/api.js';
+import { ROLES } from '../constants';
 
 const Users = () => {
     const [users, setUsers] = useState([]);
     const [loading, setLoading] = useState(true);
     const [searchQuery, setSearchQuery] = useState('');
+    const [showAddForm, setShowAddForm] = useState(false);
+    const [notice, setNotice] = useState('');
     const { user } = useAuth();
 
     useEffect(() => {
-        if (user?.role === 'admin') {
+        if (user?.role === ROLES.ADMIN) {
             fetchUsers();
         }
     }, [user]);
     const navigate = useNavigate();
     const fetchUsers = async () => {
         try {
-            const token = localStorage.getItem('token');
-            const response = await fetch(`${API_URL}/api/users/sales`, {
-                headers: {
-                    'Content-Type': 'application/json',
-                    Authorization: `Bearer ${token}`,
-                },
-            });
+            const response = await apiGet('/api/users/sales');
             if (response.ok) {
                 const result = await response.json();
                 if (result.success) {
@@ -39,6 +35,12 @@ const Users = () => {
         } finally {
             setLoading(false);
         }
+    };
+
+    const handleCreated = (message) => {
+        setShowAddForm(false);
+        setNotice(message);
+        fetchUsers();
     };
 
     const getDefaultAvatar = (name) => {
@@ -63,6 +65,7 @@ const Users = () => {
         if (!q) return true;
         return [
             u.name,
+            u.employeeId,
             u.email,
             u.leadsCreatedCount,
             u.leadsAssignedCount,
@@ -76,6 +79,10 @@ const Users = () => {
                 <p className="text-gray-500 mt-1">Manage system users</p>
             </div>
 
+            {notice && (
+                <div className="bg-green-50 border border-green-200 text-green-700 px-4 py-2.5 rounded-xl text-sm font-medium">{notice}</div>
+            )}
+
             <div className="flex flex-col md:flex-row items-center justify-between gap-4">
                 <div className="w-full md:w-80 relative">
                     <Search className="absolute left-3 top-3 text-gray-400" size={18} />
@@ -87,6 +94,12 @@ const Users = () => {
                         onChange={(e) => setSearchQuery(e.target.value)}
                     />
                 </div>
+                <button
+                    onClick={() => { setNotice(''); setShowAddForm(true); }}
+                    className="flex items-center gap-2 bg-primary text-white px-4 py-2 rounded-lg font-semibold hover:bg-violet-700 transition-colors"
+                >
+                    <UserPlus size={18} /> Add Employee
+                </button>
             </div>
 
             <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
@@ -96,7 +109,9 @@ const Users = () => {
                             <tr>
                                 <th className="px-6 py-4 text-xs font-bold text-gray-500 uppercase">Profile</th>
                                 <th className="px-6 py-4 text-xs font-bold text-gray-500 uppercase">Name</th>
+                                <th className="px-6 py-4 text-xs font-bold text-gray-500 uppercase">Employee ID</th>
                                 <th className="px-6 py-4 text-xs font-bold text-gray-500 uppercase">Email</th>
+                                <th className="px-6 py-4 text-xs font-bold text-gray-500 uppercase">Status</th>
                                 <th className="px-6 py-4 text-xs font-bold text-gray-500 uppercase">Leads Created</th>
                                 <th className="px-6 py-4 text-xs font-bold text-gray-500 uppercase">Leads Assigned</th>
                                 <th className="px-6 py-4 text-xs font-bold text-gray-500 uppercase">Actions</th>
@@ -126,7 +141,13 @@ const Users = () => {
                                         </div>
                                     </td>
                                     <td className="px-6 py-4 font-medium text-dark">{u.name}</td>
+                                    <td className="px-6 py-4 text-gray-600">{u.employeeId}</td>
                                     <td className="px-6 py-4 text-gray-600">{u.email}</td>
+                                    <td className="px-6 py-4">
+                                        <span className={`px-2 py-0.5 rounded-full text-xs font-bold ${u.isActive === false ? 'bg-red-100 text-red-700' : 'bg-green-100 text-green-700'}`}>
+                                            {u.isActive === false ? 'Inactive' : 'Active'}
+                                        </span>
+                                    </td>
                                     <td className="px-6 py-4 text-gray-600">{u.leadsCreatedCount || 0}</td>
                                     <td className="px-6 py-4 text-gray-600">{u.leadsAssignedCount || 0}</td>
                                     <td className='px-6 py-4'>
@@ -142,6 +163,8 @@ const Users = () => {
                     </table>
                 </div>
             </div>
+
+            {showAddForm && <AddEmployeeModal onClose={() => setShowAddForm(false)} onCreated={handleCreated} />}
         </div>
     );
 };

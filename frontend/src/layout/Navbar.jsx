@@ -4,7 +4,6 @@ import { Menu, PanelLeftClose, PanelLeft } from 'lucide-react';
 import Breadcrumb from '../components/Breadcrumb';
 import { Link } from 'react-router-dom';
 import { useNavigate } from "react-router-dom";
-import NotificationDropdown from '../components/layout/NotificationDropdown';
 import logoImg from '../assets/favicon.png';
 
 const Navbar = ({ onMenuClick, isCollapsed, onToggleCollapse }) => {
@@ -56,7 +55,6 @@ const Navbar = ({ onMenuClick, isCollapsed, onToggleCollapse }) => {
         </div>
       </div>
       <div className="flex items-center gap-2 md:gap-4">
-        {user && <NotificationDropdown />}
 
         <div className="flex items-center"
           onClick={() => navigate(`/${user?.role}/dashboard/profile`)}>

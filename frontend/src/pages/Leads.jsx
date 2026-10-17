@@ -1,53 +1,39 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useLeads } from '../context/LeadsContext';
 import { useAuth } from '../context/AuthContext';
-import { Search, PlusCircle, MoreVertical, Eye, Pencil, Trash2, ChevronLeft, ChevronRight } from 'lucide-react';
+import { ROLES, getBasePath } from '../constants';
+import { AssigneeSelect } from '../components/leads/LeadInlineControls';
+import RowActionsMenu from '../components/leads/RowActionsMenu';
+import { Search, PlusCircle, Upload, Eye, Pencil, Trash2, ChevronLeft, ChevronRight } from 'lucide-react';
 
 import { SkeletonTable, SkeletonCard } from '../components/common/Skeleton';
 
 const Leads = () => {
-  const { leads, deleteLead, loading, refetchLeads, users } = useLeads();
+  const { leads, leadsMeta, deleteLead, loading, refetchLeads, users } = useLeads();
   const { user } = useAuth();
   const navigate = useNavigate();
 
-  const basePath = user?.role === 'admin' ? '/admin/dashboard' : '/sales/dashboard';
+  const basePath = getBasePath(user?.role);
 
   // Filtering Options
-  const [statusFilter, setStatusFilter] = useState('All');
-  const [sourceFilter, setSourceFilter] = useState('All');
   const [assignedFilter, setAssignedFilter] = useState('All');
   const [dateFilter, setDateFilter] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
+  const [debouncedSearch, setDebouncedSearch] = useState('');
   const [sortOrder, setSortOrder] = useState('-createdAt'); // Default sort
 
   // Pagination State
   const [currentPage, setCurrentPage] = useState(1);
   const [rowsPerPage, setRowsPerPage] = useState(10);
 
-  // Dropdown
-  const [openDropdownId, setOpenDropdownId] = useState(null);
-  const dropdownRef = useRef(null);
-
-  // Close dropdown on outside click
-  useEffect(() => {
-    const handleClickOutside = (e) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(e.target)) {
-        setOpenDropdownId(null);
-      }
-    };
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, []);
-
   // Fetch leads when filters change
   useEffect(() => {
     const buildQueryString = () => {
       let params = new URLSearchParams();
 
-      if (statusFilter !== 'All') params.append('status', statusFilter);
-      if (sourceFilter !== 'All') params.append('source', sourceFilter);
-      if (assignedFilter !== 'All' && user?.role === 'admin') params.append('assignedTo', assignedFilter);
+      if (debouncedSearch) params.append('search', debouncedSearch);
+      if (assignedFilter !== 'All' && user?.role === ROLES.ADMIN) params.append('assignedTo', assignedFilter);
 
       // Date filtering logic
       if (dateFilter) {
@@ -78,66 +64,59 @@ const Leads = () => {
       }
 
       if (sortOrder) params.append('sort', sortOrder);
+      params.append('page', currentPage);
+      params.append('limit', rowsPerPage);
 
       return params.toString();
     };
 
-    const query = buildQueryString();
+    refetchLeads(buildQueryString());
+  }, [assignedFilter, dateFilter, sortOrder, debouncedSearch, currentPage, rowsPerPage, refetchLeads, user?.role]);
 
-    // Client-side debounce for search, backend handle the rest
+  // Search is done by the server; wait for a pause in typing before asking
+  useEffect(() => {
     const timeoutId = setTimeout(() => {
-      refetchLeads(query);
-    }, 300); // 300ms debounce
-
+      setDebouncedSearch(searchQuery.trim());
+      setCurrentPage(1);
+    }, 300);
     return () => clearTimeout(timeoutId);
+  }, [searchQuery]);
 
-  }, [statusFilter, sourceFilter, assignedFilter, dateFilter, sortOrder, refetchLeads, user?.role]);
+  // Changing a filter, the sort or the page size goes back to the first page
+  const changeFilter = (setter) => (e) => {
+    setter(e.target.value);
+    setCurrentPage(1);
+  };
 
-  // Client side search for quick filtering of already loaded data.
-  // We can easily move this to the backend as well if needed.
-  const filteredLeads = (leads || []).filter((lead) => {
-    const q = searchQuery.trim().toLowerCase();
-    if (!q) return true;
-    return [
-      lead.name,
-      lead.email,
-      lead.phone,
-      lead.source,
-      lead.assignedTo?.name,
-      lead._id,
-      lead.status,
-    ].some((v) => v && String(v).toLowerCase().includes(q));
-  });
-
-  // Pagination Logic
-  const totalPages = Math.ceil(filteredLeads.length / rowsPerPage);
+  // Pagination comes from the server: it sends one page and the total number of matching leads
+  const totalLeads = leadsMeta.total;
+  const totalPages = Math.max(Math.ceil(totalLeads / rowsPerPage), 1);
   const startIndex = (currentPage - 1) * rowsPerPage;
-  const paginatedLeads = filteredLeads.slice(startIndex, startIndex + rowsPerPage);
+  const paginatedLeads = leads || [];
 
   const getPageNumbers = () => {
-    const pages = [];
-    for (let i = 1; i <= Math.min(totalPages, 5); i++) {
-      pages.push(i);
-    }
-    return pages;
+    const first = Math.max(1, Math.min(currentPage - 2, totalPages - 4));
+    const last = Math.min(totalPages, first + 4);
+    return Array.from({ length: last - first + 1 }, (_, index) => first + index);
   };
 
   // Handle Delete
   const handleDelete = async (id) => {
-    setOpenDropdownId(null);
     if (window.confirm('Are you sure you want to delete this lead?')) {
       await deleteLead(id);
     }
   };
 
-  const getStatusColor = (status) => {
-    switch (status) {
-      case 'New': return 'bg-blue-100 text-blue-700';
-      case 'Contacted': return 'bg-yellow-100 text-yellow-700';
-      case 'Converted': return 'bg-green-100 text-green-700';
-      case 'Lost': return 'bg-red-100 text-red-700';
-      default: return 'bg-gray-100 text-gray-700';
-    }
+  const isAdmin = user?.role === ROLES.ADMIN;
+
+  // The row menu. (Editing happens on the lead page, so "Edit" opens it too.)
+  const rowActions = (lead) => {
+    const open = () => navigate(`${basePath}/leads/${lead.leadId}`);
+    return [
+      { key: 'view', label: 'View Lead', icon: Eye, onSelect: open },
+      { key: 'edit', label: 'Edit Lead', icon: Pencil, onSelect: open },
+      ...(isAdmin ? [{ key: 'delete', label: 'Delete Lead', icon: Trash2, danger: true, onSelect: () => handleDelete(lead.leadId) }] : []),
+    ];
   };
 
   return (
@@ -149,28 +128,34 @@ const Leads = () => {
           <p className="text-gray-500">View and manage your leads simply.</p>
         </div>
 
-        <button
-          onClick={() => navigate(`${basePath}/add-lead`)}
-          className="flex items-center gap-2 bg-primary text-white px-5 py-2.5 rounded-xl hover:bg-violet-700 transition-colors font-medium shadow-md shadow-primary/20"
-        >
-          <PlusCircle size={18} />
-          <span>Add Lead</span>
-        </button>
+        {isAdmin && (
+        <div className="flex items-center gap-3">
+          <button
+            onClick={() => navigate(`${basePath}/import-leads`)}
+            className="flex items-center gap-2 bg-white text-gray-700 px-5 py-2.5 rounded-xl border border-gray-200 hover:bg-gray-50 transition-colors font-medium"
+          >
+            <Upload size={18} />
+            <span>Import Leads</span>
+          </button>
+          <button
+            onClick={() => navigate(`${basePath}/add-lead`)}
+            className="flex items-center gap-2 bg-primary text-white px-5 py-2.5 rounded-xl hover:bg-violet-700 transition-colors font-medium shadow-md shadow-primary/20"
+          >
+            <PlusCircle size={18} />
+            <span>Add Lead</span>
+          </button>
+        </div>
+        )}
       </div>
 
       {/* Search and Filter */}
-      {/* Extract unique sources for filter options */}
-      {(() => {
-        const uniqueSources = ['All', ...new Set((leads || []).map(l => l.source || 'Other'))].sort();
-
-        return (
-          <div className="flex flex-col gap-4 w-full">
+      <div className="flex flex-col gap-4 w-full">
             <div className="flex flex-col md:flex-row gap-4 w-full">
               <div className="relative w-full md:w-80">
                 <Search className="absolute left-3 top-3 text-gray-400" size={18} />
                 <input
                   type="text"
-                  placeholder="Search leads..."
+                  placeholder="Search name, phone, email or lead ID"
                   className="w-full pl-10 pr-4 py-2.5 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-all"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
@@ -178,36 +163,14 @@ const Leads = () => {
               </div>
 
               <div className="flex flex-col sm:flex-row gap-3 w-full md:w-auto flex-1">
-                <select
-                  className="w-full sm:w-48 border border-gray-200 rounded-xl px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary bg-white transition-all text-gray-700"
-                  value={statusFilter}
-                  onChange={(e) => setStatusFilter(e.target.value)}
-                >
-                  <option value="All">All Status</option>
-                  <option value="New">New</option>
-                  <option value="Contacted">Contacted</option>
-                  <option value="Converted">Converted</option>
-                  <option value="Lost">Lost</option>
-                </select>
-
-                <select
-                  className="w-full sm:w-48 border border-gray-200 rounded-xl px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary bg-white transition-all text-gray-700"
-                  value={sourceFilter}
-                  onChange={(e) => setSourceFilter(e.target.value)}
-                >
-                  {uniqueSources.map(src => (
-                    <option key={src} value={src === 'All' ? 'All' : src}>{src === 'All' ? 'All Sources' : src}</option>
-                  ))}
-                </select>
-
-                {user?.role === 'admin' && (
+                {user?.role === ROLES.ADMIN && (
                   <select
                     className="w-full sm:w-48 border border-gray-200 rounded-xl px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary bg-white transition-all text-gray-700"
                     value={assignedFilter}
-                    onChange={(e) => setAssignedFilter(e.target.value)}
+                    onChange={changeFilter(setAssignedFilter)}
                   >
-                    <option value="All">All Users</option>
-                    {users?.map(u => (
+                    <option value="All">All Employees</option>
+                    {users.map(u => (
                       <option key={u._id} value={u._id}>{u.name}</option>
                     ))}
                   </select>
@@ -216,7 +179,7 @@ const Leads = () => {
                 <select
                   className="w-full sm:w-48 border border-gray-200 rounded-xl px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary bg-white transition-all text-gray-700"
                   value={dateFilter}
-                  onChange={(e) => setDateFilter(e.target.value)}
+                  onChange={changeFilter(setDateFilter)}
                 >
                   <option value="">All Time</option>
                   <option value="today">Today</option>
@@ -228,7 +191,7 @@ const Leads = () => {
                 <select
                   className="w-full sm:w-48 border border-gray-200 rounded-xl px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary bg-white transition-all text-gray-700"
                   value={sortOrder}
-                  onChange={(e) => setSortOrder(e.target.value)}
+                  onChange={changeFilter(setSortOrder)}
                 >
                   <option value="-createdAt">Newest First</option>
                   <option value="createdAt">Oldest First</option>
@@ -237,9 +200,7 @@ const Leads = () => {
                 </select>
               </div>
             </div>
-          </div>
-        );
-      })()}
+      </div>
 
       {/* Table */}
       <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
@@ -250,89 +211,39 @@ const Leads = () => {
               <SkeletonTable rows={8} />
             </div>
           ) : (
-            <table className="w-full text-left border-collapse">
+            <table className="w-full text-left border-collapse min-w-[860px]">
               <thead className="bg-gray-50 border-b border-gray-200">
                 <tr>
-                  <th className="px-6 py-4 font-semibold text-gray-600 text-sm">Name</th>
-                  <th className="px-6 py-4 font-semibold text-gray-600 text-sm">Contact</th>
-                  <th className="px-6 py-4 font-semibold text-gray-600 text-sm">Status</th>
-                  <th className="px-6 py-4 font-semibold text-gray-600 text-sm">Assigned To</th>
-                  <th className="px-6 py-4 font-semibold text-gray-600 text-sm text-center w-20">Actions</th>
+                  {['Name', 'Phone', 'Email', 'State', ...(isAdmin ? ['Assigned Employee'] : [])].map((heading) => (
+                    <th key={heading} className="px-4 py-3 font-semibold text-gray-600 text-sm whitespace-nowrap">{heading}</th>
+                  ))}
+                  <th className="px-4 py-3 font-semibold text-gray-600 text-sm text-center w-20">Actions</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100">
                 {paginatedLeads.length > 0 ? (
-                  paginatedLeads.map((lead) =>
-                    lead && lead._id ? (
-                      <tr key={lead._id} className="hover:bg-gray-50/50 transition-colors">
-                        <td className="px-6 py-4">
-                          <p className="font-medium text-gray-900">{lead.name}</p>
-                          <p className="text-xs text-gray-400">ID: {lead.leadId}</p>
+                  paginatedLeads.map((lead) => {
+                    if (!lead || !lead._id) return null;
+                    return (
+                      <tr key={lead._id} className="hover:bg-gray-50/50 transition-colors align-top">
+                        <td className="px-4 py-3 max-w-[14rem]">
+                          <p className="font-medium text-gray-900 truncate" title={lead.name}>{lead.name}</p>
                         </td>
-                        <td className="px-6 py-4">
-                          <p className="text-sm text-gray-600">{lead.email}</p>
-                          <p className="text-sm text-gray-500">{lead.phone}</p>
-                        </td>
-                        <td className="px-6 py-4">
-                          <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold ${getStatusColor(lead.status)}`}>
-                            {lead.status}
-                          </span>
-                        </td>
-                        <td className="px-6 py-4">
-                          <span className="text-sm text-gray-600">
-                            {lead.assignedTo?.name || 'Unassigned'}
-                          </span>
-                        </td>
-                        <td className="px-6 py-4">
-                          <div className="flex justify-center relative" ref={openDropdownId === lead._id ? dropdownRef : null}>
-                            <button
-                              onClick={() => setOpenDropdownId(openDropdownId === lead._id ? null : lead._id)}
-                              className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
-                            >
-                              <MoreVertical size={18} />
-                            </button>
-
-                            {openDropdownId === lead._id && (
-                              <div className="absolute right-0 top-full mt-1 w-44 bg-white rounded-xl shadow-lg border border-gray-200 py-1.5 z-50 animate-in fade-in slide-in-from-top-1 duration-150">
-                                <button
-                                  onClick={() => {
-                                    setOpenDropdownId(null);
-                                    navigate(`${basePath}/leads/${lead.leadId}`);
-                                  }}
-                                  className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
-                                >
-                                  <Eye size={15} className="text-blue-500" />
-                                  View Lead
-                                </button>
-                                <button
-                                  onClick={() => {
-                                    setOpenDropdownId(null);
-                                    navigate(`${basePath}/leads/${lead.leadId}`);
-                                  }}
-                                  className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
-                                >
-                                  <Pencil size={15} className="text-amber-500" />
-                                  Edit Lead
-                                </button>
-                                {(user.role === 'admin' || (lead.createdBy?._id === user?.id || lead.createdBy === user?.id)) && (
-                                  <button
-                                    onClick={() => handleDelete(lead.leadId)}
-                                    className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-red-600 hover:bg-red-50 transition-colors"
-                                  >
-                                    <Trash2 size={15} />
-                                    Delete Lead
-                                  </button>
-                                )}
-                              </div>
-                            )}
+                        <td className="px-4 py-3 text-sm text-gray-600 whitespace-nowrap">{lead.phone || '—'}</td>
+                        <td className="px-4 py-3 text-sm text-gray-600 max-w-[14rem] truncate" title={lead.email || undefined}>{lead.email || '—'}</td>
+                        <td className="px-4 py-3 text-sm text-gray-600 max-w-[10rem] truncate" title={lead.state || undefined}>{lead.state || '—'}</td>
+                        {isAdmin && <td className="px-4 py-3"><AssigneeSelect lead={lead} /></td>}
+                        <td className="px-4 py-3">
+                          <div className="flex justify-center">
+                            <RowActionsMenu label={`Actions for ${lead.name}`} actions={rowActions(lead)} />
                           </div>
                         </td>
                       </tr>
-                    ) : null
-                  )
+                    );
+                  })
                 ) : (
                   <tr>
-                    <td colSpan="5" className="px-6 py-12 text-center text-gray-500">
+                    <td colSpan={isAdmin ? 6 : 5} className="px-6 py-12 text-center text-gray-500">
                       No leads found matching your criteria.
                     </td>
                   </tr>
@@ -358,59 +269,16 @@ const Leads = () => {
                     <div className="flex items-start justify-between gap-3">
                       <div className="flex-1 min-w-0">
                         <p className="font-medium text-gray-900 truncate">{lead.name}</p>
-                        <p className="text-xs text-gray-400">ID: {lead.leadId}</p>
-                        <p className="text-sm text-gray-600 mt-1.5">{lead.email}</p>
-                        <p className="text-sm text-gray-500">{lead.phone}</p>
+                        <p className="text-sm text-gray-600 mt-1.5">{lead.phone || '—'}</p>
+                        <p className="text-sm text-gray-500 break-all">{lead.email || '—'}</p>
                       </div>
                       <div className="flex flex-col items-end gap-2">
-                        <span className={`inline-block px-2.5 py-1 rounded-full text-xs font-semibold ${getStatusColor(lead.status)}`}>
-                          {lead.status}
-                        </span>
-                        <div className="relative" ref={openDropdownId === `m-${lead._id}` ? dropdownRef : null}>
-                          <button
-                            onClick={() => setOpenDropdownId(openDropdownId === `m-${lead._id}` ? null : `m-${lead._id}`)}
-                            className="p-1.5 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
-                          >
-                            <MoreVertical size={16} />
-                          </button>
-                          {openDropdownId === `m-${lead._id}` && (
-                            <div className="absolute right-0 top-full mt-1 w-40 bg-white rounded-xl shadow-lg border border-gray-200 py-1.5 z-50">
-                              <button
-                                onClick={() => {
-                                  setOpenDropdownId(null);
-                                  navigate(`${basePath}/leads/${lead.leadId}`);
-                                }}
-                                className="w-full flex items-center gap-3 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
-                              >
-                                <Eye size={14} className="text-blue-500" />
-                                View
-                              </button>
-                              <button
-                                onClick={() => {
-                                  setOpenDropdownId(null);
-                                  navigate(`${basePath}/leads/${lead.leadId}`);
-                                }}
-                                className="w-full flex items-center gap-3 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
-                              >
-                                <Pencil size={14} className="text-amber-500" />
-                                Edit
-                              </button>
-                              {(user.role === 'admin' || (lead.createdBy?._id === user?.id || lead.createdBy === user?.id)) && (
-                                <button
-                                  onClick={() => handleDelete(lead.leadId)}
-                                  className="w-full flex items-center gap-3 px-4 py-2 text-sm text-red-600 hover:bg-red-50"
-                                >
-                                  <Trash2 size={14} />
-                                  Delete
-                                </button>
-                              )}
-                            </div>
-                          )}
-                        </div>
+                        <RowActionsMenu label={`Actions for ${lead.name}`} actions={rowActions(lead)} />
                       </div>
                     </div>
-                    <div className="mt-3 pt-3 border-t border-gray-100 text-sm text-gray-500">
-                      Assigned: {lead.assignedTo?.name || 'Unassigned'}
+                    <div className="mt-3 pt-3 border-t border-gray-100 grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm text-gray-500">
+                      <div><p className="text-xs text-gray-400 mb-1">State</p><p className="text-sm text-gray-600 break-words">{lead.state || '—'}</p></div>
+                      {isAdmin && <div><p className="text-xs text-gray-400 mb-1">Assigned</p><AssigneeSelect lead={lead} /></div>}
                     </div>
                   </div>
                 ) : null
@@ -422,7 +290,7 @@ const Leads = () => {
         </div>
 
         {/* Pagination */}
-        {filteredLeads.length > 0 && (
+        {totalLeads > 0 && (
           <div className="flex flex-col sm:flex-row items-center justify-between gap-4 px-6 py-4 border-t border-gray-200 bg-gray-50/50">
             <div className="flex items-center gap-3 text-sm text-gray-500">
               <span>Rows per page:</span>
@@ -437,9 +305,10 @@ const Leads = () => {
                 <option value={10}>10</option>
                 <option value={25}>25</option>
                 <option value={50}>50</option>
+                <option value={100}>100</option>
               </select>
               <span className="text-gray-400">
-                {startIndex + 1}–{Math.min(startIndex + rowsPerPage, filteredLeads.length)} of {filteredLeads.length}
+                {startIndex + 1}–{Math.min(startIndex + rowsPerPage, totalLeads)} of {totalLeads}
               </span>
             </div>
 
