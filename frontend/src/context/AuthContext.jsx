@@ -67,7 +67,7 @@ export const AuthProvider = ({ children }) => {
     try {
       setError('');
 
-      const res = await axios.post(`${API_URL}/api/auth/register`, userData);
+      await axios.post(`${API_URL}/api/auth/register`, userData);
 
       return { success: true };
     } catch (err) {

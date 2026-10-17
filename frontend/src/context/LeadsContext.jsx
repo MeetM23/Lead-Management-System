@@ -104,9 +104,6 @@ export const LeadsProvider = ({ children }) => {
         if (user?.role === 'admin') {
           await fetchStats();
         }
-        if (user?.role === 'admin') {
-          await fetchStats();
-        }
         await fetchLeads(); // Force refetch to ensure sorting/filtering backend states are accurate
         return { success: true, data: result.data };
       }

@@ -12,7 +12,6 @@ import { errorHandler } from "./middleware/errorMiddleware.js";
 import authRoutes from "./routes/authRoutes.js";
 import leadRoutes from "./routes/leadRoutes.js";
 import userRoutes from "./routes/userRoutes.js";
-import aiRoutes from "./routes/aiRoutes.js";
 import notificationRoutes from "./routes/notificationRoutes.js";
 import seedDummyData from "./utils/seedDummyData.js";
 
@@ -61,7 +60,6 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use("/api/auth", authRoutes);
 app.use("/api/leads", leadRoutes);
 app.use("/api/users", userRoutes);
-app.use("/api/ai", aiRoutes);
 app.use("/api/notifications", notificationRoutes);
 app.use(errorHandler);
 

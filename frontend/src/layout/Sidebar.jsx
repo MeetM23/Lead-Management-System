@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { LayoutDashboard, Users, PlusCircle, X, UserCheck, LogOut } from 'lucide-react';
+import { LayoutDashboard, Users, PlusCircle, X, UserCheck } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import clsx from 'clsx';
 import logoImg from '../assets/favicon.png';
@@ -10,7 +10,7 @@ const API_URL = import.meta.env.VITE_API_URL || '';
 
 const Sidebar = ({ isOpen, onClose, isCollapsed }) => {
   const location = useLocation();
-  const { user, logout } = useAuth();
+  const { user } = useAuth();
   const [profilePic, setProfilePic] = useState(user?.profilePic || null);
 
   useEffect(() => {
@@ -39,15 +39,6 @@ const Sidebar = ({ isOpen, onClose, isCollapsed }) => {
 
   const getDefaultAvatar = () => {
     return `https://ui-avatars.com/api/?name=${encodeURIComponent(user?.name || 'User')}&background=6366f1&color=fff&size=80`;
-  };
-
-  const getInitials = (name) => {
-    if (!name) return '?';
-    const parts = name.trim().split(/\s+/);
-    if (parts.length >= 2) {
-      return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
-    }
-    return parts[0][0].toUpperCase();
   };
 
   // Determine base path based on user role

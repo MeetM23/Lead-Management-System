@@ -1,11 +1,10 @@
-import React, { useMemo, useState } from 'react';
+import React, { useMemo } from 'react';
 import { useLeads } from '../context/LeadsContext';
 import { useAuth } from '../context/AuthContext';
-import { Link, useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { Users, UserPlus, TrendingUp, AlertCircle, CheckCircle, Calendar } from 'lucide-react';
 import StatCard from '../components/dashboard/StatCard';
 import AnalyticsCharts from '../components/dashboard/AnalyticsCharts';
-import { calculateTrend, filterLeadsByDate } from '../utils/analyticsUtils';
 
 import { SkeletonCard, SkeletonChart, SkeletonTable } from '../components/common/Skeleton';
 

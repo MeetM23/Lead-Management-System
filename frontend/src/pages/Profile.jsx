@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { Save, Camera, User as UserIcon, Pencil } from 'lucide-react';
-import { LogOut, User, Menu } from 'lucide-react';
+import { LogOut, User } from 'lucide-react';
 import { SkeletonForm } from '../components/common/Skeleton';
 
 // Get API URL from environment variables

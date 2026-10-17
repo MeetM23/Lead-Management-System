@@ -11,7 +11,6 @@ import Dashboard from './pages/Dashboard';
 import Leads from './pages/Leads';
 import AddLead from './pages/AddLead';
 import Users from './pages/Users';
-import UserProfile from './pages/UserProfile';
 import AdminUserProfile from './pages/AdminUserProfile';
 import Profile from './pages/Profile';
 import LeadDetails from './pages/LeadDetails';

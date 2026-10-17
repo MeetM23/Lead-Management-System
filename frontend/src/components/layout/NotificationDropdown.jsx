@@ -1,13 +1,11 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Bell, Check, Clock } from 'lucide-react';
 import { useNotifications } from '../../context/NotificationContext';
-import { useNavigate } from 'react-router-dom';
 
 const NotificationDropdown = () => {
     const { notifications, unreadCount, markAsRead, markAllAsRead } = useNotifications();
     const [isOpen, setIsOpen] = useState(false);
     const dropdownRef = useRef(null);
-    const navigate = useNavigate();
 
     // Close on outside click
     useEffect(() => {

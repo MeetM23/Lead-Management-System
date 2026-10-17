@@ -2,17 +2,6 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import {
-  BarChart3,
-  Users,
-  Target,
-  CheckCircle2,
-  LayoutDashboard,
-  Layers,
-  Zap,
-  Briefcase,
-  Mail,
-  Phone,
-  Star,
   Menu,
   X
 } from 'lucide-react';

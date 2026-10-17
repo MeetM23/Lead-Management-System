@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, Link, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import gsap from 'gsap';
-import { Home, LogIn } from 'lucide-react';
+import { Home } from 'lucide-react';
 import logoImg from '../assets/favicon.png';
 
 const Login = () => {
